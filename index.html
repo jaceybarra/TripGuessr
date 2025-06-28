@@ -2,7 +2,7 @@
 <html>
 <head>
     <title>Google Maps Routing Example</title>
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDJhWz8jA_KfdQCZ1jE_z8RPGuvcQBVKFMY"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDJhWz8jA_KfdQCZ1jE_z8RPGuvcQBVKFM"></script>
     <style>
         #map {
             height: 100%;
@@ -64,6 +64,8 @@
                     if (status === "OK" && response.routes[0]) {
                         const route = response.routes[0];
                         const leg = route.legs[0];
+
+                        console.log("Full response:", response);
 
                         if (leg.duration && leg.duration_in_traffic) {
                             const actualDurationMinutes = Math.ceil(leg.duration_in_traffic.value / 60);
