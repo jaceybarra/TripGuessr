@@ -55,7 +55,7 @@
   <button id="shareBtn" style="display: none;">Share</button>
 
   <script>
-    const API_KEY = "AIzaSyDJhWz8jA_KfdQCZ1jE_z8RPGuvcQBVKFM";
+        const API_KEY = "AIzaSyDJhWz8jA_KfdQCZ1jE_z8RPGuvcQBVKFM";
 
     const cities = [
       {
@@ -95,9 +95,19 @@
     document.getElementById("cityLabel").textContent = `Today's city: ${selectedCity.name}`;
 
     function randomLatLng() {
-      const lat = Math.random() * (bbox.north - bbox.south) + bbox.south;
-      const lng = Math.random() * (bbox.east - bbox.west) + bbox.west;
+      let lat, lng;
+      do {
+        lat = Math.random() * (bbox.north - bbox.south) + bbox.south;
+        lng = Math.random() * (bbox.east - bbox.west) + bbox.west;
+      } while (!isValidLocation(lat, lng));
       return { lat, lng };
+    }
+
+    function isValidLocation(lat, lng) {
+      if (lat < bbox.south || lat > bbox.north || lng < bbox.west || lng > bbox.east) {
+        return false;
+      }
+      return true;
     }
 
     function clearMarkers() {
@@ -138,6 +148,10 @@
 
     function setupNewRoute() {
       clearMarkers();
+      if (directionsRenderer) {
+        directionsRenderer.setMap(null);
+      }
+      
       hintsGiven = 0;
       document.getElementById('hint').textContent = "";
       document.getElementById('result').textContent = "";
@@ -145,64 +159,92 @@
       document.getElementById("guessInput").value = "";
       enableGuessInput(true);
 
+      let validRoute = false;
       let attempts = 0;
-      const maxAttempts = 10;
-      
-      do {
+      const maxAttempts = 20;
+
+      const findValidRoute = () => {
         origin = randomLatLng();
         destination = randomLatLng();
-        attempts++;
-        if (attempts >= maxAttempts) {
-          console.error("Could not find suitable points");
-          return;
-        }
-      } while (distance(origin, destination) < 2);
+        
+        const markerA = new google.maps.Marker({
+          position: origin,
+          map: map,
+          label: "A"
+        });
+        const markerB = new google.maps.Marker({
+          position: destination,
+          map: map,
+          label: "B"
+        });
+        markers.push(markerA, markerB);
 
-      const markerA = new google.maps.Marker({
-        position: origin,
-        map: map,
-        label: "A"
-      });
-      const markerB = new google.maps.Marker({
-        position: destination,
-        map: map,
-        label: "B"
-      });
-      markers.push(markerA, markerB);
+        calculateRoute().then(success => {
+          if (success) {
+            validRoute = true;
+            const bounds = new google.maps.LatLngBounds();
+            bounds.extend(origin);
+            bounds.extend(destination);
+            map.fitBounds(bounds);
+          } else {
+            clearMarkers();
+            if (attempts < maxAttempts) {
+              attempts++;
+              findValidRoute();
+            } else {
+              console.error("Could not find valid route after maximum attempts");
+            }
+          }
+        });
+      };
 
-      calculateRoute();
+      findValidRoute();
     }
 
     function calculateRoute() {
-      const request = {
-        origin: origin,
-        destination: destination,
-        travelMode: google.maps.TravelMode.DRIVING,
-        drivingOptions: {
-          departureTime: new Date(),
-          trafficModel: 'best_guess'
-        }
-      };
+      return new Promise((resolve) => {
+        const request = {
+          origin: origin,
+          destination: destination,
+          travelMode: google.maps.TravelMode.DRIVING,
+          drivingOptions: {
+            departureTime: new Date(),
+            trafficModel: 'best_guess'
+          }
+        };
 
-      directionsService.route(request, (response, status) => {
-        if (status === "OK") {
-          directionsRenderer.setDirections(response);
-          const leg = response.routes[0].legs[0];
-          actualDurationMinutes = Math.round(leg.duration_in_traffic.value / 60);
-          durationWithoutTrafficMinutes = Math.round(leg.duration.value / 60);
-          console.log("Route details:", {
-            actualDuration: actualDurationMinutes,
-            durationWithoutTraffic: durationWithoutTrafficMinutes,
-            distance: leg.distance.text
-          });
-        } else {
-          console.error("Directions request failed due to " + status);
-          setupNewRoute();
-        }
+        directionsService.route(request, (response, status) => {
+          if (status === "OK" && response.routes[0]) {
+            directionsRenderer.setMap(map);
+            directionsRenderer.setDirections(response);
+            
+            const leg = response.routes[0].legs[0];
+            actualDurationMinutes = Math.round(leg.duration_in_traffic.value / 60);
+            durationWithoutTrafficMinutes = Math.round(leg.duration.value / 60);
+            
+            console.log("Route calculated:", {
+              status: status,
+              duration: actualDurationMinutes,
+              durationNoTraffic: durationWithoutTrafficMinutes,
+              distance: leg.distance.text,
+              start: leg.start_location.toString(),
+              end: leg.end_location.toString()
+            });
+
+            if (actualDurationMinutes === 0) {
+              console.log("Invalid duration, retrying...");
+              resolve(false);
+            } else {
+              resolve(true);
+            }
+          } else {
+            console.error("Directions request failed:", status);
+            resolve(false);
+          }
+        });
       });
     }
-
-    document.getElementById("guessBtn").addEventListener("click", () => {
+        document.getElementById("guessBtn").addEventListener("click", () => {
       const guessEl = document.getElementById("guessInput");
       const guess = parseInt(guessEl.value);
       if (isNaN(guess) || guess < 0) {
