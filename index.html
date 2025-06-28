@@ -31,9 +31,9 @@
         let directionsRenderer;
         let markers = [];
         let hintsGiven = 0;
+        let origin, destination;
 
         function initializeMap() {
-            // Initialize the map
             map = new google.maps.Map(document.getElementById("map"), {
                 center: { lat: -34.397, lng: 150.644 },
                 zoom: 8,
@@ -42,13 +42,17 @@
             directionsService = new google.maps.DirectionsService();
             directionsRenderer = new google.maps.DirectionsRenderer({
                 map: map,
+                suppressMarkers: true
             });
+
+            const trafficLayer = new google.maps.TrafficLayer();
+            trafficLayer.setMap(map);
         }
 
         function calculateRoute() {
             return new Promise((resolve) => {
                 const now = new Date();
-                now.setHours(14, 0, 0, 0); // Set time to 2 PM local time
+                now.setHours(14, 0, 0, 0); // Set time to 2 PM
 
                 const request = {
                     origin: origin,
@@ -68,31 +72,23 @@
                         const leg = route.legs[0];
 
                         if (leg.duration && leg.duration_in_traffic) {
-                            const actualDurationMinutes = Math.ceil(leg.duration_in_traffic.value / 60);
-                            const durationWithoutTrafficMinutes = Math.ceil(leg.duration.value / 60);
+                            const actualDurationMinutes = Math.max(1, Math.round(leg.duration_in_traffic.value / 60));
+                            const durationWithoutTrafficMinutes = Math.max(1, Math.round(leg.duration.value / 60));
 
                             console.log("Leg duration:", leg.duration);
                             console.log("Leg duration in traffic:", leg.duration_in_traffic);
 
                             if (actualDurationMinutes > 0 && actualDurationMinutes <= 120) {
-                                console.log("Valid route found:", {
-                                    distance: leg.distance.text,
-                                    durationWithTraffic: leg.duration_in_traffic.text,
-                                    durationWithoutTraffic: leg.duration.text,
-                                    actualMinutes: actualDurationMinutes,
-                                    withoutTrafficMinutes: durationWithoutTrafficMinutes,
-                                });
-
-                                // Set the route on the map
                                 directionsRenderer.setMap(map);
                                 directionsRenderer.setDirections(response);
 
-                                // Adjust map bounds to show the entire route
                                 const bounds = new google.maps.LatLngBounds();
                                 route.overview_path.forEach((point) => {
                                     bounds.extend(point);
                                 });
                                 map.fitBounds(bounds);
+
+                                document.getElementById("result").textContent = `Estimated time: ${actualDurationMinutes} min (normal: ${durationWithoutTrafficMinutes} min)`;
 
                                 resolve(true);
                                 return;
@@ -134,12 +130,11 @@
                     const dist = distance(origin, destination);
                     console.log("Generated points:", origin, destination, "Distance:", dist);
 
-                    // Ensure points are within a reasonable geographic range
                     if (!isValidLatLng(origin) || !isValidLatLng(destination)) {
                         console.log("Invalid latitude or longitude generated, retrying...");
                         continue;
                     }
-                } while (dist < 1 || dist > 15); // Between 1km and 15km apart
+                } while (distance(origin, destination) < 1 || distance(origin, destination) > 15);
 
                 const markerA = new google.maps.Marker({
                     position: origin,
@@ -154,9 +149,7 @@
                 markers.push(markerA, markerB);
 
                 const success = await calculateRoute();
-                if (success) {
-                    validRoute = true;
-                } else {
+                if (!success) {
                     clearMarkers();
                     if (attempts < maxAttempts) {
                         attempts++;
@@ -178,14 +171,15 @@
         }
 
         function randomLatLng() {
-            // Generate a random latitude and longitude within a reasonable range
-            const lat = Math.random() * (90 - -90) + -90;
-            const lng = Math.random() * (180 - -180) + -180;
+            const baseLat = 37.7749; // San Francisco
+            const baseLng = -122.4194;
+            const lat = baseLat + (Math.random() - 0.5) * 0.2;
+            const lng = baseLng + (Math.random() - 0.5) * 0.2;
             return { lat: lat, lng: lng };
         }
 
         function distance(p1, p2) {
-            const R = 6371; // Earth's radius in km
+            const R = 6371;
             const dLat = (p2.lat - p1.lat) * Math.PI / 180;
             const dLon = (p2.lng - p1.lng) * Math.PI / 180;
             const a = 
@@ -193,7 +187,7 @@
                 Math.cos(p1.lat * Math.PI / 180) * Math.cos(p2.lat * Math.PI / 180) * 
                 Math.sin(dLon / 2) * Math.sin(dLon / 2);
             const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-            return R * c; // Distance in km
+            return R * c;
         }
 
         function isValidLatLng(latLng) {
@@ -204,7 +198,6 @@
             document.getElementById("guessInput").disabled = !enable;
         }
 
-        // Initialize the map when the window loads
         window.onload = initializeMap;
     </script>
 </body>
