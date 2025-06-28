@@ -51,8 +51,8 @@
 <button id="newRouteBtn">New Route</button>
 
 <script>
-  // Your Google Maps API key
-  const API_KEY = "AIzaSyCchdbQOHM7IzdUAg28bk_h4mkRcTXo5Ak";
+  // ✅ Google Maps API Key
+  const API_KEY = "AIzaSyDJhWz8jA_KfdQCZ1jE_z8RPGuvcQBVKFM";
 
   let map, directionsService, directionsRenderer;
   let actualDurationMinutes = 0;
@@ -60,7 +60,6 @@
   let hintsGiven = 0;
   let origin, destination;
 
-  // San Francisco bounding box approx
   const bbox = {
     north: 37.812,
     south: 37.703,
@@ -99,31 +98,27 @@
     document.getElementById('result').textContent = "";
     enableGuessInput(true);
 
-    // generate random origin and destination (make sure they're distinct enough)
     do {
       origin = randomLatLng();
       destination = randomLatLng();
-    } while (distance(origin, destination) < 5); // skip very short trips (<5 km)
+    } while (distance(origin, destination) < 5);
 
     calculateRoute();
   }
 
-  // Calculate distance in km between two lat/lng points using Haversine formula
   function distance(p1, p2) {
-    const R = 6371; // km
+    const R = 6371;
     const dLat = (p2.lat - p1.lat) * Math.PI / 180;
     const dLng = (p2.lng - p1.lng) * Math.PI / 180;
     const a = 
       Math.sin(dLat/2) * Math.sin(dLat/2) +
       Math.cos(p1.lat * Math.PI/180) * Math.cos(p2.lat * Math.PI/180) *
-      Math.sin(dLng/2) * Math.sin(dLng/2)
-    ;
+      Math.sin(dLng/2) * Math.sin(dLng/2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
     return R * c;
   }
 
   function calculateRoute() {
-    // Request with traffic info (departure_time=now)
     directionsService.route({
       origin: origin,
       destination: destination,
@@ -135,13 +130,10 @@
     }, (response, status) => {
       if (status === "OK") {
         directionsRenderer.setDirections(response);
-
         const leg = response.routes[0].legs[0];
-
         actualDurationMinutes = Math.round(leg.duration_in_traffic.value / 60);
         durationWithoutTrafficMinutes = Math.round(leg.duration.value / 60);
 
-        // Display points on map markers with labels
         new google.maps.Marker({
           position: origin,
           map: map,
@@ -170,7 +162,7 @@
     const hintDiv = document.getElementById("hint");
 
     const diff = Math.abs(guess - actualDurationMinutes);
-    const tolerance = actualDurationMinutes * 0.1; // 10%
+    const tolerance = actualDurationMinutes * 0.1;
 
     if(diff <= tolerance){
       resultDiv.textContent = `Correct! The trip takes about ${actualDurationMinutes} minutes. Well done! 🎉`;
