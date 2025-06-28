@@ -61,11 +61,11 @@
                 };
 
                 directionsService.route(request, (response, status) => {
+                    console.log("Full response:", response);
+
                     if (status === "OK" && response.routes[0]) {
                         const route = response.routes[0];
                         const leg = route.legs[0];
-
-                        console.log("Full response:", response);
 
                         if (leg.duration && leg.duration_in_traffic) {
                             const actualDurationMinutes = Math.ceil(leg.duration_in_traffic.value / 60);
@@ -132,6 +132,13 @@
                     origin = randomLatLng();
                     destination = randomLatLng();
                     const dist = distance(origin, destination);
+                    console.log("Generated points:", origin, destination, "Distance:", dist);
+
+                    // Ensure points are within a reasonable geographic range
+                    if (!isValidLatLng(origin) || !isValidLatLng(destination)) {
+                        console.log("Invalid latitude or longitude generated, retrying...");
+                        continue;
+                    }
                 } while (dist < 1 || dist > 15); // Between 1km and 15km apart
 
                 const markerA = new google.maps.Marker({
@@ -187,6 +194,10 @@
                 Math.sin(dLon / 2) * Math.sin(dLon / 2);
             const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
             return R * c; // Distance in km
+        }
+
+        function isValidLatLng(latLng) {
+            return latLng.lat >= -90 && latLng.lat <= 90 && latLng.lng >= -180 && latLng.lng <= 180;
         }
 
         function enableGuessInput(enable) {
