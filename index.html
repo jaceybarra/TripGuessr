@@ -1,208 +1,255 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>TripGuessr - Random Route with Traffic</title>
-<style>
-  body {
-    font-family: Arial, sans-serif;
-    max-width: 800px;
-    margin: auto;
-    padding: 1rem;
-  }
-  #map {
-    width: 100%;
-    height: 400px;
-    margin-bottom: 1rem;
-  }
-  input[type=number] {
-    width: 80px;
-    padding: 0.3em;
-  }
-  button {
-    padding: 0.5em 1em;
-  }
-  .hint {
-    margin-top: 1em;
-    background: #eef;
-    padding: 1em;
-    border-radius: 5px;
-  }
-  .result {
-    margin-top: 1em;
-    font-weight: bold;
-  }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TripGuessr - Daily City Challenge</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: auto;
+      padding: 1rem;
+    }
+    #map {
+      width: 100%;
+      height: 400px;
+      margin-bottom: 1rem;
+    }
+    input[type=number] {
+      width: 80px;
+      padding: 0.3em;
+    }
+    button {
+      padding: 0.5em 1em;
+      margin-top: 0.5em;
+    }
+    .hint {
+      margin-top: 1em;
+      background: #eef;
+      padding: 1em;
+      border-radius: 5px;
+    }
+    .result {
+      margin-top: 1em;
+      font-weight: bold;
+    }
+  </style>
 </head>
 <body>
 
-<h1>TripGuessr</h1>
-<p>Guess the driving time from Point A to Point B in San Francisco!</p>
+  <h1>TripGuessr</h1>
+  <p id="cityLabel"></p>
+  <p>Guess the driving time from Point A to Point B in today's city!</p>
 
-<div id="map"></div>
+  <div id="map"></div>
 
-<label for="guessInput">Your guess (minutes): </label>
-<input type="number" id="guessInput" min="1" />
-<button id="guessBtn">Guess</button>
+  <label for="guessInput">Your guess (minutes): </label>
+  <input type="number" id="guessInput" min="1" />
+  <button id="guessBtn">Guess</button>
 
-<div class="hint" id="hint"></div>
-<div class="result" id="result"></div>
-<button id="newRouteBtn">New Route</button>
+  <div class="hint" id="hint"></div>
+  <div class="result" id="result"></div>
+  <button id="newRouteBtn">New Route</button>
+  <button id="shareBtn" style="display: none;">Share</button>
 
-<script>
-  // ✅ Google Maps API Key
-  const API_KEY = "AIzaSyDJhWz8jA_KfdQCZ1jE_z8RPGuvcQBVKFM";
+  <script>
+    const API_KEY = "AIzaSyDJhWz8jA_KfdQCZ1jE_z8RPGuvcQBVKFM";
 
-  let map, directionsService, directionsRenderer;
-  let actualDurationMinutes = 0;
-  let durationWithoutTrafficMinutes = 0;
-  let hintsGiven = 0;
-  let origin, destination;
-
-  const bbox = {
-    north: 37.812,
-    south: 37.703,
-    west: -122.527,
-    east: -122.348
-  };
-
-  function randomLatLng() {
-    const lat = Math.random() * (bbox.north - bbox.south) + bbox.south;
-    const lng = Math.random() * (bbox.east - bbox.west) + bbox.west;
-    return {lat, lng};
-  }
-
-  function loadGoogleMaps(callback) {
-    const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${API_KEY}&callback=${callback.name}&libraries=places`;
-    script.async = true;
-    script.defer = true;
-    document.head.appendChild(script);
-  }
-
-  function initMap() {
-    map = new google.maps.Map(document.getElementById("map"), {
-      zoom: 12,
-      center: {lat: 37.7749, lng: -122.4194}
-    });
-    directionsService = new google.maps.DirectionsService();
-    directionsRenderer = new google.maps.DirectionsRenderer({map: map});
-
-    setupNewRoute();
-  }
-
-  function setupNewRoute() {
-    hintsGiven = 0;
-    document.getElementById('hint').textContent = "";
-    document.getElementById('result').textContent = "";
-    enableGuessInput(true);
-
-    do {
-      origin = randomLatLng();
-      destination = randomLatLng();
-    } while (distance(origin, destination) < 5);
-
-    calculateRoute();
-  }
-
-  function distance(p1, p2) {
-    const R = 6371;
-    const dLat = (p2.lat - p1.lat) * Math.PI / 180;
-    const dLng = (p2.lng - p1.lng) * Math.PI / 180;
-    const a = 
-      Math.sin(dLat/2) * Math.sin(dLat/2) +
-      Math.cos(p1.lat * Math.PI/180) * Math.cos(p2.lat * Math.PI/180) *
-      Math.sin(dLng/2) * Math.sin(dLng/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    return R * c;
-  }
-
-  function calculateRoute() {
-    directionsService.route({
-      origin: origin,
-      destination: destination,
-      travelMode: google.maps.TravelMode.DRIVING,
-      drivingOptions: {
-        departureTime: new Date(),
-        trafficModel: 'best_guess'
+    const cities = [
+      {
+        name: "San Francisco",
+        bbox: { north: 37.812, south: 37.703, west: -122.527, east: -122.348 }
+      },
+      {
+        name: "New York",
+        bbox: { north: 40.9176, south: 40.4774, west: -74.2591, east: -73.7002 }
+      },
+      {
+        name: "Chicago",
+        bbox: { north: 42.023, south: 41.644, west: -87.940, east: -87.523 }
+      },
+      {
+        name: "Seattle",
+        bbox: { north: 47.734, south: 47.491, west: -122.459, east: -122.224 }
+      },
+      {
+        name: "Miami",
+        bbox: { north: 25.855, south: 25.709, west: -80.319, east: -80.139 }
       }
-    }, (response, status) => {
-      if (status === "OK") {
-        directionsRenderer.setDirections(response);
-        const leg = response.routes[0].legs[0];
-        actualDurationMinutes = Math.round(leg.duration_in_traffic.value / 60);
-        durationWithoutTrafficMinutes = Math.round(leg.duration.value / 60);
+    ];
 
-        new google.maps.Marker({
-          position: origin,
-          map: map,
-          label: "A"
-        });
-        new google.maps.Marker({
-          position: destination,
-          map: map,
-          label: "B"
-        });
-      } else {
-        alert("Directions request failed due to " + status);
-      }
-    });
-  }
+    const today = new Date();
+    const cityIndex = today.getDate() % cities.length;
+    const selectedCity = cities[cityIndex];
+    const bbox = selectedCity.bbox;
 
-  document.getElementById("guessBtn").addEventListener("click", () => {
-    const guessEl = document.getElementById("guessInput");
-    const guess = parseInt(guessEl.value);
-    if(isNaN(guess) || guess < 1){
-      alert("Please enter a valid number of minutes.");
-      return;
+    document.getElementById("cityLabel").textContent = `Today's city: ${selectedCity.name}`;
+
+    let map, directionsService, directionsRenderer;
+    let actualDurationMinutes = 0;
+    let durationWithoutTrafficMinutes = 0;
+    let hintsGiven = 0;
+    let origin, destination;
+
+    function randomLatLng() {
+      const lat = Math.random() * (bbox.north - bbox.south) + bbox.south;
+      const lng = Math.random() * (bbox.east - bbox.west) + bbox.west;
+      return { lat, lng };
     }
 
-    const resultDiv = document.getElementById("result");
-    const hintDiv = document.getElementById("hint");
+    function loadGoogleMaps(callback) {
+      const script = document.createElement('script');
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${API_KEY}&callback=${callback.name}&libraries=places`;
+      script.async = true;
+      script.defer = true;
+      document.head.appendChild(script);
+    }
 
-    const diff = Math.abs(guess - actualDurationMinutes);
-    const tolerance = actualDurationMinutes * 0.1;
+    function initMap() {
+      const centerLat = (bbox.north + bbox.south) / 2;
+      const centerLng = (bbox.east + bbox.west) / 2;
 
-    if(diff <= tolerance){
-      resultDiv.textContent = `Correct! The trip takes about ${actualDurationMinutes} minutes. Well done! 🎉`;
-      hintDiv.textContent = "";
-      enableGuessInput(false);
-    } else {
-      hintsGiven++;
-      if(hintsGiven === 1){
-        hintDiv.textContent = `Hint #1: Time of day affects traffic. Current trip duration without traffic would be about ${durationWithoutTrafficMinutes} minutes.`;
-      } else if(hintsGiven === 2){
-        const delay = actualDurationMinutes - durationWithoutTrafficMinutes;
-        const delayPercent = Math.round((delay / durationWithoutTrafficMinutes) * 100);
-        hintDiv.textContent = `Hint #2: Traffic adds approximately ${delay} minutes (${delayPercent}%) to the trip time.`;
-      } else if(hintsGiven === 3){
-        hintDiv.textContent = `Hint #3: The route is about ${Math.round(distance(origin, destination))} km long.`;
-      } else {
-        resultDiv.textContent = `Game over! The actual trip time including traffic is ${actualDurationMinutes} minutes.`;
+      map = new google.maps.Map(document.getElementById("map"), {
+        zoom: 12,
+        center: { lat: centerLat, lng: centerLng }
+      });
+
+      directionsService = new google.maps.DirectionsService();
+      directionsRenderer = new google.maps.DirectionsRenderer({ map: map });
+
+      setupNewRoute();
+    }
+
+    function setupNewRoute() {
+      hintsGiven = 0;
+      document.getElementById('hint').textContent = "";
+      document.getElementById('result').textContent = "";
+      document.getElementById("shareBtn").style.display = "none";
+      enableGuessInput(true);
+
+      do {
+        origin = randomLatLng();
+        destination = randomLatLng();
+      } while (distance(origin, destination) < 5);
+
+      calculateRoute();
+    }
+
+    function distance(p1, p2) {
+      const R = 6371;
+      const dLat = (p2.lat - p1.lat) * Math.PI / 180;
+      const dLng = (p2.lng - p1.lng) * Math.PI / 180;
+      const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(p1.lat * Math.PI / 180) * Math.cos(p2.lat * Math.PI / 180) *
+        Math.sin(dLng / 2) * Math.sin(dLng / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return R * c;
+    }
+
+    function calculateRoute() {
+      directionsService.route({
+        origin: origin,
+        destination: destination,
+        travelMode: google.maps.TravelMode.DRIVING,
+        drivingOptions: {
+          departureTime: new Date(),
+          trafficModel: 'best_guess'
+        }
+      }, (response, status) => {
+        if (status === "OK") {
+          directionsRenderer.setDirections(response);
+          const leg = response.routes[0].legs[0];
+          actualDurationMinutes = Math.round(leg.duration_in_traffic.value / 60);
+          durationWithoutTrafficMinutes = Math.round(leg.duration.value / 60);
+
+          new google.maps.Marker({ position: origin, map: map, label: "A" });
+          new google.maps.Marker({ position: destination, map: map, label: "B" });
+
+        } else {
+          alert("Directions request failed due to " + status);
+        }
+      });
+    }
+
+    document.getElementById("guessBtn").addEventListener("click", () => {
+      const guessEl = document.getElementById("guessInput");
+      const guess = parseInt(guessEl.value);
+      if (isNaN(guess) || guess < 1) {
+        alert("Please enter a valid number of minutes.");
+        return;
+      }
+
+      const resultDiv = document.getElementById("result");
+      const hintDiv = document.getElementById("hint");
+
+      const diff = Math.abs(guess - actualDurationMinutes);
+      const tolerance = actualDurationMinutes * 0.1;
+
+      if (diff <= tolerance) {
+        resultDiv.textContent = `Correct! The trip takes about ${actualDurationMinutes} minutes. Well done! 🎉`;
         hintDiv.textContent = "";
         enableGuessInput(false);
+        document.getElementById("shareBtn").style.display = "inline-block";
+      } else {
+        hintsGiven++;
+
+        if (hintsGiven === 1) {
+          hintDiv.textContent = `Hint #1: Time of day affects traffic. Without traffic, the trip would be about ${durationWithoutTrafficMinutes} minutes.`;
+        } else if (hintsGiven === 2) {
+          const delay = actualDurationMinutes - durationWithoutTrafficMinutes;
+          const delayPercent = Math.round((delay / durationWithoutTrafficMinutes) * 100);
+          hintDiv.textContent = `Hint #2: Traffic adds ~${delay} minutes (${delayPercent}%) to this trip.`;
+        } else if (hintsGiven === 3) {
+          hintDiv.textContent = `Hint #3: The route is about ${Math.round(distance(origin, destination))} km long.`;
+        } else if (hintsGiven === 4) {
+          hintDiv.textContent = `Final hint! Think carefully. One last chance...`;
+        } else {
+          resultDiv.textContent = `Game over! The actual trip time including traffic is ${actualDurationMinutes} minutes.`;
+          hintDiv.textContent = "";
+          enableGuessInput(false);
+          document.getElementById("shareBtn").style.display = "inline-block";
+          return;
+        }
+
+        resultDiv.textContent = `Wrong guess: you guessed ${guess} minutes. Try again!`;
       }
-      resultDiv.textContent = `Wrong guess: you guessed ${guess} minutes. Try again!`;
+
+      guessEl.value = "";
+      guessEl.focus();
+    });
+
+    document.getElementById("shareBtn").addEventListener("click", () => {
+      const dateStr = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+      const city = selectedCity.name;
+      let message = `🌍 TripGuessr – ${dateStr}: ${city}\n`;
+
+      if (hintsGiven <= 4) {
+        message += `✅ Got it in ${hintsGiven + 1} guess${hintsGiven === 0 ? '' : 'es'}! Took ~${actualDurationMinutes} minutes.\n`;
+      } else {
+        message += `❌ Missed it in 5 guesses – actual time was ${actualDurationMinutes} minutes.\n`;
+      }
+
+      message += `https://jaceybarra.github.io/TripGuessr/`;
+
+      navigator.clipboard.writeText(message).then(() => {
+        alert("Result copied! Paste it into Slack or anywhere.");
+      });
+    });
+
+    function enableGuessInput(enabled) {
+      document.getElementById("guessInput").disabled = !enabled;
+      document.getElementById("guessBtn").disabled = !enabled;
     }
-    guessEl.value = "";
-    guessEl.focus();
-  });
 
-  function enableGuessInput(enabled){
-    const guessEl = document.getElementById("guessInput");
-    const guessBtn = document.getElementById("guessBtn");
-    guessEl.disabled = !enabled;
-    guessBtn.disabled = !enabled;
-  }
+    document.getElementById("newRouteBtn").addEventListener("click", () => {
+      directionsRenderer.setDirections({ routes: [] });
+      setupNewRoute();
+    });
 
-  document.getElementById("newRouteBtn").addEventListener("click", () => {
-    directionsRenderer.setDirections({routes: []});
-    setupNewRoute();
-  });
-
-  loadGoogleMaps(initMap);
-</script>
+    loadGoogleMaps(initMap);
+  </script>
 
 </body>
 </html>
