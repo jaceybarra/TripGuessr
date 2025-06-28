@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>TripGuessr - Daily City Challenge</title>
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDJhWz8jA_KfdQCZ1jE_z8RPGuvcQBVKFM&libraries=places"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -54,7 +55,7 @@
   <button id="shareBtn" style="display: none;">Share</button>
 
   <script>
-    const API_KEY = "AIzaSyDJhWz8jA_KfdQCZ1jE_z8RPGuvcQBVKFM"; // AIzaSyDJhWz8jA_KfdQCZ1jE_z8RPGuvcQBVKFM
+    const API_KEY = "AIzaSyDJhWz8jA_KfdQCZ1jE_z8RPGuvcQBVKFM";
 
     const cities = [
       {
@@ -97,14 +98,6 @@
       const lat = Math.random() * (bbox.north - bbox.south) + bbox.south;
       const lng = Math.random() * (bbox.east - bbox.west) + bbox.west;
       return { lat, lng };
-    }
-
-    function loadGoogleMaps(callback) {
-      const script = document.createElement('script');
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${AIzaSyDJhWz8jA_KfdQCZ1jE_z8RPGuvcQBVKFM}&callback=${callback.name}&libraries=places`;
-      script.async = true;
-      script.defer = true;
-      document.head.appendChild(script);
     }
 
     function clearMarkers() {
@@ -284,7 +277,7 @@
       setupNewRoute();
     });
 
-    loadGoogleMaps(initMap);
+    google.maps.event.addDomListener(window, 'load', initMap);
   </script>
 </body>
 </html>
