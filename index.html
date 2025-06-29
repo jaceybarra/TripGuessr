@@ -160,31 +160,31 @@
       routeData = null;
       guessCount = 0;
 
-      let attempts = 0;
-      const maxTries = 30;
-
+      let attempts = 0, maxTries = 30;
       while (attempts++ < maxTries) {
         origin = randomSF();
         destination = randomSF();
+        console.log(`Attempt ${attempts}: origin=${origin.lat},${origin.lng}, destination=${destination.lat},${destination.lng}`);
         const dist = distance(origin, destination);
         if (dist < 1 || dist > 12) continue;
 
         const route = await fetchRoute(origin, destination);
-        if (route && route.routes[0]?.legs[0]?.duration_in_traffic) {
+        if (route && route.routes?.[0]?.legs?.[0]?.duration_in_traffic) {
           const leg = route.routes[0].legs[0];
           const trafficMin = Math.max(1, Math.round(leg.duration_in_traffic.value / 60));
-          const normalMin = Math.max(1, Math.round(leg.duration.value / 60));
-
-          routeData = { trafficMin, normalMin, response: route };
-
-          markers.push(new google.maps.Marker({ position: origin, map, label: "A" }));
-          markers.push(new google.maps.Marker({ position: destination, map, label: "B" }));
+          routeData = { trafficMin, response: route };
 
           directionsRenderer.setDirections(route);
+          markers.push(new google.maps.Marker({ position: origin, map, label: "A" }));
+          markers.push(new google.maps.Marker({ position: destination, map, label: "B" }));
           map.setCenter(getMidpoint(origin, destination));
           map.setZoom(13);
+
+          console.log(`Route found: ${trafficMin} min`);
+          document.getElementById("shareBtn").style.display = "inline-block";
           return;
         }
+        console.log("Route invalid or missing duration_in_traffic");
       }
 
       document.getElementById("result").textContent = "❌ Couldn't find a valid route after multiple tries.";
@@ -216,14 +216,22 @@
     }
 
     function checkGuess() {
-      const inputVal = document.getElementById("guessInput").value.trim();
-      if (!inputVal || isNaN(inputVal)) {
+      const inputVal = document.getElementById("guessInput").value;
+      console.log(`Input raw: "${inputVal}"`);
+      const trimmed = inputVal.trim();
+      console.log(`Input trimmed: "${trimmed}"`);
+
+      if (!trimmed || isNaN(trimmed)) {
+        console.log("Validation fail: NaN or empty");
         document.getElementById("result").textContent = "⚠️ Please enter a valid number.";
         return;
       }
 
-      const guess = parseFloat(inputVal);
+      const guess = parseFloat(trimmed);
+      console.log("Parsed guess:", guess);
+
       if (!routeData || guess <= 0) {
+        console.log("No routeData or guess ≤ 0");
         document.getElementById("result").textContent = "⚠️ Please enter a valid positive number.";
         return;
       }
@@ -233,22 +241,18 @@
       const diff = Math.abs(actual - guess);
       const feedback = guess > actual ? "too high" : "too low";
 
+      let text;
       if (diff === 0) {
-        document.getElementById("result").textContent =
-          `🎯 Perfect! It was ${actual} min. You got it in ${guessCount} ${guessCount === 1 ? "try" : "tries"}.`;
+        text = `🎯 Perfect! It was ${actual} min. You got it in ${guessCount} ${guessCount === 1 ? "try" : "tries"}.`;
         document.getElementById("shareBtn").style.display = "inline-block";
         guessCount = maxGuesses;
-        return;
-      }
-
-      if (guessCount < maxGuesses) {
-        document.getElementById("result").textContent =
-          `❌ ${guess} min is ${feedback}. (${maxGuesses - guessCount} guesses left)`;
+      } else if (guessCount < maxGuesses) {
+        text = `❌ ${guess} min is ${feedback}. (${maxGuesses - guessCount} guesses left)`;
       } else {
-        document.getElementById("result").textContent =
-          `🛑 Out of guesses! The correct time was ${actual} min.`;
+        text = `🛑 Out of guesses! The correct time was ${actual} min.`;
         document.getElementById("shareBtn").style.display = "inline-block";
       }
+      document.getElementById("result").textContent = text;
     }
 
     function shareRoute() {
