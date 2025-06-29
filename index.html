@@ -1,156 +1,206 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Travel Time Guess Game</title>
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDJhWz8jA_KfdQCZ1jE_z8RPGuvcQBVKFM"></script>
-    <style>
-        html, body, #map {
-            height: 100%;
-            margin: 0;
-            padding: 0;
-        }
-        #game-ui {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            background: white;
-            padding: 10px;
-            border-radius: 6px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-            z-index: 10;
-            font-family: sans-serif;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <title>Travel Time Guessing Game</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDJhWz8jA_KfdQCZ1jE_z8RPGuvcQBVKFM"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    html, body, #map {
+      height: 100%;
+      margin: 0;
+      font-family: 'Inter', sans-serif;
+    }
+
+    #game-ui {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      background: white;
+      padding: 16px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      z-index: 10;
+      width: 260px;
+    }
+
+    #game-ui h1 {
+      margin-top: 0;
+      font-size: 18px;
+    }
+
+    input[type="number"] {
+      width: 100%;
+      padding: 8px;
+      font-size: 14px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      margin-top: 10px;
+    }
+
+    button {
+      margin-top: 10px;
+      width: 100%;
+      padding: 10px;
+      background: #007bff;
+      color: white;
+      border: none;
+      font-weight: 600;
+      font-size: 14px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #0056b3;
+    }
+
+    #result {
+      margin-top: 10px;
+      font-size: 14px;
+      font-weight: 500;
+    }
+  </style>
 </head>
 <body>
-    <div id="map"></div>
-    <div id="game-ui">
-        <button onclick="setupNewRoute()">New Route</button>
-        <br><br>
-        <input type="number" id="guessInput" placeholder="Your guess (min)" />
-        <button onclick="checkGuess()">Submit Guess</button>
-        <div id="result" style="margin-top: 10px;"></div>
-    </div>
+  <div id="map"></div>
+  <div id="game-ui">
+    <h1>Guess the Travel Time</h1>
+    <button onclick="setupNewRoute()">New Route</button>
+    <input type="number" id="guessInput" placeholder="Enter your guess (minutes)" />
+    <button onclick="checkGuess()">Submit Guess</button>
+    <div id="result"></div>
+  </div>
 
-    <script>
-        let map, directionsService, directionsRenderer;
-        let origin, destination;
-        let markers = [];
-        let routeData = null;
+  <script>
+    let map, directionsService, directionsRenderer;
+    let origin, destination;
+    let markers = [];
+    let routeData = null;
 
-        function initializeMap() {
-            map = new google.maps.Map(document.getElementById("map"), {
-                center: { lat: 37.7749, lng: -122.4194 }, // San Francisco area
-                zoom: 13,
-            });
+    function initializeMap() {
+      map = new google.maps.Map(document.getElementById("map"), {
+        center: { lat: 37.7749, lng: -122.4194 },
+        zoom: 13,
+      });
 
-            directionsService = new google.maps.DirectionsService();
+      directionsService = new google.maps.DirectionsService();
 
-            directionsRenderer = new google.maps.DirectionsRenderer({
-                suppressMarkers: true,
-                preserveViewport: true,  // ← prevents auto-zoom
-                map: map
-            });
+      directionsRenderer = new google.maps.DirectionsRenderer({
+        suppressMarkers: true,
+        preserveViewport: true,
+        map: map,
+      });
 
-            const trafficLayer = new google.maps.TrafficLayer();
-            trafficLayer.setMap(map);
+      const trafficLayer = new google.maps.TrafficLayer();
+      trafficLayer.setMap(map);
+    }
+
+    async function setupNewRoute() {
+      clearMarkers();
+      routeData = null;
+      document.getElementById("result").textContent = "";
+      document.getElementById("guessInput").value = "";
+
+      do {
+        origin = randomLatLng();
+        destination = randomLatLng();
+      } while (distance(origin, destination) < 1 || distance(origin, destination) > 15);
+
+      markers.push(new google.maps.Marker({ position: origin, map, label: "A" }));
+      markers.push(new google.maps.Marker({ position: destination, map, label: "B" }));
+
+      centerMapBetween(origin, destination);
+
+      const now = new Date();
+      now.setHours(14, 0, 0, 0);
+
+      const request = {
+        origin,
+        destination,
+        travelMode: google.maps.TravelMode.DRIVING,
+        drivingOptions: {
+          departureTime: now,
+          trafficModel: google.maps.TrafficModel.BEST_GUESS,
+        },
+      };
+
+      directionsService.route(request, (response, status) => {
+        if (status === "OK" && response.routes.length > 0) {
+          const leg = response.routes[0].legs[0];
+          const trafficMin = Math.max(1, Math.round(leg.duration_in_traffic.value / 60));
+          const normalMin = Math.max(1, Math.round(leg.duration.value / 60));
+          routeData = {
+            trafficMin,
+            normalMin,
+            response,
+          };
+          directionsRenderer.setDirections(response); // always show route
+        } else {
+          document.getElementById("result").textContent = "Failed to load route.";
         }
+      });
+    }
 
-        async function setupNewRoute() {
-            clearMarkers();
-            routeData = null;
-            document.getElementById("result").textContent = "";
-            document.getElementById("guessInput").value = "";
+    function checkGuess() {
+      const input = document.getElementById("guessInput").value;
+      const guess = parseInt(input);
+      const resultDiv = document.getElementById("result");
 
-            do {
-                origin = randomLatLng();
-                destination = randomLatLng();
-            } while (distance(origin, destination) < 1 || distance(origin, destination) > 15);
+      if (!routeData || isNaN(guess)) {
+        resultDiv.textContent = "Please enter a valid number.";
+        return;
+      }
 
-            markers.push(new google.maps.Marker({ position: origin, map, label: "A" }));
-            markers.push(new google.maps.Marker({ position: destination, map, label: "B" }));
+      const actual = routeData.trafficMin;
+      const diff = Math.abs(actual - guess);
+      const tooHigh = guess > actual;
 
-            centerMapBetween(origin, destination);
+      let feedback = `You guessed ${guess} min. Actual: ${actual} min. `;
+      if (diff === 0) feedback += "🎉 Perfect!";
+      else if (diff <= 2) feedback += `🔥 Very close! You were just a bit too ${tooHigh ? "high" : "low"}.`;
+      else if (diff <= 5) feedback += `👍 Close! Try ${tooHigh ? "lower" : "higher"} next time.`;
+      else feedback += `❌ Far off. You guessed too ${tooHigh ? "high" : "low"}.`;
 
-            const now = new Date();
-            now.setHours(14, 0, 0, 0);
+      resultDiv.textContent = feedback;
+    }
 
-            const request = {
-                origin,
-                destination,
-                travelMode: google.maps.TravelMode.DRIVING,
-                drivingOptions: {
-                    departureTime: now,
-                    trafficModel: google.maps.TrafficModel.BEST_GUESS,
-                },
-            };
+    function clearMarkers() {
+      for (const marker of markers) marker.setMap(null);
+      markers = [];
+    }
 
-            directionsService.route(request, (response, status) => {
-                if (status === "OK" && response.routes.length > 0) {
-                    const leg = response.routes[0].legs[0];
-                    const trafficMin = Math.max(1, Math.round(leg.duration_in_traffic.value / 60));
-                    const normalMin = Math.max(1, Math.round(leg.duration.value / 60));
-                    routeData = {
-                        trafficMin,
-                        normalMin,
-                        response
-                    };
-                    directionsRenderer.setDirections(response);  // draws route line
-                } else {
-                    document.getElementById("result").textContent = "Failed to find route.";
-                }
-            });
-        }
+    function centerMapBetween(p1, p2) {
+      const lat = (p1.lat + p2.lat) / 2;
+      const lng = (p1.lng + p2.lng) / 2;
+      map.setCenter({ lat, lng });
+      map.setZoom(13);
+    }
 
-        function checkGuess() {
-            const input = document.getElementById("guessInput").value;
-            const guess = parseInt(input);
-            if (!routeData || isNaN(guess)) return;
+    function randomLatLng() {
+      const baseLat = 37.7749;
+      const baseLng = -122.4194;
+      return {
+        lat: baseLat + (Math.random() - 0.5) * 0.2,
+        lng: baseLng + (Math.random() - 0.5) * 0.2,
+      };
+    }
 
-            const actual = routeData.trafficMin;
-            const diff = Math.abs(actual - guess);
+    function distance(p1, p2) {
+      const R = 6371;
+      const dLat = (p2.lat - p1.lat) * Math.PI / 180;
+      const dLon = (p2.lng - p1.lng) * Math.PI / 180;
+      const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(p1.lat * Math.PI / 180) *
+        Math.cos(p2.lat * Math.PI / 180) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return R * c;
+    }
 
-            let feedback = `You guessed ${guess} min. Actual: ${actual} min. `;
-            if (diff <= 2) feedback += "🎯 Excellent!";
-            else if (diff <= 5) feedback += "👍 Not bad!";
-            else feedback += "❌ Way off!";
-
-            document.getElementById("result").textContent = feedback;
-        }
-
-        function clearMarkers() {
-            for (const marker of markers) marker.setMap(null);
-            markers = [];
-        }
-
-        function randomLatLng() {
-            const baseLat = 37.7749, baseLng = -122.4194;
-            return {
-                lat: baseLat + (Math.random() - 0.5) * 0.2,
-                lng: baseLng + (Math.random() - 0.5) * 0.2
-            };
-        }
-
-        function centerMapBetween(p1, p2) {
-            const lat = (p1.lat + p2.lat) / 2;
-            const lng = (p1.lng + p2.lng) / 2;
-            map.setCenter({ lat, lng });
-            map.setZoom(13); // fixed zoom for game feel
-        }
-
-        function distance(p1, p2) {
-            const R = 6371;
-            const dLat = (p2.lat - p1.lat) * Math.PI / 180;
-            const dLon = (p2.lng - p1.lng) * Math.PI / 180;
-            const a = 
-                Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                Math.cos(p1.lat * Math.PI / 180) * Math.cos(p2.lat * Math.PI / 180) * 
-                Math.sin(dLon / 2) * Math.sin(dLon / 2);
-            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-            return R * c;
-        }
-
-        window.onload = initializeMap;
-    </script>
+    window.onload = initializeMap;
+  </script>
 </body>
 </html>
