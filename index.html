@@ -11,55 +11,51 @@
       margin: 0;
       padding: 0;
       font-family: 'Inter', sans-serif;
-      background: #f4f4f7;
+      background: #f0f2f5;
       display: flex;
-      align-items: center;
       justify-content: center;
+      align-items: center;
       height: 100vh;
     }
 
     #app {
-      background: white;
+      background: #fff;
       border-radius: 12px;
       box-shadow: 0 6px 24px rgba(0, 0, 0, 0.1);
       overflow: hidden;
-      width: 95%;
       max-width: 960px;
-      display: flex;
-      flex-direction: column;
+      width: 95%;
     }
 
     #game-ui {
       padding: 20px;
-      border-bottom: 1px solid #eee;
+      border-bottom: 1px solid #e0e0e0;
     }
 
     #game-ui h1 {
       font-size: 20px;
-      margin: 0 0 10px;
+      margin-bottom: 10px;
     }
 
     #controls {
       display: flex;
-      flex-wrap: wrap;
       gap: 10px;
-      margin-top: 10px;
+      flex-wrap: wrap;
     }
 
-    #controls input, #controls button {
+    #controls button, #controls input {
       flex: 1;
       padding: 10px;
-      font-size: 14px;
       border-radius: 6px;
       border: 1px solid #ccc;
+      font-size: 14px;
     }
 
     #controls button {
       background: #007bff;
-      color: white;
-      border: none;
+      color: #fff;
       font-weight: bold;
-      cursor: pointer;
+      border: none;
     }
 
     #controls button:hover {
@@ -72,8 +68,13 @@
       font-weight: 500;
     }
 
-    #map {
+    #map-container {
       height: 500px;
+      width: 100%;
+    }
+
+    #map {
+      height: 100%;
       width: 100%;
     }
 
@@ -95,7 +96,9 @@
       </div>
       <div id="result"></div>
     </div>
-    <div id="map"></div>
+    <div id="map-container">
+      <div id="map"></div>
+    </div>
   </div>
 
   <script>
@@ -105,8 +108,10 @@
     let origin, destination;
 
     const SF_BOUNDS = {
-      minLat: 37.735, maxLat: 37.81,
-      minLng: -122.52, maxLng: -122.38
+      minLat: 37.735,
+      maxLat: 37.81,
+      minLng: -122.52,
+      maxLng: -122.38,
     };
 
     function initializeMap() {
@@ -116,15 +121,13 @@
       });
 
       directionsService = new google.maps.DirectionsService();
-
       directionsRenderer = new google.maps.DirectionsRenderer({
-        map,
+        map: map,
         suppressMarkers: true,
-        preserveViewport: true
+        preserveViewport: true,
       });
 
-      const trafficLayer = new google.maps.TrafficLayer();
-      trafficLayer.setMap(map);
+      new google.maps.TrafficLayer().setMap(map);
     }
 
     async function setupNewRoute() {
@@ -171,7 +174,11 @@
         };
 
         directionsService.route(request, (response, status) => {
-          if (status === "OK" && response.routes.length > 0 && response.routes[0].legs.length > 0) {
+          if (
+            status === "OK" &&
+            response.routes.length > 0 &&
+            response.routes[0].legs.length > 0
+          ) {
             const leg = response.routes[0].legs[0];
             const trafficMin = Math.max(1, Math.round(leg.duration_in_traffic.value / 60));
             const normalMin = Math.max(1, Math.round(leg.duration.value / 60));
@@ -190,9 +197,11 @@
     }
 
     function checkGuess() {
-      const guess = parseInt(document.getElementById("guessInput").value);
-      if (!routeData || isNaN(guess)) {
-        document.getElementById("result").textContent = "⚠️ Enter a valid number.";
+      const inputVal = document.getElementById("guessInput").value;
+      const guess = parseInt(inputVal, 10);
+
+      if (!routeData || !Number.isInteger(guess) || guess <= 0) {
+        document.getElementById("result").textContent = "⚠️ Please enter a valid number.";
         return;
       }
 
@@ -210,7 +219,7 @@
     }
 
     function clearMarkers() {
-      for (const m of markers) m.setMap(null);
+      for (const marker of markers) marker.setMap(null);
       markers = [];
     }
 
