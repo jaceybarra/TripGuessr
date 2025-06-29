@@ -21,41 +21,47 @@
     #app {
       background: #fff;
       border-radius: 12px;
-      box-shadow: 0 6px 24px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 8px 28px rgba(0, 0, 0, 0.12);
       overflow: hidden;
-      max-width: 960px;
+      max-width: 900px;
       width: 95%;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
     }
 
     #game-ui {
-      padding: 20px;
-      border-bottom: 1px solid #e0e0e0;
+      background: #fff;
+      padding: 24px 20px 20px;
+      border-bottom: 1px solid #eee;
     }
 
     #game-ui h1 {
       font-size: 20px;
-      margin-bottom: 10px;
+      margin-bottom: 12px;
     }
 
     #controls {
       display: flex;
-      gap: 10px;
       flex-wrap: wrap;
+      gap: 10px;
     }
 
-    #controls button, #controls input {
+    #controls input,
+    #controls button {
       flex: 1;
       padding: 10px;
+      font-size: 14px;
       border-radius: 6px;
       border: 1px solid #ccc;
-      font-size: 14px;
     }
 
     #controls button {
       background: #007bff;
-      color: #fff;
+      color: white;
       font-weight: bold;
       border: none;
+      cursor: pointer;
     }
 
     #controls button:hover {
@@ -69,7 +75,7 @@
     }
 
     #map-container {
-      height: 500px;
+      height: 400px;
       width: 100%;
     }
 
@@ -197,10 +203,14 @@
     }
 
     function checkGuess() {
-      const inputVal = document.getElementById("guessInput").value;
-      const guess = parseInt(inputVal, 10);
+      const inputVal = document.getElementById("guessInput").value.trim();
+      if (!inputVal) {
+        document.getElementById("result").textContent = "⚠️ Please enter a number.";
+        return;
+      }
 
-      if (!routeData || !Number.isInteger(guess) || guess <= 0) {
+      const guess = parseFloat(inputVal);
+      if (!routeData || isNaN(guess) || guess <= 0) {
         document.getElementById("result").textContent = "⚠️ Please enter a valid number.";
         return;
       }
