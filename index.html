@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <title>TripGuesser</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDJhWz8jA_KfdQCZ1jE_z8RPGuvcQBVKFM"></script>
+  <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDJhWz8jA_KfdQCZ1jE_z8RPGuvcQBVKFM"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
   <style>
     body {
@@ -160,11 +160,12 @@
       routeData = null;
       guessCount = 0;
 
-      let attempts = 0, maxTries = 30;
+      let attempts = 0;
+      const maxTries = 30;
+
       while (attempts++ < maxTries) {
         origin = randomSF();
         destination = randomSF();
-        console.log(`Attempt ${attempts}: origin=${origin.lat},${origin.lng}, destination=${destination.lat},${destination.lng}`);
         const dist = distance(origin, destination);
         if (dist < 1 || dist > 12) continue;
 
@@ -180,11 +181,10 @@
           map.setCenter(getMidpoint(origin, destination));
           map.setZoom(13);
 
-          console.log(`Route found: ${trafficMin} min`);
-          document.getElementById("shareBtn").style.display = "inline-block";
+          console.log(`✅ Route found: ${trafficMin} min`);
           return;
         }
-        console.log("Route invalid or missing duration_in_traffic");
+        console.log(`❌ Route failed on attempt ${attempts}`);
       }
 
       document.getElementById("result").textContent = "❌ Couldn't find a valid route after multiple tries.";
@@ -217,21 +217,15 @@
 
     function checkGuess() {
       const inputVal = document.getElementById("guessInput").value;
-      console.log(`Input raw: "${inputVal}"`);
       const trimmed = inputVal.trim();
-      console.log(`Input trimmed: "${trimmed}"`);
 
       if (!trimmed || isNaN(trimmed)) {
-        console.log("Validation fail: NaN or empty");
         document.getElementById("result").textContent = "⚠️ Please enter a valid number.";
         return;
       }
 
       const guess = parseFloat(trimmed);
-      console.log("Parsed guess:", guess);
-
       if (!routeData || guess <= 0) {
-        console.log("No routeData or guess ≤ 0");
         document.getElementById("result").textContent = "⚠️ Please enter a valid positive number.";
         return;
       }
@@ -252,13 +246,14 @@
         text = `🛑 Out of guesses! The correct time was ${actual} min.`;
         document.getElementById("shareBtn").style.display = "inline-block";
       }
+
       document.getElementById("result").textContent = text;
     }
 
     function shareRoute() {
       const shareText = `I just played TripGuesser! Can you guess how long this drive takes?\nhttps://yourdomain.com`;
       navigator.clipboard.writeText(shareText).then(() => {
-        alert("Route copied to clipboard! Share it with your friends.");
+        alert("✅ Route copied to clipboard! Share it with your friends.");
       });
     }
 
