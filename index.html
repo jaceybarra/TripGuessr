@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>TripGuesser</title>
+  <title>TripGuesser – Daily Challenge</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDJhWz8jA_KfdQCZ1jE_z8RPGuvcQBVKFM"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
@@ -107,9 +107,9 @@
 <body>
   <div id="app">
     <div id="game-ui">
-      <h1>Guess the Travel Time</h1>
+      <h1>🗓️ Daily Route Challenge</h1>
       <div id="controls">
-        <button onclick="setupNewRoute()">New Route</button>
+        <button onclick="setupDailyRoute()">New Route</button>
         <input type="number" id="guessInput" placeholder="Your guess (minutes)" />
         <button onclick="checkGuess()">Submit Guess</button>
       </div>
@@ -125,7 +125,6 @@
     let map, directionsService, directionsRenderer;
     let markers = [];
     let routeData = null;
-    let origin, destination;
     let guessCount = 0;
     const maxGuesses = 5;
 
@@ -152,7 +151,25 @@
       new google.maps.TrafficLayer().setMap(map);
     }
 
-    async function setupNewRoute() {
+    function seededRandom(seed) {
+      let x = Math.sin(seed) * 10000;
+      return x - Math.floor(x);
+    }
+
+    function dailyLatLng(seedOffset = 0) {
+      const dateStr = new Date().toDateString();
+      let seed = 0;
+      for (let i = 0; i < dateStr.length; i++) {
+        seed += dateStr.charCodeAt(i);
+      }
+      seed += seedOffset;
+      return {
+        lat: SF_BOUNDS.minLat + seededRandom(seed) * (SF_BOUNDS.maxLat - SF_BOUNDS.minLat),
+        lng: SF_BOUNDS.minLng + seededRandom(seed + 42) * (SF_BOUNDS.maxLng - SF_BOUNDS.minLng),
+      };
+    }
+
+    async function setupDailyRoute() {
       clearMarkers();
       document.getElementById("result").textContent = "";
       document.getElementById("guessInput").value = "";
@@ -160,40 +177,36 @@
       routeData = null;
       guessCount = 0;
 
-      let attempts = 0;
-      const maxTries = 30;
+      const origin = dailyLatLng(0);
+      const destination = dailyLatLng(1);
+      const dist = distance(origin, destination);
 
-      while (attempts++ < maxTries) {
-        origin = randomSF();
-        destination = randomSF();
-        const dist = distance(origin, destination);
-        if (dist < 1 || dist > 12) continue;
-
-        const route = await fetchRoute(origin, destination);
-        if (route && route.routes?.[0]?.legs?.[0]?.duration_in_traffic) {
-          const leg = route.routes[0].legs[0];
-          const trafficMin = Math.max(1, Math.round(leg.duration_in_traffic.value / 60));
-          routeData = { trafficMin, response: route };
-
-          directionsRenderer.setDirections(route);
-          markers.push(new google.maps.Marker({ position: origin, map, label: "A" }));
-          markers.push(new google.maps.Marker({ position: destination, map, label: "B" }));
-          map.setCenter(getMidpoint(origin, destination));
-          map.setZoom(13);
-
-          console.log(`✅ Route found: ${trafficMin} min`);
-          return;
-        }
-        console.log(`❌ Route failed on attempt ${attempts}`);
+      if (dist < 1 || dist > 12) {
+        document.getElementById("result").textContent = "🚫 Invalid daily route generated. Try again tomorrow.";
+        return;
       }
 
-      document.getElementById("result").textContent = "❌ Couldn't find a valid route after multiple tries.";
+      const route = await fetchRoute(origin, destination);
+      if (route && route.routes?.[0]?.legs?.[0]?.duration_in_traffic) {
+        const leg = route.routes[0].legs[0];
+        const trafficMin = Math.max(1, Math.round(leg.duration_in_traffic.value / 60));
+        routeData = { trafficMin, response: route };
+
+        directionsRenderer.setDirections(route);
+        markers.push(new google.maps.Marker({ position: origin, map, label: "A" }));
+        markers.push(new google.maps.Marker({ position: destination, map, label: "B" }));
+        map.setCenter(getMidpoint(origin, destination));
+        map.setZoom(13);
+
+        console.log(`✅ Daily route: ${trafficMin} min`);
+      } else {
+        document.getElementById("result").textContent = "❌ Could not load today's route. Try refreshing.";
+      }
     }
 
     function fetchRoute(origin, destination) {
       return new Promise((resolve) => {
-        const now = new Date();
-        now.setHours(14, 0, 0, 0);
+        const now = new Date(Date.now() + 60000); // 1 minute into future
 
         const request = {
           origin,
@@ -251,7 +264,8 @@
     }
 
     function shareRoute() {
-      const shareText = `I just played TripGuesser! Can you guess how long this drive takes?\nhttps://yourdomain.com`;
+      const today = new Date().toDateString();
+      const shareText = `🚗 TripGuesser – ${today}\nI played the daily route challenge! Can you guess how long the drive takes?\nhttps://yourdomain.com`;
       navigator.clipboard.writeText(shareText).then(() => {
         alert("✅ Route copied to clipboard! Share it with your friends.");
       });
@@ -260,13 +274,6 @@
     function clearMarkers() {
       for (const marker of markers) marker.setMap(null);
       markers = [];
-    }
-
-    function randomSF() {
-      return {
-        lat: SF_BOUNDS.minLat + Math.random() * (SF_BOUNDS.maxLat - SF_BOUNDS.minLat),
-        lng: SF_BOUNDS.minLng + Math.random() * (SF_BOUNDS.maxLng - SF_BOUNDS.minLng),
-      };
     }
 
     function getMidpoint(p1, p2) {
