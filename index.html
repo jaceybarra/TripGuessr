@@ -2,78 +2,100 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Travel Time Guess Game</title>
+  <title>TripGuesser</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDJhWz8jA_KfdQCZ1jE_z8RPGuvcQBVKFM"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
   <style>
-    html, body {
+    body {
       margin: 0;
       padding: 0;
-      height: 100%;
       font-family: 'Inter', sans-serif;
+      background: #f4f4f7;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
     }
 
-    #map {
-      height: 100%;
-      width: 100%;
-      position: absolute;
-      top: 0;
-      left: 0;
+    #app {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 6px 24px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+      width: 95%;
+      max-width: 960px;
+      display: flex;
+      flex-direction: column;
     }
 
     #game-ui {
-      position: absolute;
-      top: 20px;
-      left: 20px;
-      z-index: 10;
-      background: white;
-      padding: 16px;
-      border-radius: 8px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-      width: 270px;
+      padding: 20px;
+      border-bottom: 1px solid #eee;
     }
 
     #game-ui h1 {
-      font-size: 18px;
+      font-size: 20px;
       margin: 0 0 10px;
     }
 
-    input, button {
-      width: 100%;
+    #controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    #controls input, #controls button {
+      flex: 1;
       padding: 10px;
       font-size: 14px;
-      margin-top: 10px;
-      border-radius: 5px;
+      border-radius: 6px;
       border: 1px solid #ccc;
     }
 
-    button {
-      background-color: #007bff;
+    #controls button {
+      background: #007bff;
       color: white;
-      font-weight: bold;
       border: none;
+      font-weight: bold;
+      cursor: pointer;
     }
 
-    button:hover {
-      background-color: #0056b3;
+    #controls button:hover {
+      background: #0056b3;
     }
 
     #result {
       margin-top: 12px;
-      font-size: 14px;
+      font-size: 15px;
       font-weight: 500;
+    }
+
+    #map {
+      height: 500px;
+      width: 100%;
+    }
+
+    @media (max-width: 600px) {
+      #controls {
+        flex-direction: column;
+      }
     }
   </style>
 </head>
 <body>
-  <div id="map"></div>
-  <div id="game-ui">
-    <h1>Guess the Drive Time</h1>
-    <button onclick="setupNewRoute()">New Route</button>
-    <input type="number" id="guessInput" placeholder="Your guess (minutes)" />
-    <button onclick="checkGuess()">Submit Guess</button>
-    <div id="result"></div>
+  <div id="app">
+    <div id="game-ui">
+      <h1>Guess the Travel Time</h1>
+      <div id="controls">
+        <button onclick="setupNewRoute()">New Route</button>
+        <input type="number" id="guessInput" placeholder="Your guess (minutes)" />
+        <button onclick="checkGuess()">Submit Guess</button>
+      </div>
+      <div id="result"></div>
+    </div>
+    <div id="map"></div>
   </div>
 
   <script>
@@ -83,10 +105,8 @@
     let origin, destination;
 
     const SF_BOUNDS = {
-      minLat: 37.70,
-      maxLat: 37.82,
-      minLng: -122.52,
-      maxLng: -122.35,
+      minLat: 37.735, maxLat: 37.81,
+      minLng: -122.52, maxLng: -122.38
     };
 
     function initializeMap() {
@@ -98,9 +118,9 @@
       directionsService = new google.maps.DirectionsService();
 
       directionsRenderer = new google.maps.DirectionsRenderer({
-        map: map,
+        map,
         suppressMarkers: true,
-        preserveViewport: true,
+        preserveViewport: true
       });
 
       const trafficLayer = new google.maps.TrafficLayer();
@@ -113,15 +133,14 @@
       document.getElementById("guessInput").value = "";
       routeData = null;
 
-      let tries = 0;
-      const maxTries = 20;
+      let attempts = 0;
+      const maxTries = 15;
 
-      while (tries++ < maxTries) {
+      while (attempts++ < maxTries) {
         origin = randomSF();
         destination = randomSF();
-
         const dist = distance(origin, destination);
-        if (dist < 1 || dist > 15) continue;
+        if (dist < 1 || dist > 12) continue;
 
         const success = await fetchRoute(origin, destination);
         if (success) {
@@ -133,7 +152,7 @@
         }
       }
 
-      document.getElementById("result").textContent = "❌ Could not find a valid route after several attempts.";
+      document.getElementById("result").textContent = "❌ Couldn't find a valid route.";
     }
 
     function fetchRoute(origin, destination) {
@@ -171,30 +190,27 @@
     }
 
     function checkGuess() {
-      const input = document.getElementById("guessInput").value;
-      const guess = parseInt(input);
-      const res = document.getElementById("result");
-
+      const guess = parseInt(document.getElementById("guessInput").value);
       if (!routeData || isNaN(guess)) {
-        res.textContent = "⚠️ Enter a valid number.";
+        document.getElementById("result").textContent = "⚠️ Enter a valid number.";
         return;
       }
 
       const actual = routeData.trafficMin;
       const diff = Math.abs(actual - guess);
-      const highLow = guess > actual ? "too high" : "too low";
+      const feedback = guess > actual ? "too high" : "too low";
 
-      let feedback = `You guessed ${guess} min. Actual: ${actual} min. `;
-      if (diff === 0) feedback += "🎯 Perfect!";
-      else if (diff <= 2) feedback += `🔥 Very close! A bit ${highLow}.`;
-      else if (diff <= 5) feedback += `👍 Close! Try ${highLow === "too high" ? "lower" : "higher"}.`;
-      else feedback += `❌ Way off. You were ${highLow}.`;
+      let text = `You guessed ${guess} min. Actual: ${actual} min. `;
+      if (diff === 0) text += "🎯 Perfect!";
+      else if (diff <= 2) text += `🔥 Very close! Just a bit ${feedback}.`;
+      else if (diff <= 5) text += `👍 Close! Try ${feedback === "too high" ? "lower" : "higher"}.`;
+      else text += `❌ Way off. You were ${feedback}.`;
 
-      res.textContent = feedback;
+      document.getElementById("result").textContent = text;
     }
 
     function clearMarkers() {
-      for (const marker of markers) marker.setMap(null);
+      for (const m of markers) m.setMap(null);
       markers = [];
     }
 
