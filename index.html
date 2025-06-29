@@ -143,7 +143,7 @@
       routeData = null;
 
       let attempts = 0;
-      const maxTries = 15;
+      const maxTries = 30;
 
       while (attempts++ < maxTries) {
         origin = randomSF();
@@ -151,17 +151,25 @@
         const dist = distance(origin, destination);
         if (dist < 1 || dist > 12) continue;
 
-        const success = await fetchRoute(origin, destination);
-        if (success) {
+        const route = await fetchRoute(origin, destination);
+        if (route && route.routes[0]?.legs[0]?.duration_in_traffic) {
+          const leg = route.routes[0].legs[0];
+          const trafficMin = Math.max(1, Math.round(leg.duration_in_traffic.value / 60));
+          const normalMin = Math.max(1, Math.round(leg.duration.value / 60));
+
+          routeData = { trafficMin, normalMin, response: route };
+
           markers.push(new google.maps.Marker({ position: origin, map, label: "A" }));
           markers.push(new google.maps.Marker({ position: destination, map, label: "B" }));
+
+          directionsRenderer.setDirections(route);
           map.setCenter(getMidpoint(origin, destination));
           map.setZoom(13);
           return;
         }
       }
 
-      document.getElementById("result").textContent = "❌ Couldn't find a valid route.";
+      document.getElementById("result").textContent = "❌ Couldn't find a valid route after multiple tries.";
     }
 
     function fetchRoute(origin, destination) {
@@ -180,23 +188,10 @@
         };
 
         directionsService.route(request, (response, status) => {
-          if (
-            status === "OK" &&
-            response.routes.length > 0 &&
-            response.routes[0].legs.length > 0
-          ) {
-            const leg = response.routes[0].legs[0];
-            const trafficMin = Math.max(1, Math.round(leg.duration_in_traffic.value / 60));
-            const normalMin = Math.max(1, Math.round(leg.duration.value / 60));
-            routeData = {
-              trafficMin,
-              normalMin,
-              response,
-            };
-            directionsRenderer.setDirections(response);
-            resolve(true);
+          if (status === "OK" && response.routes.length > 0) {
+            resolve(response);
           } else {
-            resolve(false);
+            resolve(null);
           }
         });
       });
@@ -204,14 +199,14 @@
 
     function checkGuess() {
       const inputVal = document.getElementById("guessInput").value.trim();
-      if (!inputVal) {
-        document.getElementById("result").textContent = "⚠️ Please enter a number.";
+      if (!inputVal || isNaN(inputVal)) {
+        document.getElementById("result").textContent = "⚠️ Please enter a valid number.";
         return;
       }
 
       const guess = parseFloat(inputVal);
-      if (!routeData || isNaN(guess) || guess <= 0) {
-        document.getElementById("result").textContent = "⚠️ Please enter a valid number.";
+      if (!routeData || guess <= 0) {
+        document.getElementById("result").textContent = "⚠️ Please enter a valid positive number.";
         return;
       }
 
