@@ -74,6 +74,19 @@
       font-weight: 500;
     }
 
+    #shareBtn {
+      margin-top: 12px;
+      padding: 10px;
+      width: 100%;
+      font-size: 14px;
+      background: #28a745;
+      color: white;
+      font-weight: bold;
+      border: none;
+      border-radius: 6px;
+      display: none;
+    }
+
     #map-container {
       height: 400px;
       width: 100%;
@@ -101,6 +114,7 @@
         <button onclick="checkGuess()">Submit Guess</button>
       </div>
       <div id="result"></div>
+      <button id="shareBtn" onclick="shareRoute()">Share Route</button>
     </div>
     <div id="map-container">
       <div id="map"></div>
@@ -112,6 +126,8 @@
     let markers = [];
     let routeData = null;
     let origin, destination;
+    let guessCount = 0;
+    const maxGuesses = 5;
 
     const SF_BOUNDS = {
       minLat: 37.735,
@@ -140,7 +156,9 @@
       clearMarkers();
       document.getElementById("result").textContent = "";
       document.getElementById("guessInput").value = "";
+      document.getElementById("shareBtn").style.display = "none";
       routeData = null;
+      guessCount = 0;
 
       let attempts = 0;
       const maxTries = 30;
@@ -210,17 +228,34 @@
         return;
       }
 
+      guessCount++;
       const actual = routeData.trafficMin;
       const diff = Math.abs(actual - guess);
       const feedback = guess > actual ? "too high" : "too low";
 
-      let text = `You guessed ${guess} min. Actual: ${actual} min. `;
-      if (diff === 0) text += "🎯 Perfect!";
-      else if (diff <= 2) text += `🔥 Very close! Just a bit ${feedback}.`;
-      else if (diff <= 5) text += `👍 Close! Try ${feedback === "too high" ? "lower" : "higher"}.`;
-      else text += `❌ Way off. You were ${feedback}.`;
+      if (diff === 0) {
+        document.getElementById("result").textContent =
+          `🎯 Perfect! It was ${actual} min. You got it in ${guessCount} ${guessCount === 1 ? "try" : "tries"}.`;
+        document.getElementById("shareBtn").style.display = "inline-block";
+        guessCount = maxGuesses;
+        return;
+      }
 
-      document.getElementById("result").textContent = text;
+      if (guessCount < maxGuesses) {
+        document.getElementById("result").textContent =
+          `❌ ${guess} min is ${feedback}. (${maxGuesses - guessCount} guesses left)`;
+      } else {
+        document.getElementById("result").textContent =
+          `🛑 Out of guesses! The correct time was ${actual} min.`;
+        document.getElementById("shareBtn").style.display = "inline-block";
+      }
+    }
+
+    function shareRoute() {
+      const shareText = `I just played TripGuesser! Can you guess how long this drive takes?\nhttps://yourdomain.com`;
+      navigator.clipboard.writeText(shareText).then(() => {
+        alert("Route copied to clipboard! Share it with your friends.");
+      });
     }
 
     function clearMarkers() {
