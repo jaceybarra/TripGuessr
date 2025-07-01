@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="="en">
 <head>
   <meta charset="UTF-8" />
   <title>TripGuesser – Daily SF Driving Challenge</title>
@@ -147,8 +147,8 @@
   <div id="app">
     <div id="game-ui">
       <h1 id="game-title">🚗 TripGuesser</h1>
-      <p id="game-subtitle">Can you guess how long it takes to drive from point A to point B in today's mystery San Francisco route?</p>
-      <p id="game-desc">Every day, you're challenged with a new random route across SF. You have <strong>5 tries</strong> to guess the drive time (in minutes) — accounting for current traffic. Test your sense of time and distance!</p>
+      <p id="game-subtitle">Can you guess how long it takes to drive from point A to point B in today's mystery city?</p>
+      <p id="game-desc">Every day, you're challenged with a new random route across a surprise U.S. city. You have <strong>5 tries</strong> to guess the drive time (in minutes) — accounting for current traffic. Test your sense of time and distance!</p>
 
       <div id="controls">
         <button onclick="setupDailyRoute()">🎲 New Route</button>
@@ -171,16 +171,67 @@
     let guessCount = 0;
     const maxGuesses = 5;
 
-    const SF_BOUNDS = {
-      minLat: 37.735,
-      maxLat: 37.81,
-      minLng: -122.52,
-      maxLng: -122.38,
+    const CITY_BOUNDS = {
+      "San Francisco": {
+        minLat: 37.735, maxLat: 37.81,
+        minLng: -122.52, maxLng: -122.38,
+        center: { lat: 37.7749, lng: -122.4194 }
+      },
+      "New York": {
+        minLat: 40.70, maxLat: 40.82,
+        minLng: -74.02, maxLng: -73.92,
+        center: { lat: 40.77, lng: -73.97 }
+      },
+      "Chicago": {
+        minLat: 41.83, maxLat: 41.95,
+        minLng: -87.72, maxLng: -87.60,
+        center: { lat: 41.88, lng: -87.63 }
+      },
+      "Los Angeles": {
+        minLat: 34.00, maxLat: 34.15,
+        minLng: -118.30, maxLng: -118.15,
+        center: { lat: 34.05, lng: -118.25 }
+      },
+      "Seattle": {
+        minLat: 47.58, maxLat: 47.70,
+        minLng: -122.36, maxLng: -122.30,
+        center: { lat: 47.61, lng: -122.33 }
+      }
     };
 
+    function seededRandom(seed) {
+      let x = Math.sin(seed) * 10000;
+      return x - Math.floor(x);
+    }
+
+    function getUTCSeed(offset = 0) {
+      const now = new Date();
+      return now.getUTCFullYear() * 10000 + now.getUTCMonth() * 100 + now.getUTCDate() + offset;
+    }
+
+    function getCityOfTheDay() {
+      const cityNames = Object.keys(CITY_BOUNDS);
+      const index = Math.floor(seededRandom(getUTCSeed()) * cityNames.length);
+      return cityNames[index];
+    }
+
+    function dailyLatLng(seedOffset = 0) {
+      const city = getCityOfTheDay();
+      const bounds = CITY_BOUNDS[city];
+      const seed = getUTCSeed(seedOffset);
+
+      return {
+        lat: bounds.minLat + seededRandom(seed) * (bounds.maxLat - bounds.minLat),
+        lng: bounds.minLng + seededRandom(seed + 42) * (bounds.maxLng - bounds.minLng),
+      };
+    }
+
     function initializeMap() {
+      const city = getCityOfTheDay();
+      const center = CITY_BOUNDS[city].center;
+
       map = new google.maps.Map(document.getElementById("map"), {
-        center: { lat: 37.7749, lng: -122.4194 },
+        center: center,
         zoom: 13,
       });
 
@@ -194,26 +245,6 @@
       new google.maps.TrafficLayer().setMap(map);
     }
 
-    function seededRandom(seed) {
-      let x = Math.sin(seed) * 10000;
-      return x - Math.floor(x);
-    }
-
-   function dailyLatLng(seedOffset = 0) {
-  // Use UTC date for consistency across time zones
-  const now = new Date();
-  const year = now.getUTCFullYear();
-  const month = now.getUTCMonth();
-  const day = now.getUTCDate();
-
-  // Create a daily seed number based on UTC date
-  const seed = (year * 10000) + (month * 100) + day + seedOffset;
-
-  return {
-    lat: SF_BOUNDS.minLat + seededRandom(seed) * (SF_BOUNDS.maxLat - SF_BOUNDS.minLat),
-    lng: SF_BOUNDS.minLng + seededRandom(seed + 42) * (SF_BOUNDS.maxLng - SF_BOUNDS.minLng),
-  };
-}
     async function setupDailyRoute() {
       clearMarkers();
       document.getElementById("result").textContent = "";
@@ -222,11 +253,15 @@
       routeData = null;
       guessCount = 0;
 
+      const city = getCityOfTheDay();
+      document.getElementById("game-subtitle").textContent =
+        `Can you guess how long it takes to drive from point A to point B in ${city}?`;
+
       const origin = dailyLatLng(0);
       const destination = dailyLatLng(1);
       const dist = distance(origin, destination);
 
-      if (dist < 1 || dist > 12) {
+      if (dist < 1 || dist > 30) {
         document.getElementById("result").textContent = "🚫 Invalid daily route generated. Try again tomorrow.";
         return;
       }
@@ -242,8 +277,6 @@
         markers.push(new google.maps.Marker({ position: destination, map, label: "B" }));
         map.setCenter(getMidpoint(origin, destination));
         map.setZoom(13);
-
-        console.log(`✅ Daily route: ${trafficMin} min`);
       } else {
         document.getElementById("result").textContent = "❌ Could not load today's route. Try refreshing.";
       }
@@ -251,7 +284,7 @@
 
     function fetchRoute(origin, destination) {
       return new Promise((resolve) => {
-        const now = new Date(Date.now() + 60000); // 1 minute into future
+        const now = new Date(Date.now() + 60000);
 
         const request = {
           origin,
@@ -274,15 +307,14 @@
     }
 
     function checkGuess() {
-      const inputVal = document.getElementById("guessInput").value;
-      const trimmed = inputVal.trim();
+      const inputVal = document.getElementById("guessInput").value.trim();
 
-      if (!trimmed || isNaN(trimmed)) {
+      if (!inputVal || isNaN(inputVal)) {
         document.getElementById("result").textContent = "⚠️ Please enter a valid number.";
         return;
       }
 
-      const guess = parseFloat(trimmed);
+      const guess = parseFloat(inputVal);
       if (!routeData || guess <= 0) {
         document.getElementById("result").textContent = "⚠️ Please enter a valid positive number.";
         return;
@@ -311,6 +343,7 @@
     function shareRoute() {
       const today = new Date().toDateString();
       const actual = routeData?.trafficMin;
+      const city = getCityOfTheDay();
       let message;
 
       if (!actual) {
@@ -319,18 +352,17 @@
       }
 
       if (guessCount === 1) {
-        message = `🎯 I nailed it in 1 guess! The route took exactly ${actual} min.`;
+        message = `🎯 Nailed it in 1 guess! The drive in ${city} was exactly ${actual} min.`;
       } else if (guessCount < maxGuesses) {
-        message = `✔️ Got it in ${guessCount} guesses! Today's route took ${actual} min.`;
+        message = `✔️ Got it in ${guessCount} guesses. Today's ${city} route took ${actual} min.`;
       } else {
-        message = `❌ I ran out of guesses. The route took ${actual} min.`;
+        message = `❌ I ran out of guesses. The ${city} drive was ${actual} min.`;
       }
 
-      const shareText =
-        `🚗 TripGuesser – ${today}\n${message}\n👉 Try the daily challenge: https://yourdomain.com`;
+      const shareText = `🚗 TripGuesser – ${today}\n${message}\n👉 Try it: https://yourdomain.com`;
 
       navigator.clipboard.writeText(shareText).then(() => {
-        alert("✅ Route copied to clipboard! Share it with your friends.");
+        alert("✅ Result copied to clipboard! Share it with friends.");
       });
     }
 
