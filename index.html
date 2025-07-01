@@ -326,45 +326,42 @@
       const feedback = guess > actual ? "too high" : "too low";
 
       let text;
-      if (diff === 0) {
-        text = `🎯 Perfect! It was ${actual} min. You got it in ${guessCount} ${guessCount === 1 ? "try" : "tries"}.`;
-        document.getElementById("shareBtn").style.display = "inline-block";
-        guessCount = maxGuesses;
-      } else if (guessCount < maxGuesses) {
-        text = `❌ ${guess} min is ${feedback}. (${maxGuesses - guessCount} guesses left)`;
-      } else {
-        text = `🛑 Out of guesses! The correct time was ${actual} min.`;
-        document.getElementById("shareBtn").style.display = "inline-block";
-      }
+   if (diff === 0) {
+  text = `🎯 Perfect! You got it in ${guessCount} ${guessCount === 1 ? "try" : "tries"}.`;
+  routeData.correctGuess = true; // Track win
+  document.getElementById("shareBtn").style.display = "inline-block";
+} else if (guessCount < maxGuesses) {
+  text = `❌ ${guess} min is ${feedback}. (${maxGuesses - guessCount} guesses left)`;
+} else {
+  text = `🛑 Out of guesses! Better luck tomorrow.`;
+  document.getElementById("shareBtn").style.display = "inline-block";
+}
 
       document.getElementById("result").textContent = text;
     }
 
-    function shareRoute() {
-      const today = new Date().toDateString();
-      const actual = routeData?.trafficMin;
-      const city = getCityOfTheDay();
-      let message;
+function shareRoute() {
+  const today = new Date().toDateString();
+  const city = getCityOfTheDay();
+  const didWin = routeData?.correctGuess ?? false;
 
-      if (!actual) {
-        alert("No route data available to share.");
-        return;
-      }
+  let message;
+  if (didWin) {
+    message = `🎯 I guessed the drive time in ${guessCount} ${guessCount === 1 ? "try" : "tries"}!`;
+  } else {
+    message = `🛑 I used all 5 guesses on today's route. Can you do better?`;
+  }
 
-      if (guessCount === 1) {
-        message = `🎯 Nailed it in 1 guess! The drive in ${city} was exactly ${actual} min.`;
-      } else if (guessCount < maxGuesses) {
-        message = `✔️ Got it in ${guessCount} guesses. Today's ${city} route took ${actual} min.`;
-      } else {
-        message = `❌ I ran out of guesses. The ${city} drive was ${actual} min.`;
-      }
+  const shareText =
+    `🚗 TripGuesser – ${today}\n` +
+    `${message}\n` +
+    `📍 City: ${city}\n` +
+    `👉 Play the daily challenge: https://yourdomain.com`;
 
-      const shareText = `🚗 TripGuesser – ${today}\n${message}\n👉 Try it: https://yourdomain.com`;
-
-      navigator.clipboard.writeText(shareText).then(() => {
-        alert("✅ Result copied to clipboard! Share it with friends.");
-      });
-    }
+  navigator.clipboard.writeText(shareText).then(() => {
+    alert("✅ Result copied to clipboard! Share it with your team.");
+  });
+}
 
     function clearMarkers() {
       for (const marker of markers) marker.setMap(null);
