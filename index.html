@@ -348,7 +348,7 @@
         ? `🎯 I guessed the drive time in ${guessCount} ${guessCount === 1 ? "try" : "tries"}!`
         : `🛑 I used all 5 guesses on today's route. Can you do better?`;
 
-      const shareText = `🚗 TripGuesser – ${today}\n${message}\n📍 City: ${city}\n👉 Play: https://yourdomain.com`;
+      const shareText = `🚗 TripGuesser – ${today}\n${message}\n📍 City: ${city}\n👉 Play: https://jaceybarra.github.io/TripGuessr/`;
 
       navigator.clipboard.writeText(shareText).then(() => {
         alert("✅ Result copied to clipboard! Share it with friends.");
