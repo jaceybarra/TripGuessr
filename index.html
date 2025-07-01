@@ -199,19 +199,21 @@
       return x - Math.floor(x);
     }
 
-    function dailyLatLng(seedOffset = 0) {
-      const dateStr = new Date().toDateString();
-      let seed = 0;
-      for (let i = 0; i < dateStr.length; i++) {
-        seed += dateStr.charCodeAt(i);
-      }
-      seed += seedOffset;
-      return {
-        lat: SF_BOUNDS.minLat + seededRandom(seed) * (SF_BOUNDS.maxLat - SF_BOUNDS.minLat),
-        lng: SF_BOUNDS.minLng + seededRandom(seed + 42) * (SF_BOUNDS.maxLng - SF_BOUNDS.minLng),
-      };
-    }
+   function dailyLatLng(seedOffset = 0) {
+  // Use UTC date for consistency across time zones
+  const now = new Date();
+  const year = now.getUTCFullYear();
+  const month = now.getUTCMonth();
+  const day = now.getUTCDate();
 
+  // Create a daily seed number based on UTC date
+  const seed = (year * 10000) + (month * 100) + day + seedOffset;
+
+  return {
+    lat: SF_BOUNDS.minLat + seededRandom(seed) * (SF_BOUNDS.maxLat - SF_BOUNDS.minLat),
+    lng: SF_BOUNDS.minLng + seededRandom(seed + 42) * (SF_BOUNDS.maxLng - SF_BOUNDS.minLng),
+  };
+}
     async function setupDailyRoute() {
       clearMarkers();
       document.getElementById("result").textContent = "";
