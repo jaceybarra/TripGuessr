@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="="en">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>TripGuesser – Daily SF Driving Challenge</title>
+  <title>TripGuesser – Daily Driving Challenge</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDJhWz8jA_KfdQCZ1jE_z8RPGuvcQBVKFM"></script>
+  <script async defer src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
   <style>
     body {
@@ -148,7 +148,7 @@
     <div id="game-ui">
       <h1 id="game-title">🚗 TripGuesser</h1>
       <p id="game-subtitle">Can you guess how long it takes to drive from point A to point B in today's mystery city?</p>
-      <p id="game-desc">Every day, you're challenged with a new random route across a surprise U.S. city. You have <strong>5 tries</strong> to guess the drive time (in minutes) — accounting for current traffic. Test your sense of time and distance!</p>
+      <p id="game-desc">Each day features a random route in a surprise U.S. city. You have <strong>5 tries</strong> to guess the drive time — including current traffic. Can you get it right?</p>
 
       <div id="controls">
         <button onclick="setupDailyRoute()">🎲 New Route</button>
@@ -249,6 +249,7 @@
       clearMarkers();
       document.getElementById("result").textContent = "";
       document.getElementById("guessInput").value = "";
+      document.getElementById("guessInput").disabled = false;
       document.getElementById("shareBtn").style.display = "none";
       routeData = null;
       guessCount = 0;
@@ -270,7 +271,7 @@
       if (route && route.routes?.[0]?.legs?.[0]?.duration_in_traffic) {
         const leg = route.routes[0].legs[0];
         const trafficMin = Math.max(1, Math.round(leg.duration_in_traffic.value / 60));
-        routeData = { trafficMin, response: route };
+        routeData = { trafficMin, correctGuess: false, response: route };
 
         directionsRenderer.setDirections(route);
         markers.push(new google.maps.Marker({ position: origin, map, label: "A" }));
@@ -297,25 +298,21 @@
         };
 
         directionsService.route(request, (response, status) => {
-          if (status === "OK" && response.routes.length > 0) {
-            resolve(response);
-          } else {
-            resolve(null);
-          }
+          resolve(status === "OK" ? response : null);
         });
       });
     }
 
     function checkGuess() {
-      const inputVal = document.getElementById("guessInput").value.trim();
-
-      if (!inputVal || isNaN(inputVal)) {
-        document.getElementById("result").textContent = "⚠️ Please enter a valid number.";
+      if (!routeData || routeData.correctGuess || guessCount >= maxGuesses) {
+        document.getElementById("result").textContent = "🚫 The game is over. Refresh or start a new route.";
         return;
       }
 
+      const inputVal = document.getElementById("guessInput").value.trim();
       const guess = parseFloat(inputVal);
-      if (!routeData || guess <= 0) {
+
+      if (!inputVal || isNaN(guess) || guess <= 0) {
         document.getElementById("result").textContent = "⚠️ Please enter a valid positive number.";
         return;
       }
@@ -326,42 +323,37 @@
       const feedback = guess > actual ? "too high" : "too low";
 
       let text;
-   if (diff === 0) {
-  text = `🎯 Perfect! You got it in ${guessCount} ${guessCount === 1 ? "try" : "tries"}.`;
-  routeData.correctGuess = true; // Track win
-  document.getElementById("shareBtn").style.display = "inline-block";
-} else if (guessCount < maxGuesses) {
-  text = `❌ ${guess} min is ${feedback}. (${maxGuesses - guessCount} guesses left)`;
-} else {
-  text = `🛑 Out of guesses! Better luck tomorrow.`;
-  document.getElementById("shareBtn").style.display = "inline-block";
-}
+      if (diff === 0) {
+        routeData.correctGuess = true;
+        text = `🎯 Perfect! You got it in ${guessCount} ${guessCount === 1 ? "try" : "tries"}.`;
+        document.getElementById("shareBtn").style.display = "inline-block";
+        document.getElementById("guessInput").disabled = true;
+      } else if (guessCount < maxGuesses) {
+        text = `❌ ${guess} min is ${feedback}. (${maxGuesses - guessCount} guesses left)`;
+      } else {
+        text = `🛑 Out of guesses! Better luck tomorrow.`;
+        document.getElementById("shareBtn").style.display = "inline-block";
+        document.getElementById("guessInput").disabled = true;
+      }
 
       document.getElementById("result").textContent = text;
     }
 
-function shareRoute() {
-  const today = new Date().toDateString();
-  const city = getCityOfTheDay();
-  const didWin = routeData?.correctGuess ?? false;
+    function shareRoute() {
+      const today = new Date().toDateString();
+      const city = getCityOfTheDay();
+      const didWin = routeData?.correctGuess ?? false;
 
-  let message;
-  if (didWin) {
-    message = `🎯 I guessed the drive time in ${guessCount} ${guessCount === 1 ? "try" : "tries"}!`;
-  } else {
-    message = `🛑 I used all 5 guesses on today's route. Can you do better?`;
-  }
+      const message = didWin
+        ? `🎯 I guessed the drive time in ${guessCount} ${guessCount === 1 ? "try" : "tries"}!`
+        : `🛑 I used all 5 guesses on today's route. Can you do better?`;
 
-  const shareText =
-    `🚗 TripGuesser – ${today}\n` +
-    `${message}\n` +
-    `📍 City: ${city}\n` +
-    `👉 Play the daily challenge: https://yourdomain.com`;
+      const shareText = `🚗 TripGuesser – ${today}\n${message}\n📍 City: ${city}\n👉 Play: https://yourdomain.com`;
 
-  navigator.clipboard.writeText(shareText).then(() => {
-    alert("✅ Result copied to clipboard! Share it with your team.");
-  });
-}
+      navigator.clipboard.writeText(shareText).then(() => {
+        alert("✅ Result copied to clipboard! Share it with friends.");
+      });
+    }
 
     function clearMarkers() {
       for (const marker of markers) marker.setMap(null);
