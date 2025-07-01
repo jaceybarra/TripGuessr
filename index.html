@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>TripGuesser – Daily Challenge</title>
+  <title>TripGuesser – Daily SF Driving Challenge</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDJhWz8jA_KfdQCZ1jE_z8RPGuvcQBVKFM"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
@@ -32,28 +32,47 @@
 
     #game-ui {
       background: #fff;
-      padding: 24px 20px 20px;
+      padding: 32px 24px;
       border-bottom: 1px solid #eee;
+      text-align: center;
     }
 
-    #game-ui h1 {
-      font-size: 20px;
-      margin-bottom: 12px;
+    #game-title {
+      font-size: 32px;
+      margin: 0;
+      color: #222;
+      font-weight: 700;
+    }
+
+    #game-subtitle {
+      font-size: 18px;
+      color: #444;
+      margin: 10px 0;
+    }
+
+    #game-desc {
+      font-size: 15px;
+      color: #666;
+      max-width: 600px;
+      margin: 0 auto 20px;
+      line-height: 1.6;
     }
 
     #controls {
       display: flex;
       flex-wrap: wrap;
       gap: 10px;
+      justify-content: center;
+      margin-top: 10px;
     }
 
     #controls input,
     #controls button {
-      flex: 1;
-      padding: 10px;
-      font-size: 14px;
+      padding: 12px 14px;
+      font-size: 15px;
       border-radius: 6px;
       border: 1px solid #ccc;
+      max-width: 200px;
     }
 
     #controls button {
@@ -69,22 +88,28 @@
     }
 
     #result {
-      margin-top: 12px;
-      font-size: 15px;
+      margin-top: 16px;
+      font-size: 16px;
       font-weight: 500;
+      color: #222;
     }
 
     #shareBtn {
-      margin-top: 12px;
-      padding: 10px;
-      width: 100%;
-      font-size: 14px;
+      margin-top: 16px;
+      padding: 12px;
+      width: auto;
+      font-size: 15px;
       background: #28a745;
       color: white;
       font-weight: bold;
       border: none;
       border-radius: 6px;
       display: none;
+      cursor: pointer;
+    }
+
+    #shareBtn:hover {
+      background: #218838;
     }
 
     #map-container {
@@ -98,8 +123,22 @@
     }
 
     @media (max-width: 600px) {
+      #game-title {
+        font-size: 24px;
+      }
+
       #controls {
         flex-direction: column;
+        align-items: stretch;
+      }
+
+      #controls input,
+      #controls button {
+        max-width: 100%;
+      }
+
+      #game-desc {
+        font-size: 14px;
       }
     }
   </style>
@@ -107,14 +146,18 @@
 <body>
   <div id="app">
     <div id="game-ui">
-      <h1>🗓️ Daily Route Challenge</h1>
+      <h1 id="game-title">🚗 TripGuesser</h1>
+      <p id="game-subtitle">Can you guess how long it takes to drive from point A to point B in today's mystery San Francisco route?</p>
+      <p id="game-desc">Every day, you're challenged with a new random route across SF. You have <strong>5 tries</strong> to guess the drive time (in minutes) — accounting for current traffic. Test your sense of time and distance!</p>
+
       <div id="controls">
-        <button onclick="setupDailyRoute()">New Route</button>
+        <button onclick="setupDailyRoute()">🎲 New Route</button>
         <input type="number" id="guessInput" placeholder="Your guess (minutes)" />
-        <button onclick="checkGuess()">Submit Guess</button>
+        <button onclick="checkGuess()">✅ Submit Guess</button>
       </div>
+
       <div id="result"></div>
-      <button id="shareBtn" onclick="shareRoute()">Share Route</button>
+      <button id="shareBtn" onclick="shareRoute()">📤 Share My Result</button>
     </div>
     <div id="map-container">
       <div id="map"></div>
@@ -265,7 +308,25 @@
 
     function shareRoute() {
       const today = new Date().toDateString();
-      const shareText = `🚗 TripGuesser – ${today}\nI played the daily route challenge! Can you guess how long the drive takes?\nhttps://yourdomain.com`;
+      const actual = routeData?.trafficMin;
+      let message;
+
+      if (!actual) {
+        alert("No route data available to share.");
+        return;
+      }
+
+      if (guessCount === 1) {
+        message = `🎯 I nailed it in 1 guess! The route took exactly ${actual} min.`;
+      } else if (guessCount < maxGuesses) {
+        message = `✔️ Got it in ${guessCount} guesses! Today's route took ${actual} min.`;
+      } else {
+        message = `❌ I ran out of guesses. The route took ${actual} min.`;
+      }
+
+      const shareText =
+        `🚗 TripGuesser – ${today}\n${message}\n👉 Try the daily challenge: https://yourdomain.com`;
+
       navigator.clipboard.writeText(shareText).then(() => {
         alert("✅ Route copied to clipboard! Share it with your friends.");
       });
