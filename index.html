@@ -303,46 +303,21 @@
       });
     }
 
-function checkGuess() {
-  if (!routeData || routeData.correctGuess || guessCount >= maxGuesses) {
-    document.getElementById("result").textContent = "🚫 The game is over. Refresh or start a new route.";
-    return;
-  }
+ function shareRoute() {
+      const today = new Date().toDateString();
+      const city = getCityOfTheDay();
+      const didWin = routeData?.correctGuess ?? false;
 
-  const inputVal = document.getElementById("guessInput").value.trim();
-  const guess = parseFloat(inputVal);
+      const message = didWin
+        ? `🎯 I guessed the drive time in ${guessCount} ${guessCount === 1 ? "try" : "tries"}!`
+        : `🛑 I used all 5 guesses on today's route. Can you do better?`;
 
-  if (!inputVal || isNaN(guess) || guess <= 0) {
-    document.getElementById("result").textContent = "⚠️ Please enter a valid positive number.";
-    return;
-  }
+      const shareText = `🚗 TripGuesser – ${today}\n${message}\n📍 City: ${city}\n👉 Play: https://jaceybarra.github.io/TripGuessr/`;
 
-  guessCount++;
-  const actual = routeData.trafficMin;
-  const diff = Math.abs(actual - guess);
-  const feedback = guess > actual ? "too high" : "too low";
-
-  routeData.closestGuess = Math.min(routeData.closestGuess ?? Infinity, diff);
-
-  let text;
-  if (diff <= guessTolerance) {
-    routeData.correctGuess = true;
-    text = `🎯 Nice! You were within ${guessTolerance} minutes and got it in ${guessCount} ${guessCount === 1 ? "try" : "tries"}.`;
-    document.getElementById("shareBtn").style.display = "inline-block";
-    document.getElementById("guessInput").disabled = true;
-  } else if (guessCount < maxGuesses) {
-    const closeMessage = diff <= nearMissTolerance ? " (😬 So close!)" : "";
-    text = `❌ ${guess} min is ${feedback}.${closeMessage} (${maxGuesses - guessCount} guesses left)`;
-  } else {
-    const closeMessage = routeData.closestGuess <= nearMissTolerance
-      ? "😬 You were really close on one of your guesses!"
-      : "Better luck tomorrow.";
-    text = `🛑 Out of guesses! ${closeMessage}`;
-    document.getElementById("shareBtn").style.display = "inline-block";
-    document.getElementById("guessInput").disabled = true;
-  }
-
-  document.getElementById("result").textContent = text;
+      navigator.clipboard.writeText(shareText).then(() => {
+        alert("✅ Result copied to clipboard! Share it with friends.");
+      });
+    }
 }
 
     function shareRoute() {
