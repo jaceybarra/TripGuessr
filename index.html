@@ -303,37 +303,46 @@
       });
     }
 
- function shareRoute() {
-      const today = new Date().toDateString();
-      const city = getCityOfTheDay();
-      const didWin = routeData?.correctGuess ?? false;
+    function checkGuess() {
+      if (!routeData || routeData.correctGuess || guessCount >= maxGuesses) {
+        document.getElementById("result").textContent = "🚫 The game is over. Refresh or start a new route.";
+        return;
+      }
 
-      const message = didWin
-        ? `🎯 I guessed the drive time in ${guessCount} ${guessCount === 1 ? "try" : "tries"}!`
-        : `🛑 I used all 5 guesses on today's route. Can you do better?`;
+      const inputVal = document.getElementById("guessInput").value.trim();
+      const guess = parseFloat(inputVal);
 
-      const shareText = `🚗 TripGuesser – ${today}\n${message}\n📍 City: ${city}\n👉 Play: https://jaceybarra.github.io/TripGuessr/`;
+      if (!inputVal || isNaN(guess) || guess <= 0) {
+        document.getElementById("result").textContent = "⚠️ Please enter a valid positive number.";
+        return;
+      }
 
-      navigator.clipboard.writeText(shareText).then(() => {
-        alert("✅ Result copied to clipboard! Share it with friends.");
-      });
+      guessCount++;
+      const actual = routeData.trafficMin;
+      const diff = Math.abs(actual - guess);
+      const feedback = guess > actual ? "too high" : "too low";
+
+      let text;
+      if (diff === 0) {
+        routeData.correctGuess = true;
+        text = `🎯 Perfect! You got it in ${guessCount} ${guessCount === 1 ? "try" : "tries"}.`;
+        document.getElementById("shareBtn").style.display = "inline-block";
+        document.getElementById("guessInput").disabled = true;
+      } else if (guessCount < maxGuesses) {
+        text = `❌ ${guess} min is ${feedback}. (${maxGuesses - guessCount} guesses left)`;
+      } else {
+        text = `🛑 Out of guesses! Better luck tomorrow.`;
+        document.getElementById("shareBtn").style.display = "inline-block";
+        document.getElementById("guessInput").disabled = true;
+      }
+
+      document.getElementById("result").textContent = text;
     }
-}
 
     function shareRoute() {
       const today = new Date().toDateString();
       const city = getCityOfTheDay();
       const didWin = routeData?.correctGuess ?? false;
-      const close = routeData.closestGuess ?? null;
-
-let message;
-if (didWin) {
-  message = `🎯 I guessed the drive time in ${guessCount} ${guessCount === 1 ? "try" : "tries"}!`;
-} else if (close !== null && close <= nearMissTolerance) {
-  message = `😬 I was just ${close} min off but ran out of guesses!`;
-} else {
-  message = `🛑 I used all 5 guesses. Tough one today.`;
-}
 
       const message = didWin
         ? `🎯 I guessed the drive time in ${guessCount} ${guessCount === 1 ? "try" : "tries"}!`
