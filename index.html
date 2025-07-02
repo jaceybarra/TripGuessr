@@ -351,6 +351,16 @@ function checkGuess() {
       const today = new Date().toDateString();
       const city = getCityOfTheDay();
       const didWin = routeData?.correctGuess ?? false;
+      const close = routeData.closestGuess ?? null;
+
+let message;
+if (didWin) {
+  message = `🎯 I guessed the drive time in ${guessCount} ${guessCount === 1 ? "try" : "tries"}!`;
+} else if (close !== null && close <= nearMissTolerance) {
+  message = `😬 I was just ${close} min off but ran out of guesses!`;
+} else {
+  message = `🛑 I used all 5 guesses. Tough one today.`;
+}
 
       const message = didWin
         ? `🎯 I guessed the drive time in ${guessCount} ${guessCount === 1 ? "try" : "tries"}!`
