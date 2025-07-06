@@ -331,7 +331,7 @@
       } else if (guessCount < maxGuesses) {
         text = `❌ ${guess} min is ${feedback}. (${maxGuesses - guessCount} guesses left)`;
       } else {
-        text = `🛑 Out of guesses! Better luck tomorrow.`;
+        text = `🛑 Out of guesses! Better luck tomorrow. Or you can click new route to try again!`;
         document.getElementById("shareBtn").style.display = "inline-block";
         document.getElementById("guessInput").disabled = true;
       }
