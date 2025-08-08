@@ -1,11 +1,3 @@
-ls -a
-root@11e1e0fa9438:/workspace# ls -a
-.  ..  TripGuessr
-root@11e1e0fa9438:/workspace# cd TripGuessr
-root@11e1e0fa9438:/workspace/TripGuessr# ls -a
-.  ..  .git  README.md  V1  V2  index.html
-root@11e1e0fa9438:/workspace/TripGuessr# find .. -name AGENTS.md -print
-root@11e1e0fa9438:/workspace/TripGuessr# cat index.html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -15,124 +7,285 @@ root@11e1e0fa9438:/workspace/TripGuessr# cat index.html
   <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDJhWz8jA_KfdQCZ1jE_z8RPGuvcQBVKFM"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
   <style>
+    :root {
+      --bg:#f6f7f9;
+      --card:#ffffff;
+      --text:#1f2328;
+      --muted:#6b7280;
+      --primary:#2563eb;
+      --primary-600:#1d4ed8;
+      --success:#16a34a;
+      --danger:#dc2626;
+      --border:#e5e7eb;
+      --chip:#eef2ff;
+    }
+    * { box-sizing: border-box; }
     body {
       margin: 0;
-      padding: 0;
-      font-family: 'Inter', sans-serif;
-      background: #f0f2f5;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: grid;
+      place-items: center;
+      min-height: 100vh;
+      padding: 16px;
     }
-
     #app {
-      background: #fff;
-      border-radius: 12px;
-      box-shadow: 0 8px 28px rgba(0, 0, 0, 0.12);
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      box-shadow: 0 12px 30px rgba(0,0,0,.06);
       overflow: hidden;
-      max-width: 900px;
-      width: 95%;
-      max-height: 90vh;
-      display: flex;
-      flex-direction: column;
+      max-width: 1000px;
+      width: 100%;
+      display: grid;
+      grid-template-rows: auto auto 1fr;
     }
-
+    /* Header */
     #game-ui {
-      background: #fff;
-      padding: 32px 24px;
-      border-bottom: 1px solid #eee;
-      text-align: center;
+      padding: 22px 20px 14px;
+      border-bottom: 1px solid var(--border);
     }
-
-    #game-title {
-      font-size: 32px;
-      margin: 0;
-      color: #222;
-      font-weight: 700;
+    #top-row { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+    #title-wrap { display:flex; align-items:center; gap:10px; }
+    #game-title { font-size: 26px; margin: 0; }
+    #city-chip {
+      font-size: 13px; color: var(--primary);
+      background: var(--chip); border: 1px solid #dbe3ff;
+      padding: 6px 10px; border-radius: 999px; font-weight:600;
     }
-
-    #game-subtitle {
-      font-size: 18px;
-      color: #444;
-      margin: 10px 0;
-    }
-
-    #game-desc {
-      font-size: 15px;
-      color: #666;
-      max-width: 600px;
-      margin: 0 auto 20px;
-      line-height: 1.6;
-    }
-
+    #game-subtitle { margin: 6px 0 0; color: var(--muted); font-size: 14px; }
+    /* Controls */
     #controls {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      justify-content: center;
-      margin-top: 10px;
+      display: grid; gap: 10px; padding: 14px 20px 6px;
+      grid-template-columns: 1fr 1fr 1fr auto;
     }
-
-    #controls input,
-    #controls button {
-      padding: 12px 14px;
-      font-size: 15px;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-      max-width: 200px;
+    .control {
+      display:flex; align-items:center; gap:8px; border:1px solid var(--border); border-radius:10px; padding:10px 12px; background:#fff;
     }
-
-    #controls button {
-      background: #007bff;
-      color: white;
-      font-weight: bold;
-      border: none;
-      cursor: pointer;
+    .control label { font-size:12px; color:var(--muted); white-space:nowrap; }
+    .control input[type="number"] { width:100%; border:none; outline:none; font-size:16px; }
+    .control input[type="range"] { width:100%; }
+    button.primary {
+      background: var(--primary); color:#fff; border:none; border-radius:10px; padding:12px 16px; font-weight:700; cursor:pointer;
     }
-
-    #controls button:hover {
-      background: #0056b3;
+    button.primary:hover { background: var(--primary-600); }
+    button.secondary {
+      background:#fff; border:1px solid var(--border); border-radius:10px; padding:12px 14px; cursor:pointer; font-weight:600;
     }
-
+    /* Progress + Result */
+    #meta {
+      display:flex; align-items:center; justify-content:space-between; gap:12px; padding: 0 20px 14px;
+    }
+    #progress-wrap { width:100%; background:#f1f5f9; border-radius:999px; height:10px; overflow:hidden; border:1px solid var(--border); }
+    #progress { height:100%; width:0%; background:var(--primary); transition:width .25s ease; }
     #result {
-      margin-top: 16px;
-      font-size: 16px;
-      font-weight: 500;
-      color: #222;
+      padding: 10px 14px; margin: 0 20px 12px;
+      border-radius:10px; border:1px dashed var(--border); color:var(--muted); font-weight:600; min-height: 44px;
+      display:flex; align-items:center; justify-content:space-between; gap:8px;
+    }
+    #result .actual { color:var(--text); font-weight:700; }
+    /* Guess history */
+    #history {
+      padding: 0 20px 14px; display:flex; gap:8px; flex-wrap:wrap;
+    }
+    .pill {
+      border-radius:999px; padding:6px 10px; font-size:13px; border:1px solid var(--border); background:#fff;
+    }
+    .pill.ok { background:#ecfdf5; border-color:#bbf7d0; color:var(--success); }
+    .pill.high { background:#fef2f2; border-color:#fecaca; color:var(--danger); }
+    .pill.low  { background:#eff6ff; border-color:#bfdbfe; color:#1d4ed8; }
+    /* Map */
+    #map-container { height: 440px; width: 100%; border-top:1px solid var(--border); }
+    #map { height: 100%; width: 100%; }
+    /* Share row */
+    #actions {
+      padding: 12px 20px 18px; display:flex; gap:10px; justify-content:flex-end; align-items:center; border-top:1px solid var(--border);
+    }
+    #shareBtn { display:none; }
+    .hint { color:var(--muted); font-size:12px; margin-left:auto; }
+    @media (max-width: 720px) {
+      #controls { grid-template-columns: 1fr 1fr; }
+      #actions { flex-wrap:wrap; }
+      #map-container { height: 360px; }
+    }
+  </style>
+</head>
+<body>
+  <div id="app" role="application" aria-label="TripGuesser game">
+    <div id="game-ui">
+      <div id="top-row">
+        <div id="title-wrap">
+          <h1 id="game-title">🚗 TripGuesser</h1>
+          <span id="city-chip" aria-live="polite">City: —</span>
+        </div>
+        <button class="secondary" id="newRouteBtn">🎲 New Route</button>
+      </div>
+      <p id="game-subtitle">Guess today’s **live traffic** drive time from A → B. You’ve got <strong>5 tries</strong>. Hitting within your tolerance counts as a win.</p>
+    </div>
+
+    <div id="controls" aria-label="Game controls">
+      <div class="control" title="Your guess in minutes">
+        <label for="guessInput">Guess (min)</label>
+        <input type="number" id="guessInput" inputmode="decimal" placeholder="e.g., 18" min="1" />
+      </div>
+
+      <div class="control" title="Win tolerance as percent of actual time">
+        <label for="toleranceInput">Tolerance (%)</label>
+        <input type="number" id="toleranceInput" min="1" max="25" value="8" />
+      </div>
+
+      <div class="control" title="Quick tolerance slider">
+        <label for="toleranceRange">±%</label>
+        <input type="range" id="toleranceRange" min="1" max="25" value="8" />
+      </div>
+
+      <button class="primary" id="submitBtn">✅ Submit Guess</button>
+    </div>
+
+    <div id="meta">
+      <div id="progress-wrap" aria-label="Guess progress">
+        <div id="progress"></div>
+      </div>
+      <span class="hint" id="triesHint">0/5</span>
+    </div>
+
+    <div id="result" aria-live="polite">
+      <span id="resultText">Press “New Route” to start.</span>
+      <span id="actualWrap" style="display:none;">Actual: <span class="actual" id="actualTime"></span> min</span>
+    </div>
+
+    <div id="history" aria-label="Guess history"></div>
+
+    <div id="map-container"><div id="map"></div></div>
+
+    <div id="actions">
+      <span class="hint">Win if you’re within ±<span id="tolEcho">8</span>% of the actual time.</span>
+      <button class="secondary" id="shareBtn">📤 Share Result</button>
+    </div>
+  </div>
+
+  <script>
+    let map, directionsService, directionsRenderer;
+    let markers = [];
+    let routeData = null;
+    let guessCount = 0;
+    const maxGuesses = 5;
+
+    const CITY_BOUNDS = {
+      "San Francisco": { minLat:37.735, maxLat:37.81,  minLng:-122.52, maxLng:-122.38, center:{lat:37.7749, lng:-122.4194}},
+      "New York":      { minLat:40.70,  maxLat:40.82,  minLng:-74.02,  maxLng:-73.92,  center:{lat:40.77,   lng:-73.97}},
+      "Chicago":       { minLat:41.83,  maxLat:41.95,  minLng:-87.72,  maxLng:-87.60,  center:{lat:41.88,   lng:-87.63}},
+      "Los Angeles":   { minLat:34.00,  maxLat:34.15,  minLng:-118.30, maxLng:-118.15, center:{lat:34.05,   lng:-118.25}},
+      "Seattle":       { minLat:47.58,  maxLat:47.70,  minLng:-122.36, maxLng:-122.30, center:{lat:47.61,   lng:-122.33}},
+    };
+
+    // --- Deterministic daily seed/city
+    function seededRandom(seed) { let x = Math.sin(seed) * 10000; return x - Math.floor(x); }
+    function getUTCSeed(offset = 0) {
+      const now = new Date();
+      // yyyy * 10000 + mm(0-based)*100 + dd → stable per UTC day
+      return now.getUTCFullYear() * 10000 + now.getUTCMonth() * 100 + now.getUTCDate() + offset;
+    }
+    function getCityOfTheDay() {
+      const cityNames = Object.keys(CITY_BOUNDS);
+      const index = Math.floor(seededRandom(getUTCSeed()) * cityNames.length);
+      return cityNames[index];
+    }
+    function dailyLatLng(seedOffset = 0) {
+      const city = getCityOfTheDay();
+      const b = CITY_BOUNDS[city];
+      const seed = getUTCSeed(seedOffset);
+      return {
+        lat: b.minLat + seededRandom(seed) * (b.maxLat - b.minLat),
+        lng: b.minLng + seededRandom(seed + 42) * (b.maxLng - b.minLng),
+      };
     }
 
-    #shareBtn {
-      margin-top: 16px;
-      padding: 12px;
-      width: auto;
-      font-size: 15px;
-      background: #28a745;
-      color: white;
-      font-weight: bold;
-      border: none;
-      border-radius: 6px;
-      display: none;
-      cursor: pointer;
+    // --- Map
+    function initializeMap() {
+      const city = getCityOfTheDay();
+      document.getElementById("city-chip").textContent = `City: ${city}`;
+      const center = CITY_BOUNDS[city].center;
+
+      map = new google.maps.Map(document.getElementById("map"), { center, zoom: 13 });
+      directionsService = new google.maps.DirectionsService();
+      directionsRenderer = new google.maps.DirectionsRenderer({
+        map, suppressMarkers:true, preserveViewport:true,
+        polylineOptions: { strokeOpacity: 0.9 }
+      });
+      new google.maps.TrafficLayer().setMap(map);
     }
 
-    #shareBtn:hover {
-      background: #218838;
+    // --- Helpers
+    function distance(p1, p2) {
+      const R = 6371; // km
+      const dLat = (p2.lat - p1.lat) * Math.PI / 180;
+      const dLon = (p2.lng - p1.lng) * Math.PI / 180;
+      const a = Math.sin(dLat/2)**2 +
+        Math.cos(p1.lat * Math.PI/180) * Math.cos(p2.lat * Math.PI/180) * Math.sin(dLon/2)**2;
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      return R * c;
+    }
+    function getMidpoint(p1, p2) { return { lat: (p1.lat + p2.lat)/2, lng: (p1.lng + p2.lng)/2 }; }
+    function clearMarkers() { for (const m of markers) m.setMap(null); markers = []; }
+    function isWithinTolerance(guess, actual, pct) { return Math.abs(actual - guess) <= (actual * pct / 100); }
+    function setProgress() {
+      const pct = (guessCount / maxGuesses) * 100;
+      document.getElementById("progress").style.width = `${pct}%`;
+      document.getElementById("triesHint").textContent = `${guessCount}/${maxGuesses}`;
+    }
+    function addHistoryPill(guess, actual, pct) {
+      const pill = document.createElement("span");
+      let cls = "pill";
+      if (isWithinTolerance(guess, actual, pct)) cls += " ok";
+      else if (guess > actual) cls += " high";
+      else cls += " low";
+      pill.className = cls;
+      const diff = Math.round((Math.abs(actual - guess)/actual)*100);
+      pill.textContent = `${guess} min · ${guess > actual ? "high" : (guess < actual ? "low" : "exact")} · ${diff}%`;
+      document.getElementById("history").appendChild(pill);
+    }
+    function lockInputs() {
+      document.getElementById("guessInput").disabled = true;
+      document.getElementById("toleranceInput").disabled = true;
+      document.getElementById("toleranceRange").disabled = true;
+      document.getElementById("submitBtn").disabled = true;
+    }
+    function unlockInputs() {
+      document.getElementById("guessInput").disabled = false;
+      document.getElementById("toleranceInput").disabled = false;
+      document.getElementById("toleranceRange").disabled = false;
+      document.getElementById("submitBtn").disabled = false;
+    }
+    function setResult(text, color) {
+      const el = document.getElementById("resultText");
+      el.textContent = text;
+      el.style.color = color || "inherit";
     }
 
-    #map-container {
-      height: 400px;
-      width: 100%;
-    }
+    // --- Route
+    async function setupDailyRoute() {
+      clearMarkers();
+      document.getElementById("resultText").textContent = "Generating today’s route…";
+      document.getElementById("actualWrap").style.display = "none";
+      document.getElementById("actualTime").textContent = "";
+      document.getElementById("history").innerHTML = "";
+      document.getElementById("guessInput").value = "";
+      document.getElementById("shareBtn").style.display = "none";
+      routeData = null;
+      guessCount = 0; setProgress(); unlockInputs();
 
-    #map {
-      height: 100%;
-      width: 100%;
-    }
-...
+      const city = getCityOfTheDay();
+      document.getElementById("city-chip").textContent = `City: ${city}`;
 
+      const origin = dailyLatLng(0);
+      const destination = dailyLatLng(1);
+      const dist = distance(origin, destination);
+
+      // sanity check: keep routes reasonable
       if (dist < 1 || dist > 30) {
-        document.getElementById("result").textContent = "🚫 Invalid daily route generated. Try again tomorrow.";
+        setResult("🚫 Invalid daily route generated. Try again.", "var(--danger)");
         return;
       }
 
@@ -147,65 +300,70 @@ root@11e1e0fa9438:/workspace/TripGuessr# cat index.html
         markers.push(new google.maps.Marker({ position: destination, map, label: "B" }));
         map.setCenter(getMidpoint(origin, destination));
         map.setZoom(13);
+
+        setResult("Route ready. Make your first guess.");
       } else {
-        document.getElementById("result").textContent = "❌ Could not load today's route. Try refreshing.";
+        setResult("❌ Could not load today’s route. Try refreshing.", "var(--danger)");
       }
     }
 
     function fetchRoute(origin, destination) {
       return new Promise((resolve) => {
-        const now = new Date(Date.now() + 60000);
-
+        const now = new Date(Date.now() + 60000); // 1 min in the future to force traffic calc
         const request = {
-          origin,
-          destination,
+          origin, destination,
           travelMode: google.maps.TravelMode.DRIVING,
-          drivingOptions: {
-            departureTime: now,
-            trafficModel: google.maps.TrafficModel.BEST_GUESS,
-          },
+          drivingOptions: { departureTime: now, trafficModel: google.maps.TrafficModel.BEST_GUESS },
         };
-
-        directionsService.route(request, (response, status) => {
-          resolve(status === "OK" ? response : null);
-        });
+        directionsService.route(request, (response, status) => resolve(status === "OK" ? response : null));
       });
     }
 
+    // --- Gameplay
     function checkGuess() {
-      if (!routeData || routeData.correctGuess || guessCount >= maxGuesses) {
-        document.getElementById("result").textContent = "🚫 The game is over. Refresh or start a new route.";
+      if (!routeData) { setResult("Start a route first.", "var(--danger)"); return; }
+      if (routeData.correctGuess || guessCount >= maxGuesses) {
+        setResult("🚫 The game is over. Start a new route.", "var(--danger)"); return;
+      }
+
+      const val = document.getElementById("guessInput").value.trim();
+      const guess = parseFloat(val);
+      const tolPct = Math.max(1, Math.min(25, parseFloat(document.getElementById("toleranceInput").value || "8")));
+
+      if (!val || isNaN(guess) || guess <= 0) {
+        setResult("⚠️ Enter a valid positive number for minutes.", "var(--danger)");
         return;
       }
 
-      const inputVal = document.getElementById("guessInput").value.trim();
-      const guess = parseFloat(inputVal);
-
-      if (!inputVal || isNaN(guess) || guess <= 0) {
-        document.getElementById("result").textContent = "⚠️ Please enter a valid positive number.";
-        return;
-      }
-
-      guessCount++;
+      guessCount++; setProgress();
       const actual = routeData.trafficMin;
+      const within = isWithinTolerance(guess, actual, tolPct);
       const diff = Math.abs(actual - guess);
-      const feedback = guess > actual ? "too high" : "too low";
+      const hiLo = guess > actual ? "too high" : (guess < actual ? "too low" : "exact");
 
-      let text;
-      if (diff === 0) {
+      addHistoryPill(guess, actual, tolPct);
+
+      if (within) {
         routeData.correctGuess = true;
-        text = `🎯 Perfect! You got it in ${guessCount} ${guessCount === 1 ? "try" : "tries"}.`;
+        setResult(`🎯 Nailed it within ±${tolPct}% in ${guessCount} ${guessCount===1?"try":"tries"}!`, "var(--success)");
+        document.getElementById("actualTime").textContent = actual;
+        document.getElementById("actualWrap").style.display = "inline";
         document.getElementById("shareBtn").style.display = "inline-block";
-        document.getElementById("guessInput").disabled = true;
-      } else if (guessCount < maxGuesses) {
-        text = `❌ ${guess} min is ${feedback}. (${maxGuesses - guessCount} guesses left)`;
-      } else {
-        text = `🛑 Out of guesses! Better luck tomorrow. Or you can click new route to try again!`;
-        document.getElementById("shareBtn").style.display = "inline-block";
-        document.getElementById("guessInput").disabled = true;
+        lockInputs();
+        return;
       }
 
-      document.getElementById("result").textContent = text;
+      if (guessCount < maxGuesses) {
+        const left = maxGuesses - guessCount;
+        const pctOff = Math.round((diff/actual)*100);
+        setResult(`❌ ${guess} min is ${hiLo} (${pctOff}% off). ${left} ${left===1?"guess":"guesses"} left.`);
+      } else {
+        setResult(`🛑 Out of guesses.`, "var(--danger)");
+        document.getElementById("actualTime").textContent = actual;
+        document.getElementById("actualWrap").style.display = "inline";
+        document.getElementById("shareBtn").style.display = "inline-block";
+        lockInputs();
+      }
     }
 
     function shareRoute() {
@@ -214,452 +372,34 @@ root@11e1e0fa9438:/workspace/TripGuessr# cat index.html
       const didWin = routeData?.correctGuess ?? false;
 
       const message = didWin
-        ? `🎯 I guessed the drive time in ${guessCount} ${guessCount === 1 ? "try" : "tries"}!`
-        : `🛑 I used all 5 guesses on today's route. Can you do better?`;
-
-      const shareText = `🚗 TripGuesser – ${today}\n${message}\n📍 City: ${city}\n👉 Play: https://jaceybarra.github.io/TripGues
-sr/`;
+        ? `🎯 I got within my tolerance in ${guessCount} ${guessCount === 1 ? "try" : "tries"}!`
+        : `🛑 Used all ${maxGuesses} guesses on today’s route. Can you do better?`;
+      const shareText =
+        `🚗 TripGuesser – ${today}\n${message}\n📍 City: ${city}\n👉 Play: https://jaceybarra.github.io/TripGuessr/`;
 
       navigator.clipboard.writeText(shareText).then(() => {
-        alert("✅ Result copied to clipboard! Share it with friends.");
+        alert("✅ Result copied to clipboard!");
       });
     }
 
-    function clearMarkers() {
-      for (const marker of markers) marker.setMap(null);
-      markers = [];
+    // --- Wire up
+    function syncToleranceEcho() {
+      const n = parseInt(document.getElementById("toleranceInput").value || "8", 10);
+      document.getElementById("toleranceRange").value = String(n);
+      document.getElementById("tolEcho").textContent = n;
     }
+    document.getElementById("toleranceInput").addEventListener("input", syncToleranceEcho);
+    document.getElementById("toleranceRange").addEventListener("input", (e)=> {
+      document.getElementById("toleranceInput").value = e.target.value;
+      syncToleranceEcho();
+    });
 
-    function getMidpoint(p1, p2) {
-      return {
-        lat: (p1.lat + p2.lat) / 2,
-        lng: (p1.lng + p2.lng) / 2,
-      };
-    }
-
-    function distance(p1, p2) {
-      const R = 6371;
-      const dLat = (p2.lat - p1.lat) * Math.PI / 180;
-      const dLon = (p2.lng - p1.lng) * Math.PI / 180;
-      const a =
-        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-        Math.cos(p1.lat * Math.PI / 180) *
-        Math.cos(p2.lat * Math.PI / 180) *
-        Math.sin(dLon / 2) * Math.sin(dLon / 2);
-      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-      return R * c;
-    }
+    document.getElementById("submitBtn").addEventListener("click", checkGuess);
+    document.getElementById("shareBtn").addEventListener("click", shareRoute);
+    document.getElementById("newRouteBtn").addEventListener("click", setupDailyRoute);
+    document.getElementById("guessInput").addEventListener("keydown", (e)=>{ if(e.key==="Enter") checkGuess(); });
 
     window.onload = initializeMap;
   </script>
 </body>
 </html>
-root@11e1e0fa9438:/workspace/TripGuessr# nl -ba index.html | sed -n '1,200p'
-     1  <!DOCTYPE html>
-     2  <html lang="en">
-     3  <head>
-     4    <meta charset="UTF-8" />
-     5    <title>TripGuesser – Daily Driving Challenge</title>
-     6    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-     7    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDJhWz8jA_KfdQCZ1jE_z8RPGuvcQBVKFM"></script
->
-     8    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
-     9    <style>
-    10      body {
-    11        margin: 0;
-    12        padding: 0;
-    13        font-family: 'Inter', sans-serif;
-    14        background: #f0f2f5;
-    15        display: flex;
-    16        justify-content: center;
-    17        align-items: center;
-    18        height: 100vh;
-    19      }
-    20
-    21      #app {
-    22        background: #fff;
-    23        border-radius: 12px;
-    24        box-shadow: 0 8px 28px rgba(0, 0, 0, 0.12);
-    25        overflow: hidden;
-    26        max-width: 900px;
-    27        width: 95%;
-    28        max-height: 90vh;
-    29        display: flex;
-    30        flex-direction: column;
-    31      }
-    32
-    33      #game-ui {
-    34        background: #fff;
-    35        padding: 32px 24px;
-    36        border-bottom: 1px solid #eee;
-    37        text-align: center;
-    38      }
-    39
-    40      #game-title {
-    41        font-size: 32px;
-    42        margin: 0;
-    43        color: #222;
-    44        font-weight: 700;
-    45      }
-    46
-    47      #game-subtitle {
-    48        font-size: 18px;
-    49        color: #444;
-    50        margin: 10px 0;
-    51      }
-    52
-    53      #game-desc {
-    54        font-size: 15px;
-    55        color: #666;
-    56        max-width: 600px;
-    57        margin: 0 auto 20px;
-    58        line-height: 1.6;
-    59      }
-    60
-    61      #controls {
-    62        display: flex;
-    63        flex-wrap: wrap;
-    64        gap: 10px;
-    65        justify-content: center;
-    66        margin-top: 10px;
-    67      }
-    68
-    69      #controls input,
-    70      #controls button {
-    71        padding: 12px 14px;
-    72        font-size: 15px;
-    73        border-radius: 6px;
-    74        border: 1px solid #ccc;
-    75        max-width: 200px;
-    76      }
-    77
-    78      #controls button {
-    79        background: #007bff;
-    80        color: white;
-    81        font-weight: bold;
-    82        border: none;
-    83        cursor: pointer;
-    84      }
-    85
-    86      #controls button:hover {
-    87        background: #0056b3;
-    88      }
-    89
-    90      #result {
-    91        margin-top: 16px;
-    92        font-size: 16px;
-    93        font-weight: 500;
-    94        color: #222;
-    95      }
-    96
-    97      #shareBtn {
-    98        margin-top: 16px;
-    99        padding: 12px;
-   100        width: auto;
-   101        font-size: 15px;
-   102        background: #28a745;
-   103        color: white;
-   104        font-weight: bold;
-   105        border: none;
-   106        border-radius: 6px;
-   107        display: none;
-   108        cursor: pointer;
-   109      }
-   110
-   111      #shareBtn:hover {
-   112        background: #218838;
-   113      }
-   114
-   115      #map-container {
-   116        height: 400px;
-   117        width: 100%;
-   118      }
-   119
-   120      #map {
-   121        height: 100%;
-   122        width: 100%;
-   123      }
-   124
-   125      @media (max-width: 600px) {
-   126        #game-title {
-   127          font-size: 24px;
-   128        }
-   129
-   130        #controls {
-   131          flex-direction: column;
-   132          align-items: stretch;
-   133        }
-   134
-   135        #controls input,
-   136        #controls button {
-   137          max-width: 100%;
-   138        }
-   139
-   140        #game-desc {
-   141          font-size: 14px;
-   142        }
-   143      }
-   144    </style>
-   145  </head>
-   146  <body>
-   147    <div id="app">
-   148      <div id="game-ui">
-   149        <h1 id="game-title">🚗 TripGuesser</h1>
-   150        <p id="game-subtitle">Can you guess how long it takes to drive from point A to point B in today's mystery city?</p
->
-   151        <p id="game-desc">Each day features a random route in a surprise U.S. city. You have <strong>5 tries</strong> to g
-uess the drive time — including current traffic. Can you get it right?</p>
-   152
-   153        <div id="controls">
-   154          <button onclick="setupDailyRoute()">🎲 New Route</button>
-   155          <input type="number" id="guessInput" placeholder="Your guess (minutes)" />
-   156          <button onclick="checkGuess()">✅ Submit Guess</button>
-   157        </div>
-   158
-   159        <div id="result"></div>
-   160        <button id="shareBtn" onclick="shareRoute()">📤 Share My Result</button>
-   161      </div>
-   162      <div id="map-container">
-   163        <div id="map"></div>
-   164      </div>
-   165    </div>
-   166
-   167    <script>
-   168      let map, directionsService, directionsRenderer;
-   169      let markers = [];
-   170      let routeData = null;
-   171      let guessCount = 0;
-   172      const maxGuesses = 5;
-   173
-   174      const CITY_BOUNDS = {
-   175        "San Francisco": {
-   176          minLat: 37.735, maxLat: 37.81,
-   177          minLng: -122.52, maxLng: -122.38,
-   178          center: { lat: 37.7749, lng: -122.4194 }
-   179        },
-   180        "New York": {
-   181          minLat: 40.70, maxLat: 40.82,
-   182          minLng: -74.02, maxLng: -73.92,
-   183          center: { lat: 40.77, lng: -73.97 }
-   184        },
-   185        "Chicago": {
-   186          minLat: 41.83, maxLat: 41.95,
-   187          minLng: -87.72, maxLng: -87.60,
-   188          center: { lat: 41.88, lng: -87.63 }
-   189        },
-   190        "Los Angeles": {
-   191          minLat: 34.00, maxLat: 34.15,
-   192          minLng: -118.30, maxLng: -118.15,
-   193          center: { lat: 34.05, lng: -118.25 }
-   194        },
-   195        "Seattle": {
-   196          minLat: 47.58, maxLat: 47.70,
-   197          minLng: -122.36, maxLng: -122.30,
-   198          center: { lat: 47.61, lng: -122.33 }
-   199        }
-   200      };
-root@11e1e0fa9438:/workspace/TripGuessr# nl -ba index.html | sed -n '201,400p'
-   201
-   202      function seededRandom(seed) {
-   203        let x = Math.sin(seed) * 10000;
-   204        return x - Math.floor(x);
-   205      }
-   206
-   207      function getUTCSeed(offset = 0) {
-   208        const now = new Date();
-   209        return now.getUTCFullYear() * 10000 + now.getUTCMonth() * 100 + now.getUTCDate() + offset;
-   210      }
-   211
-   212      function getCityOfTheDay() {
-   213        const cityNames = Object.keys(CITY_BOUNDS);
-   214        const index = Math.floor(seededRandom(getUTCSeed()) * cityNames.length);
-   215        return cityNames[index];
-   216      }
-   217
-   218      function dailyLatLng(seedOffset = 0) {
-   219        const city = getCityOfTheDay();
-   220        const bounds = CITY_BOUNDS[city];
-   221        const seed = getUTCSeed(seedOffset);
-   222
-   223        return {
-   224          lat: bounds.minLat + seededRandom(seed) * (bounds.maxLat - bounds.minLat),
-   225          lng: bounds.minLng + seededRandom(seed + 42) * (bounds.maxLng - bounds.minLng),
-   226        };
-   227      }
-   228
-   229      function initializeMap() {
-   230        const city = getCityOfTheDay();
-   231        const center = CITY_BOUNDS[city].center;
-   232
-   233        map = new google.maps.Map(document.getElementById("map"), {
-   234          center: center,
-   235          zoom: 13,
-   236        });
-   237
-   238        directionsService = new google.maps.DirectionsService();
-   239        directionsRenderer = new google.maps.DirectionsRenderer({
-   240          map: map,
-   241          suppressMarkers: true,
-   242          preserveViewport: true,
-   243        });
-   244
-   245        new google.maps.TrafficLayer().setMap(map);
-   246      }
-   247
-   248      async function setupDailyRoute() {
-   249        clearMarkers();
-   250        document.getElementById("result").textContent = "";
-   251        document.getElementById("guessInput").value = "";
-   252        document.getElementById("guessInput").disabled = false;
-   253        document.getElementById("shareBtn").style.display = "none";
-   254        routeData = null;
-   255        guessCount = 0;
-   256
-   257        const city = getCityOfTheDay();
-   258        document.getElementById("game-subtitle").textContent =
-   259          `Can you guess how long it takes to drive from point A to point B in ${city}?`;
-   260
-   261        const origin = dailyLatLng(0);
-   262        const destination = dailyLatLng(1);
-   263        const dist = distance(origin, destination);
-   264
-   265        if (dist < 1 || dist > 30) {
-   266          document.getElementById("result").textContent = "🚫 Invalid daily route generated. Try again tomorrow.";
-   267          return;
-   268        }
-   269
-   270        const route = await fetchRoute(origin, destination);
-   271        if (route && route.routes?.[0]?.legs?.[0]?.duration_in_traffic) {
-   272          const leg = route.routes[0].legs[0];
-   273          const trafficMin = Math.max(1, Math.round(leg.duration_in_traffic.value / 60));
-   274          routeData = { trafficMin, correctGuess: false, response: route };
-   275
-   276          directionsRenderer.setDirections(route);
-   277          markers.push(new google.maps.Marker({ position: origin, map, label: "A" }));
-   278          markers.push(new google.maps.Marker({ position: destination, map, label: "B" }));
-   279          map.setCenter(getMidpoint(origin, destination));
-   280          map.setZoom(13);
-   281        } else {
-   282          document.getElementById("result").textContent = "❌ Could not load today's route. Try refreshing.";
-   283        }
-   284      }
-   285
-   286      function fetchRoute(origin, destination) {
-   287        return new Promise((resolve) => {
-   288          const now = new Date(Date.now() + 60000);
-   289
-   290          const request = {
-   291            origin,
-   292            destination,
-   293            travelMode: google.maps.TravelMode.DRIVING,
-   294            drivingOptions: {
-   295              departureTime: now,
-   296              trafficModel: google.maps.TrafficModel.BEST_GUESS,
-   297            },
-   298          };
-   299
-   300          directionsService.route(request, (response, status) => {
-   301            resolve(status === "OK" ? response : null);
-   302          });
-   303        });
-   304      }
-   305
-   306      function checkGuess() {
-   307        if (!routeData || routeData.correctGuess || guessCount >= maxGuesses) {
-   308          document.getElementById("result").textContent = "🚫 The game is over. Refresh or start a new route.";
-   309          return;
-   310        }
-   311
-   312        const inputVal = document.getElementById("guessInput").value.trim();
-   313        const guess = parseFloat(inputVal);
-   314
-   315        if (!inputVal || isNaN(guess) || guess <= 0) {
-   316          document.getElementById("result").textContent = "⚠️ Please enter a valid positive number.";
-   317          return;
-   318        }
-   319
-   320        guessCount++;
-   321        const actual = routeData.trafficMin;
-   322        const diff = Math.abs(actual - guess);
-   323        const feedback = guess > actual ? "too high" : "too low";
-   324
-   325        let text;
-   326        if (diff === 0) {
-   327          routeData.correctGuess = true;
-   328          text = `🎯 Perfect! You got it in ${guessCount} ${guessCount === 1 ? "try" : "tries"}.`;
-   329          document.getElementById("shareBtn").style.display = "inline-block";
-   330          document.getElementById("guessInput").disabled = true;
-   331        } else if (guessCount < maxGuesses) {
-   332          text = `❌ ${guess} min is ${feedback}. (${maxGuesses - guessCount} guesses left)`;
-   333        } else {
-   334          text = `🛑 Out of guesses! Better luck tomorrow. Or you can click new route to try again!`;
-   335          document.getElementById("shareBtn").style.display = "inline-block";
-   336          document.getElementById("guessInput").disabled = true;
-   337        }
-   338
-   339        document.getElementById("result").textContent = text;
-   340      }
-   341
-   342      function shareRoute() {
-   343        const today = new Date().toDateString();
-   344        const city = getCityOfTheDay();
-   345        const didWin = routeData?.correctGuess ?? false;
-   346
-   347        const message = didWin
-   348          ? `🎯 I guessed the drive time in ${guessCount} ${guessCount === 1 ? "try" : "tries"}!`
-   349          : `🛑 I used all 5 guesses on today's route. Can you do better?`;
-   350
-   351        const shareText = `🚗 TripGuesser – ${today}\n${message}\n📍 City: ${city}\n👉 Play: https://jaceybarra.github.io/
-TripGuessr/`;
-   352
-   353        navigator.clipboard.writeText(shareText).then(() => {
-   354          alert("✅ Result copied to clipboard! Share it with friends.");
-   355        });
-   356      }
-   357
-   358      function clearMarkers() {
-   359        for (const marker of markers) marker.setMap(null);
-   360        markers = [];
-   361      }
-   362
-   363      function getMidpoint(p1, p2) {
-   364        return {
-   365          lat: (p1.lat + p2.lat) / 2,
-   366          lng: (p1.lng + p2.lng) / 2,
-   367        };
-   368      }
-   369
-   370      function distance(p1, p2) {
-   371        const R = 6371;
-   372        const dLat = (p2.lat - p1.lat) * Math.PI / 180;
-   373        const dLon = (p2.lng - p1.lng) * Math.PI / 180;
-   374        const a =
-   375          Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-   376          Math.cos(p1.lat * Math.PI / 180) *
-   377          Math.cos(p2.lat * Math.PI / 180) *
-   378          Math.sin(dLon / 2) * Math.sin(dLon / 2);
-   379        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-   380        return R * c;
-   381      }
-   382
-   383      window.onload = initializeMap;
-   384    </script>
-   385  </body>
-   386  </html>
-root@11e1e0fa9438:/workspace/TripGuessr# cat -n V1 V2
-     1
-     2
-root@11e1e0fa9438:/workspace/TripGuessr# cat README.md
-git remote add origin https://github.com/<your-user>/<your-repo>.git
-git push -u origin main
-root@11e1e0fa9438:/workspace/TripGuessr# git status
-On branch work
-nothing to commit, working tree clean
-root@11e1e0fa9438:/workspace/TripGuessr# git log --oneline
-941fa38 (grafted, HEAD -> work, main) Create README.md
-root@11e1e0fa9438:/workspace/TripGuessr# git ls-tree -r HEAD
-100644 blob 0aeadd41b8ef6cdd32f9a84b6fb732dff8b76994    README.md
-100644 blob 8b137891791fe96927ad78e64b0aad7bded08bdc    V1
-100644 blob 8b137891791fe96927ad78e64b0aad7bded08bdc    V2
-100644 blob a5482157877e27065b2f3d405d74ef2fdf07eba2    index.html
-root@11e1e0fa9438:/workspace/TripGuessr# git remote -v
