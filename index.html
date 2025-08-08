@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <title>TripGuesser – Daily Driving Challenge</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- Keep your key here or load via env at build time -->
   <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDJhWz8jA_KfdQCZ1jE_z8RPGuvcQBVKFM"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
   <style>
@@ -58,14 +59,13 @@
     /* Controls */
     #controls {
       display: grid; gap: 10px; padding: 14px 20px 6px;
-      grid-template-columns: 1fr 1fr 1fr auto;
+      grid-template-columns: 1fr auto;
     }
     .control {
       display:flex; align-items:center; gap:8px; border:1px solid var(--border); border-radius:10px; padding:10px 12px; background:#fff;
     }
     .control label { font-size:12px; color:var(--muted); white-space:nowrap; }
     .control input[type="number"] { width:100%; border:none; outline:none; font-size:16px; }
-    .control input[type="range"] { width:100%; }
     button.primary {
       background: var(--primary); color:#fff; border:none; border-radius:10px; padding:12px 16px; font-weight:700; cursor:pointer;
     }
@@ -103,11 +103,11 @@
       padding: 12px 20px 18px; display:flex; gap:10px; justify-content:flex-end; align-items:center; border-top:1px solid var(--border);
     }
     #shareBtn { display:none; }
-    .hint { color:var(--muted); font-size:12px; margin-left:auto; }
+    .hint { color:var(--muted); font-size:12px; margin-right:auto; }
     @media (max-width: 720px) {
-      #controls { grid-template-columns: 1fr 1fr; }
-      #actions { flex-wrap:wrap; }
+      #controls { grid-template-columns: 1fr; }
       #map-container { height: 360px; }
+      #actions { flex-wrap:wrap; }
     }
   </style>
 </head>
@@ -121,7 +121,7 @@
         </div>
         <button class="secondary" id="newRouteBtn">🎲 New Route</button>
       </div>
-      <p id="game-subtitle">Guess today’s **live traffic** drive time from A → B. You’ve got <strong>5 tries</strong>. Hitting within your tolerance counts as a win.</p>
+      <p id="game-subtitle">Guess today’s <strong>live traffic</strong> drive time from A → B. You’ve got <strong>5 tries</strong>. Win if you’re within <strong>±10%</strong> of the actual time.</p>
     </div>
 
     <div id="controls" aria-label="Game controls">
@@ -129,17 +129,6 @@
         <label for="guessInput">Guess (min)</label>
         <input type="number" id="guessInput" inputmode="decimal" placeholder="e.g., 18" min="1" />
       </div>
-
-      <div class="control" title="Win tolerance as percent of actual time">
-        <label for="toleranceInput">Tolerance (%)</label>
-        <input type="number" id="toleranceInput" min="1" max="25" value="8" />
-      </div>
-
-      <div class="control" title="Quick tolerance slider">
-        <label for="toleranceRange">±%</label>
-        <input type="range" id="toleranceRange" min="1" max="25" value="8" />
-      </div>
-
       <button class="primary" id="submitBtn">✅ Submit Guess</button>
     </div>
 
@@ -160,17 +149,20 @@
     <div id="map-container"><div id="map"></div></div>
 
     <div id="actions">
-      <span class="hint">Win if you’re within ±<span id="tolEcho">8</span>% of the actual time.</span>
+      <span class="hint">Auto tolerance: ±10% of actual time.</span>
       <button class="secondary" id="shareBtn">📤 Share Result</button>
     </div>
   </div>
 
   <script>
+    // -------- Constants / State --------
+    const TOL_PCT = 10;           // Fixed tolerance (best-practice)
+    const maxGuesses = 5;
+
     let map, directionsService, directionsRenderer;
     let markers = [];
     let routeData = null;
     let guessCount = 0;
-    const maxGuesses = 5;
 
     const CITY_BOUNDS = {
       "San Francisco": { minLat:37.735, maxLat:37.81,  minLng:-122.52, maxLng:-122.38, center:{lat:37.7749, lng:-122.4194}},
@@ -180,11 +172,10 @@
       "Seattle":       { minLat:47.58,  maxLat:47.70,  minLng:-122.36, maxLng:-122.30, center:{lat:47.61,   lng:-122.33}},
     };
 
-    // --- Deterministic daily seed/city
+    // -------- Utilities --------
     function seededRandom(seed) { let x = Math.sin(seed) * 10000; return x - Math.floor(x); }
     function getUTCSeed(offset = 0) {
       const now = new Date();
-      // yyyy * 10000 + mm(0-based)*100 + dd → stable per UTC day
       return now.getUTCFullYear() * 10000 + now.getUTCMonth() * 100 + now.getUTCDate() + offset;
     }
     function getCityOfTheDay() {
@@ -201,8 +192,50 @@
         lng: b.minLng + seededRandom(seed + 42) * (b.maxLng - b.minLng),
       };
     }
+    function distance(p1, p2) {
+      const R = 6371; // km
+      const dLat = (p2.lat - p1.lat) * Math.PI / 180;
+      const dLon = (p2.lng - p1.lng) * Math.PI / 180;
+      const a = Math.sin(dLat/2)**2 +
+        Math.cos(p1.lat * Math.PI/180) * Math.cos(p2.lat * Math.PI/180) * Math.sin(dLon/2)**2;
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      return R * c;
+    }
+    function getMidpoint(p1, p2) { return { lat: (p1.lat + p2.lat)/2, lng: (p1.lng + p2.lng)/2 }; }
+    function clearMarkers() { for (const m of markers) m.setMap(null); markers = []; }
+    function isWithinTolerance(guess, actual) { return Math.abs(actual - guess) <= (actual * TOL_PCT / 100); }
 
-    // --- Map
+    function setProgress() {
+      const pct = (guessCount / maxGuesses) * 100;
+      document.getElementById("progress").style.width = `${pct}%`;
+      document.getElementById("triesHint").textContent = `${guessCount}/${maxGuesses}`;
+    }
+    function addHistoryPill(guess, actual) {
+      const pill = document.createElement("span");
+      let cls = "pill";
+      if (isWithinTolerance(guess, actual)) cls += " ok";
+      else if (guess > actual) cls += " high";
+      else cls += " low";
+      pill.className = cls;
+      const diffPct = Math.round((Math.abs(actual - guess)/actual)*100);
+      pill.textContent = `${guess} min · ${guess > actual ? "high" : (guess < actual ? "low" : "exact")} · ${diffPct}%`;
+      document.getElementById("history").appendChild(pill);
+    }
+    function lockInputs() {
+      document.getElementById("guessInput").disabled = true;
+      document.getElementById("submitBtn").disabled = true;
+    }
+    function unlockInputs() {
+      document.getElementById("guessInput").disabled = false;
+      document.getElementById("submitBtn").disabled = false;
+    }
+    function setResult(text, color) {
+      const el = document.getElementById("resultText");
+      el.textContent = text;
+      el.style.color = color || "inherit";
+    }
+
+    // -------- Map / Route --------
     function initializeMap() {
       const city = getCityOfTheDay();
       document.getElementById("city-chip").textContent = `City: ${city}`;
@@ -217,54 +250,6 @@
       new google.maps.TrafficLayer().setMap(map);
     }
 
-    // --- Helpers
-    function distance(p1, p2) {
-      const R = 6371; // km
-      const dLat = (p2.lat - p1.lat) * Math.PI / 180;
-      const dLon = (p2.lng - p1.lng) * Math.PI / 180;
-      const a = Math.sin(dLat/2)**2 +
-        Math.cos(p1.lat * Math.PI/180) * Math.cos(p2.lat * Math.PI/180) * Math.sin(dLon/2)**2;
-      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-      return R * c;
-    }
-    function getMidpoint(p1, p2) { return { lat: (p1.lat + p2.lat)/2, lng: (p1.lng + p2.lng)/2 }; }
-    function clearMarkers() { for (const m of markers) m.setMap(null); markers = []; }
-    function isWithinTolerance(guess, actual, pct) { return Math.abs(actual - guess) <= (actual * pct / 100); }
-    function setProgress() {
-      const pct = (guessCount / maxGuesses) * 100;
-      document.getElementById("progress").style.width = `${pct}%`;
-      document.getElementById("triesHint").textContent = `${guessCount}/${maxGuesses}`;
-    }
-    function addHistoryPill(guess, actual, pct) {
-      const pill = document.createElement("span");
-      let cls = "pill";
-      if (isWithinTolerance(guess, actual, pct)) cls += " ok";
-      else if (guess > actual) cls += " high";
-      else cls += " low";
-      pill.className = cls;
-      const diff = Math.round((Math.abs(actual - guess)/actual)*100);
-      pill.textContent = `${guess} min · ${guess > actual ? "high" : (guess < actual ? "low" : "exact")} · ${diff}%`;
-      document.getElementById("history").appendChild(pill);
-    }
-    function lockInputs() {
-      document.getElementById("guessInput").disabled = true;
-      document.getElementById("toleranceInput").disabled = true;
-      document.getElementById("toleranceRange").disabled = true;
-      document.getElementById("submitBtn").disabled = true;
-    }
-    function unlockInputs() {
-      document.getElementById("guessInput").disabled = false;
-      document.getElementById("toleranceInput").disabled = false;
-      document.getElementById("toleranceRange").disabled = false;
-      document.getElementById("submitBtn").disabled = false;
-    }
-    function setResult(text, color) {
-      const el = document.getElementById("resultText");
-      el.textContent = text;
-      el.style.color = color || "inherit";
-    }
-
-    // --- Route
     async function setupDailyRoute() {
       clearMarkers();
       document.getElementById("resultText").textContent = "Generating today’s route…";
@@ -283,7 +268,7 @@
       const destination = dailyLatLng(1);
       const dist = distance(origin, destination);
 
-      // sanity check: keep routes reasonable
+      // keep routes reasonable
       if (dist < 1 || dist > 30) {
         setResult("🚫 Invalid daily route generated. Try again.", "var(--danger)");
         return;
@@ -301,7 +286,7 @@
         map.setCenter(getMidpoint(origin, destination));
         map.setZoom(13);
 
-        setResult("Route ready. Make your first guess.");
+        setResult(`Route ready. Win if you're within ±${TOL_PCT}% of the actual time.`);
       } else {
         setResult("❌ Could not load today’s route. Try refreshing.", "var(--danger)");
       }
@@ -309,7 +294,7 @@
 
     function fetchRoute(origin, destination) {
       return new Promise((resolve) => {
-        const now = new Date(Date.now() + 60000); // 1 min in the future to force traffic calc
+        const now = new Date(Date.now() + 60000); // 1 min ahead helps traffic calc
         const request = {
           origin, destination,
           travelMode: google.maps.TravelMode.DRIVING,
@@ -319,7 +304,7 @@
       });
     }
 
-    // --- Gameplay
+    // -------- Gameplay --------
     function checkGuess() {
       if (!routeData) { setResult("Start a route first.", "var(--danger)"); return; }
       if (routeData.correctGuess || guessCount >= maxGuesses) {
@@ -328,7 +313,6 @@
 
       const val = document.getElementById("guessInput").value.trim();
       const guess = parseFloat(val);
-      const tolPct = Math.max(1, Math.min(25, parseFloat(document.getElementById("toleranceInput").value || "8")));
 
       if (!val || isNaN(guess) || guess <= 0) {
         setResult("⚠️ Enter a valid positive number for minutes.", "var(--danger)");
@@ -337,15 +321,15 @@
 
       guessCount++; setProgress();
       const actual = routeData.trafficMin;
-      const within = isWithinTolerance(guess, actual, tolPct);
+      const within = isWithinTolerance(guess, actual);
       const diff = Math.abs(actual - guess);
       const hiLo = guess > actual ? "too high" : (guess < actual ? "too low" : "exact");
 
-      addHistoryPill(guess, actual, tolPct);
+      addHistoryPill(guess, actual);
 
       if (within) {
         routeData.correctGuess = true;
-        setResult(`🎯 Nailed it within ±${tolPct}% in ${guessCount} ${guessCount===1?"try":"tries"}!`, "var(--success)");
+        setResult(`🎯 Nailed it within ±${TOL_PCT}% in ${guessCount} ${guessCount===1?"try":"tries"}!`, "var(--success)");
         document.getElementById("actualTime").textContent = actual;
         document.getElementById("actualWrap").style.display = "inline";
         document.getElementById("shareBtn").style.display = "inline-block";
@@ -372,7 +356,7 @@
       const didWin = routeData?.correctGuess ?? false;
 
       const message = didWin
-        ? `🎯 I got within my tolerance in ${guessCount} ${guessCount === 1 ? "try" : "tries"}!`
+        ? `🎯 I got within ±${TOL_PCT}% in ${guessCount} ${guessCount === 1 ? "try" : "tries"}!`
         : `🛑 Used all ${maxGuesses} guesses on today’s route. Can you do better?`;
       const shareText =
         `🚗 TripGuesser – ${today}\n${message}\n📍 City: ${city}\n👉 Play: https://jaceybarra.github.io/TripGuessr/`;
@@ -382,18 +366,7 @@
       });
     }
 
-    // --- Wire up
-    function syncToleranceEcho() {
-      const n = parseInt(document.getElementById("toleranceInput").value || "8", 10);
-      document.getElementById("toleranceRange").value = String(n);
-      document.getElementById("tolEcho").textContent = n;
-    }
-    document.getElementById("toleranceInput").addEventListener("input", syncToleranceEcho);
-    document.getElementById("toleranceRange").addEventListener("input", (e)=> {
-      document.getElementById("toleranceInput").value = e.target.value;
-      syncToleranceEcho();
-    });
-
+    // -------- Wire-up --------
     document.getElementById("submitBtn").addEventListener("click", checkGuess);
     document.getElementById("shareBtn").addEventListener("click", shareRoute);
     document.getElementById("newRouteBtn").addEventListener("click", setupDailyRoute);
