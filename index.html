@@ -18,19 +18,13 @@
       background:radial-gradient(1200px 800px at -10% -20%, rgba(96,165,250,.08), transparent 45%),
                  radial-gradient(900px 700px at 110% -10%, rgba(34,197,94,.08), transparent 40%),
                  linear-gradient(180deg, var(--bg), var(--bg) 30%, var(--bg2) 100%);
-      font-family: ui-sans-serif, -apple-system, Segoe UI, Roboto, Helvetica, Arial, system-ui;
+      font-family: ui-sans-serif,-apple-system,Segoe UI,Roboto,Helvetica,Arial,system-ui;
       -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
     }
     a{color:var(--accent);text-decoration:none}
     .container{max-width:1140px;margin:0 auto;padding:24px}
     .hero{display:grid;grid-template-columns:1.1fr 0.9fr;gap:24px;align-items:stretch;margin-bottom:18px}
-    .card{
-      background:var(--card);
-      border:1px solid var(--border);
-      border-radius:20px;
-      box-shadow:var(--shadow);
-      padding:24px;
-    }
+    .card{background:var(--card);border:1px solid var(--border);border-radius:20px;box-shadow:var(--shadow);padding:24px}
     .title{margin:0 0 8px;font-weight:900;letter-spacing:.2px;line-height:1.05;font-size:clamp(28px,4vw,44px)}
     .subtitle{color:var(--muted);margin:0 0 14px;font-size:clamp(14px,2.2vw,18px)}
     .ctaRow{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
@@ -49,9 +43,11 @@
     .toggleRow{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
     .toggle{display:inline-flex;gap:8px;align-items:center;border:1px solid var(--border);background:var(--card2);padding:8px 10px;border-radius:12px;font-size:13px;color:var(--muted)}
     .grid{display:grid;grid-template-columns:1.35fr 1fr;gap:16px}
+
     /* Map card */
-    #mapWrap{position:relative;min-height:420px;border-radius:16px;border:1px solid var(--border);overflow:hidden;background:#0b1328}
+    #mapWrap{position:relative;height:420px;border-radius:16px;border:1px solid var(--border);overflow:hidden;background:#0b1328}
     #map{width:100%;height:100%}
+
     /* Skeleton shimmer while the map is loading */
     .skeleton::before{
       content:"";position:absolute;inset:0;background:
@@ -61,6 +57,7 @@
       animation:shimmer 1.2s infinite;
     }
     @keyframes shimmer{0%{background-position:-120% 0, 0 0}100%{background-position:220% 0, 0 0}}
+
     .pill{display:inline-flex;gap:6px;align-items:center;border:1px solid var(--border);background:var(--card2);padding:7px 12px;border-radius:999px;color:var(--muted);font-size:13px}
     .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
     .game-card{display:grid;gap:12px}
@@ -73,7 +70,7 @@
     .feedbackChips{display:flex;gap:6px;flex-wrap:wrap}
     .chip{border:1px solid var(--border);background:var(--card2);padding:6px 10px;border-radius:999px;font-size:12px;color:var(--muted)}
     .shareBox{display:grid;gap:10px}
-    .shareCard{white-space:pre;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;background:#0b1328;color:#d1d5db;border:1px dashed #2b3b66;border-radius:12px;padding:10px;overflow:auto;max-height:160px}
+    .shareCard{white-space:pre;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;background:#0b1328;color:#d1d5db;border:1px dashed #2b3b66;border-radius:12px;padding:10px;overflow:auto;max-height:160px}
     .leaderboards{display:grid;grid-template-columns:1fr 1fr;gap:12px}
     table{width:100%;border-collapse:collapse;font-size:14px}
     th,td{padding:10px;border-bottom:1px solid #233259;text-align:left;color:#d6d8df}
@@ -82,15 +79,16 @@
     footer{color:var(--muted);font-size:12px;text-align:center;padding:24px 8px 56px}
     .streak{font-weight:900;color:#93c5fd}
     .hidden{display:none!important}
+
     /* Map diagnostics overlay */
     #mapDiag{position:absolute;inset:0;display:grid;place-items:center;background:rgba(7,12,26,.72);backdrop-filter:saturate(120%) blur(2px);color:#c8d2e5;padding:18px;text-align:center}
     #mapDiag .box{background:var(--card);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow);padding:14px}
     #mapDiag p{margin:8px 0 0;font-size:13px;color:#9fb0d0}
-    /* Mobile */
+
     @media (max-width:980px){
       .hero{grid-template-columns:1fr}
       .grid{grid-template-columns:1fr}
-      #mapWrap{min-height:360px}
+      #mapWrap{height:360px}
     }
   </style>
 </head>
@@ -125,7 +123,7 @@
           <div id="mapDiag" class="hidden">
             <div class="box">
               <strong>Map didn’t load</strong>
-              <p id="mapDiagMsg">Check your API key, billing, and referrer restrictions, then press retry.</p>
+              <p id="mapDiagMsg">Check your API key, billing, and HTTP referrers. Then press Retry.</p>
               <div style="margin-top:10px;display:flex;gap:8px;justify-content:center">
                 <button class="btn" id="retryMapBtn">Retry</button>
                 <button class="btn ghost" id="showMarkersBtn">Show markers only</button>
@@ -196,7 +194,7 @@
   <!-- Confetti -->
   <canvas id="confetti" class="hidden" style="position:fixed;inset:0;pointer-events:none"></canvas>
 
-  <!-- GA4 (replace G-XXXXXXXXXX) -->
+  <!-- GA4 (optional) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
   <script>
     window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}
@@ -204,13 +202,9 @@
     const gaEvent=(name,params={})=>{try{gtag('event',name,params)}catch(e){}}
   </script>
 
-  <!-- Google Maps (replace YOUR_GOOGLE_MAPS_API_KEY) -->
-  <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDJhWz8jA_KfdQCZ1jE_z8RPGuvcQBVKFM&callback=initApp&libraries=geometry"></script>
-
+  <!-- App logic + dynamic Google Maps loader -->
   <script>
-  /***************
-   * ROUTE DATA – 50 U.S. cities (baseline minutes are conservative)
-   ***************/
+  /*************** ROUTE DATA (50 U.S. cities) ***************/
   const ROUTES = [
     { city:"New York, NY", origin:{lat:40.758, lng:-73.9855, label:"Times Sq"}, dest:{lat:40.7061, lng:-74.0087, label:"Wall St"}, baselineMinutes:22 },
     { city:"Los Angeles, CA", origin:{lat:34.1381, lng:-118.3534, label:"Universal Studios"}, dest:{lat:34.011, lng:-118.495, label:"Santa Monica Pier"}, baselineMinutes:38 },
@@ -268,8 +262,9 @@
 
   /*************** CONFIG ***************/
   const MAX_GUESSES=6, NEAR_TOL_PCT=0.05, NEAR_TOL_MIN=2;
-  const STORAGE_PREFIX="tripguessr_v5";
+  const STORAGE_PREFIX="tripguessr_v6";
   const todayISO=new Date().toISOString().slice(0,10);
+  const GOOGLE_MAPS_KEY = "AIzaSyDJhWz8jA_KfdQCZ1jE_z8RPGuvcQBVKFM"; // ← replace me
 
   /*************** STATE ***************/
   let map, directions, renderer, routeOfDay=null, liveMinutes=null, fallbackMinutes=null;
@@ -277,16 +272,16 @@
   let confettiTimer;
 
   /*************** UTIL ***************/
-  const seedIndex=(seed,mod)=>{let h=2166136261;for(let c of seed){h^=c.charCodeAt(0);h+= (h<<1)+(h<<4)+(h<<7)+(h<<8)+(h<<24);}return Math.abs(h)%mod}
+  const seedIndex=(seed,mod)=>{let h=2166136261;for(let i=0;i<seed.length;i++){h^=seed.charCodeAt(i);h+=(h<<1)+(h<<4)+(h<<7)+(h<<8)+(h<<24);}return Math.abs(h)%mod}
   const $=(id)=>document.getElementById(id);
   const store=(k,v)=>localStorage.setItem(`${STORAGE_PREFIX}:${k}`,JSON.stringify(v));
   const load=(k,def=null)=>{const v=localStorage.getItem(`${STORAGE_PREFIX}:${k}`);return v?JSON.parse(v):def}
   const answerMinutes=()=> (liveMinutes ?? fallbackMinutes);
   const keyDaily=()=>`daily:${todayISO}`, keyAllTime=()=>`alltime`, keyStreak=()=>`streak`, keyLastPlayed=()=>`lastPlayed`;
+  const verdictEmoji=(v)=> v==='win'?'🟩':(v==='near'?'🟨':'🟥');
 
-  /*************** INIT (callback from Google script) ***************/
-  window.initApp = function(){
-    // Basic page init
+  /*************** APP INIT ***************/
+  function appBoot(){
     $("year").textContent = new Date().getFullYear();
     $("pillDate").textContent = todayISO;
 
@@ -297,17 +292,14 @@
     $("originLabel").textContent = routeOfDay.origin.label;
     $("destLabel").textContent = routeOfDay.dest.label;
 
-    // Bind UI
     bindUI();
-
-    // Try to init map; show skeleton while loading
-    setupMap();
-
-    // Restore today’s progress
     restoreDaily();
 
-    gaEvent('page_view',{page_title:'TripGuessr',page_location:location.href});
-  };
+    // Dynamically load Google Maps and init when ready (no fragile callback param)
+    loadGoogleMaps()
+      .then(()=> initMapCore())
+      .catch((msg)=> showMapDiag(msg||"Maps script failed to load. Check the API key and network."));
+  }
 
   function bindUI(){
     $("btnRules").onclick = ()=> $("howItWorks").classList.toggle("hidden");
@@ -320,49 +312,60 @@
     });
     $("btnGiveUp").onclick = giveUp;
     $("btnShare").onclick = copyShare;
-    $("retryMapBtn").onclick = ()=> { $("mapDiag").classList.add("hidden"); setupMap(true); };
+    $("retryMapBtn").onclick = ()=> { $("mapDiag").classList.add("hidden"); loadGoogleMaps(true).then(()=> initMapCore()).catch(showMapDiag); };
     $("showMarkersBtn").onclick = showMarkersOnly;
     $("darkToggle").onchange = (e)=>{document.body.style.background = e.target.checked
       ? 'radial-gradient(1200px 800px at -10% -20%, rgba(96,165,250,.08), transparent 45%), radial-gradient(900px 700px at 110% -10%, rgba(34,197,94,.08), transparent 40%), linear-gradient(180deg, var(--bg), var(--bg) 30%, var(--bg2) 100%)'
       : '#f6f8fb'}
   }
+
   function nudge(delta){
     const el=$("guessMinutes");
     const v = Math.max(1, (parseInt(el.value||'0',10)||0) + delta);
     el.value = v;
   }
 
-  /*************** MAP ***************/
-  function setupMap(isRetry=false){
-    const wrap=$("mapWrap");
-    wrap.classList.add("skeleton");
-    // detect google availability
-    const ready = !!(window.google && google.maps);
-    if(!ready){
-      // give it a brief moment (script is async/defer)
-      setTimeout(()=>{
-        if(!(window.google && google.maps)){
-          showMapDiag("Google Maps JS not detected. Confirm API Key, billing, and HTTP referrer restrictions. For local dev, allow http://localhost and http://127.0.0.1.");
-          wrap.classList.remove("skeleton");
-          return;
-        }
-        // else continue
-        initMapCore();
-      }, 600);
-      return;
-    }
-    initMapCore();
+  /*************** GOOGLE MAPS LOADER ***************/
+  function loadGoogleMaps(forceReload=false){
+    return new Promise((resolve,reject)=>{
+      if(!GOOGLE_MAPS_KEY || GOOGLE_MAPS_KEY.includes("AIzaSyDJhWz8jA_KfdQCZ1jE_z8RPGuvcQBVKFM")){
+        reject("Missing API key. Replace AIzaSyDJhWz8jA_KfdQCZ1jE_z8RPGuvcQBVKFM.");
+        return;
+      }
+      if(window.google && google.maps && !forceReload){ resolve(); return; }
+      // Remove any existing script if reloading
+      const old = document.getElementById('gmaps-sdk');
+      if(old){ old.remove(); }
+
+      const s = document.createElement('script');
+      s.id = 'gmaps-sdk';
+      s.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(AIzaSyDJhWz8jA_KfdQCZ1jE_z8RPGuvcQBVKFM)}&libraries=geometry`;
+      s.async = true; s.defer = true;
+      s.onload = ()=> {
+        if(window.google && google.maps) resolve(); else reject("Google Maps loaded but window.google is undefined.");
+      };
+      s.onerror = ()=> reject("Network or CSP blocked Google Maps. Check ad‑blockers, CSP, and referrers.");
+      document.head.appendChild(s);
+
+      // safety timeout
+      setTimeout(()=>{ if(!(window.google && google.maps)) reject("Timed out loading Google Maps."); }, 8000);
+    });
   }
 
+  /*************** MAP ***************/
   function initMapCore(){
     const wrap=$("mapWrap");
+    wrap.classList.add("skeleton");
     try{
       map = new google.maps.Map($("map"),{
         center: routeOfDay.origin, zoom: 12, disableDefaultUI: true, backgroundColor:'#0b1328',
         styles:[{elementType:'geometry',stylers:[{color:'#0b1328'}]},{elementType:'labels.text.fill',stylers:[{color:'#a8b3c9'}]}]
       });
       directions = new google.maps.DirectionsService();
-      renderer   = new google.maps.DirectionsRenderer({ map, suppressMarkers:false, preserveViewport:false, polylineOptions:{strokeOpacity:.95, strokeWeight:6} });
+      renderer   = new google.maps.DirectionsRenderer({
+        map, suppressMarkers:false, preserveViewport:false,
+        polylineOptions:{strokeOpacity:.95, strokeWeight:6}
+      });
       renderRoute();
     }catch(e){
       showMapDiag("Map failed to initialize: " + (e?.message||e));
@@ -374,11 +377,11 @@
   function showMapDiag(msg){
     $("mapDiagMsg").textContent = msg;
     $("mapDiag").classList.remove("hidden");
-    gaEvent('map_error',{msg});
+    gaEvent && gaEvent('map_error',{msg});
   }
 
   function renderRoute(){
-    if(!(google && google.maps)){ showMarkersOnly(); return; }
+    if(!(window.google && google.maps)){ showMarkersOnly(); return; }
     const req={
       origin: routeOfDay.origin, destination: routeOfDay.dest,
       travelMode: google.maps.TravelMode.DRIVING, provideRouteAlternatives:false,
@@ -399,11 +402,11 @@
   }
 
   function showMarkersOnly(){
-    // Fallback visual: drop two markers; use baseline for timing
-    if(google?.maps && !map){
+    // Fallback visuals + baseline minutes
+    if(window.google?.maps && !map){
       map = new google.maps.Map($("map"),{center: routeOfDay.origin, zoom: 12, disableDefaultUI:true, backgroundColor:'#0b1328'});
     }
-    if(google?.maps){
+    if(window.google?.maps){
       new google.maps.Marker({position:routeOfDay.origin,map,title:routeOfDay.origin.label});
       new google.maps.Marker({position:routeOfDay.dest,map,title:routeOfDay.dest.label});
       if(map && routeOfDay.origin && routeOfDay.dest){
@@ -430,7 +433,6 @@
                        verdict==='near' ? '🟨 So close!' :
                        dir==='high' ? '🡅 Too high' : '🡇 Too low';
     $("lastFeedback").prepend(chip);
-    // keep last 6 chips
     const chips=[...$("lastFeedback").children]; if(chips.length>6) chips.pop().remove();
   }
 
@@ -494,9 +496,7 @@
     }
   }
   function restoreDaily(){
-    // streak
     $("streakVal").textContent = load(keyStreak(),0);
-    // daily
     const data=load(keyDaily(), null);
     if(data && data.city===routeOfDay.city){
       guesses=data.guesses||[]; won=!!data.won; nearHit=!!data.nearHit; revealed=!!data.revealed;
@@ -509,7 +509,6 @@
   function addStreak(ok){
     let s=load(keyStreak(),0); s = ok ? s+1 : 0; store(keyStreak(),s); $("streakVal").textContent=s;
   }
-  function verdictEmoji(v){ return v==='win'?'🟩':(v==='near'?'🟨':'🟥'); }
   function renderTables(){
     const tb1=$("tblDaily").querySelector('tbody'); tb1.innerHTML='';
     guesses.forEach((g,i)=>{
@@ -538,6 +537,8 @@
     catch(e){ $("shareNote").textContent='Copy failed — select text below'; }
   }
 
+  // Boot the app as soon as DOM is ready (no reliance on Google’s callback timing)
+  document.addEventListener('DOMContentLoaded', appBoot);
   </script>
 </body>
 </html>
