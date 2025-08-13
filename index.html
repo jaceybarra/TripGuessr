@@ -95,6 +95,14 @@
     .streak{font-weight:900;color:#93c5fd}
     .hidden{display:none!important}
 
+    /* Modal */
+    .modal{position:fixed;inset:0;background:rgba(5,10,22,.6);backdrop-filter:blur(3px);display:none;align-items:center;justify-content:center;z-index:40}
+    .modal.open{display:flex}
+    .dialog{background:var(--card);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow);max-width:640px;width:92%;padding:18px}
+    .dialog h3{margin:0 0 6px}
+    .dialog p{margin:8px 0;color:var(--muted)}
+    .dialog .actions{display:flex;justify-content:flex-end;gap:8px;margin-top:12px}
+
     /* Map diagnostics overlay */
     #mapDiag{position:absolute;inset:0;display:grid;place-items:center;background:rgba(7,12,26,.72);backdrop-filter:saturate(120%) blur(2px);color:#c8d2e5;padding:18px;text-align:center}
     #mapDiag .box{background:var(--card);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow);padding:14px}
@@ -117,7 +125,7 @@
         <p class="subtitle">Guess today’s real‑world driving time between two places somewhere in the U.S. A new city every day.</p>
         <div class="ctaRow">
           <a href="#game" class="btn primary" id="ctaPlay">Play today’s route</a>
-          <button class="btn ghost" id="btnRules">How it works</button>
+          <button class="btn ghost" id="btnRules" aria-haspopup="dialog">How it works</button>
         </div>
         <div class="toggleRow">
           <label class="toggle"><input type="checkbox" id="darkToggle" checked /> Dark mode</label>
@@ -137,27 +145,19 @@
 
           <!-- Controls -->
           <div class="mapControls" aria-label="Map controls">
-            <div class="ctrl legend" aria-hidden="true">
-              <div class="legendSwatch"></div>
-              Route
-            </div>
+            <div class="ctrl legend" aria-hidden="true"><div class="legendSwatch"></div>Route</div>
             <div class="viewBtns">
               <button class="btn" id="btnFit">Fit route</button>
               <button class="btn" id="btnContext">City context</button>
             </div>
-            <label class="ctrl chk">
-              <input type="checkbox" id="contrastToggle" checked />
-              High‑contrast route
-            </label>
+            <label class="ctrl chk"><input type="checkbox" id="contrastToggle" checked /> High‑contrast route</label>
           </div>
 
           <!-- Distance badge -->
           <div class="overviewBadge" id="distanceBadge">—</div>
 
           <!-- Overview mini‑map -->
-          <div id="overviewWrap" aria-hidden="true">
-            <div id="overview"></div>
-          </div>
+          <div id="overviewWrap" aria-hidden="true"><div id="overview"></div></div>
 
           <!-- Map diagnostics -->
           <div id="mapDiag" class="hidden" role="alert">
@@ -223,12 +223,23 @@
       </div>
     </section>
 
-    <footer>
-      <div id="howItWorks" class="hidden">
-        <p><strong>How it works:</strong> A new U.S. city is selected each day. We render a real route via Google Directions. Guess the minutes. We’ll only say “Too high/Too low” or “So close!”. 6 tries.</p>
+    <footer><p>© <span id="year"></span> TripGuessr</p></footer>
+  </div>
+
+  <!-- Modal: How it works -->
+  <div class="modal" id="howModal" role="dialog" aria-modal="true" aria-labelledby="howTitle">
+    <div class="dialog" role="document">
+      <h3 id="howTitle">How it works</h3>
+      <p>Each day we pick a new U.S. city and render a real driving route with Google Directions. Your job: guess the travel time in minutes. We’ll only say <strong>Too high</strong>, <strong>Too low</strong>, or <strong>So close!</strong>. You get 6 tries.</p>
+      <ul class="muted" style="margin:8px 0 0 18px">
+        <li>No % hints or distance to the answer.</li>
+        <li>Daily streaks! Share your score card with friends.</li>
+      </ul>
+      <div class="actions">
+        <button class="btn ghost" id="howClose">Close</button>
+        <a class="btn primary" href="#game" id="howPlay">Play today’s route</a>
       </div>
-      <p>© <span id="year"></span> TripGuessr</p>
-    </footer>
+    </div>
   </div>
 
   <!-- Confetti -->
@@ -248,7 +259,7 @@
 
   /*************** CONFIG ***************/
   const MAX_GUESSES=6, NEAR_TOL_PCT=0.05, NEAR_TOL_MIN=2;
-  const STORAGE_PREFIX="tripguessr_v9";
+  const STORAGE_PREFIX="tripguessr_v10";
   const todayISO=new Date().toISOString().slice(0,10);
   const GOOGLE_MAPS_KEY="AIzaSyDJhWz8jA_KfdQCZ1jE_z8RPGuvcQBVKFM"; // your key
 
@@ -268,6 +279,32 @@
   const verdictEmoji=(v)=> v==='win'?'🟩':(v==='near'?'🟨':'🟥');
   const miles=(m)=> (m/1609.344); const km=(m)=> (m/1000);
 
+  /*************** MAP STYLES (readability) ***************/
+  // Detailed style (close zooms): subtle strokes and brighter text
+  const STYLE_DETAIL=[
+    {elementType:'geometry',stylers:[{color:'#0c1430'}]},
+    {elementType:'labels.text.stroke',stylers:[{color:'#0c1430'}]}, /* blends stroke into bg to avoid bold look */
+    {elementType:'labels.text.fill',stylers:[{color:'#cfe0ff'}]},
+    {featureType:'poi',elementType:'labels',stylers:[{visibility:'off'}]},
+    {featureType:'road',elementType:'geometry',stylers:[{color:'#1a264a'}]},
+    {featureType:'road.highway',elementType:'geometry',stylers:[{color:'#20315f'}]},
+    {featureType:'road',elementType:'labels.icon',stylers:[{visibility:'off'}]},
+    {featureType:'transit',stylers:[{visibility:'off'}]},
+    {featureType:'water',elementType:'geometry',stylers:[{color:'#0b1b3d'}]}
+  ];
+  // Low‑detail style (zoomed out): hides most labels so nothing looks bold
+  const STYLE_LOW=[
+    {elementType:'geometry',stylers:[{color:'#0c1430'}]},
+    {elementType:'labels.text.stroke',stylers:[{color:'#0c1430'}]},
+    {elementType:'labels.text.fill',stylers:[{color:'#9fb0d0'}]},
+    {featureType:'poi',stylers:[{visibility:'off'}]},
+    {featureType:'administrative',elementType:'labels',stylers:[{visibility:'off'}]},
+    {featureType:'road',elementType:'labels',stylers:[{visibility:'off'}]},
+    {featureType:'transit',stylers:[{visibility:'off'}]},
+    {featureType:'road',elementType:'geometry',stylers:[{color:'#18203e'}]},
+    {featureType:'water',elementType:'geometry',stylers:[{color:'#0b1b3d'}]}
+  ];
+
   /*************** INIT ***************/
   function appBoot(){
     $("year").textContent=new Date().getFullYear();
@@ -283,7 +320,15 @@
   }
 
   function bindUI(){
-    $("btnRules").onclick=()=>$("howItWorks").classList.toggle("hidden");
+    // Modal
+    const modal=$("howModal"), closeBtn=$("howClose"), playBtn=$("howPlay"), openBtn=$("btnRules");
+    const openModal=()=>{ modal.classList.add("open"); closeBtn.focus(); document.body.style.overflow='hidden'; };
+    const closeModal=()=>{ modal.classList.remove("open"); document.body.style.overflow=''; openBtn.focus(); };
+    openBtn.onclick=()=>openModal();
+    closeBtn.onclick=()=>closeModal();
+    modal.addEventListener('click',(e)=>{ if(e.target===modal) closeModal(); });
+    document.addEventListener('keydown',(e)=>{ if(e.key==='Escape' && modal.classList.contains('open')) closeModal(); });
+
     $("ctaPlay").onclick=()=>{location.hash="#game"; setTimeout(()=>$("guessMinutes").focus(),80);};
     $("btnGuess").onclick=onGuess; $("btnGiveUp").onclick=giveUp; $("btnShare").onclick=copyShare;
     $("guessMinutes").addEventListener('keydown',(e)=>{
@@ -295,10 +340,7 @@
     $("showMarkersBtn").onclick=showMarkersOnly;
     $("contrastToggle").onchange=applyRouteStyle;
     $("btnFit").onclick=()=>{ if(currentBounds){ map.fitBounds(currentBounds,{top:40,left:40,right:40,bottom:40}); } };
-    $("btnContext").onclick=()=>{ if(currentBounds){ 
-      // zoom out ~1.6x to give city context
-      map.fitBounds(currentBounds,{top:120,left:120,right:120,bottom:120}); 
-    }};
+    $("btnContext").onclick=()=>{ if(currentBounds){ map.fitBounds(currentBounds,{top:120,left:120,right:120,bottom:120}); } };
     $("darkToggle").onchange=(e)=>{
       document.body.style.background=e.target.checked
         ? 'radial-gradient(1200px 800px at -10% -20%, rgba(96,165,250,.08), transparent 45%), radial-gradient(900px 700px at 110% -10%, rgba(34,197,94,.08), transparent 40%), linear-gradient(180deg, var(--bg), var(--bg) 30%, var(--bg2) 100%)'
@@ -326,25 +368,20 @@
   /*************** MAP ***************/
   function initMapCore(){
     const wrap=$("mapWrap"); wrap.classList.add("skeleton");
-    const style=[
-      {elementType:'geometry',stylers:[{color:'#0c1430'}]},
-      {elementType:'labels.text.fill',stylers:[{color:'#c4d3f6'}]},
-      {featureType:'poi',stylers:[{visibility:'off'}]},
-      {featureType:'road',elementType:'geometry',stylers:[{color:'#1a264a'}]},
-      {featureType:'road.highway',elementType:'geometry',stylers:[{color:'#20315f'}]},
-      {featureType:'road',elementType:'labels.text.fill',stylers:[{color:'#b9c8eb'}]},
-      {featureType:'transit',stylers:[{visibility:'off'}]},
-      {featureType:'water',elementType:'geometry',stylers:[{color:'#0b1b3d'}]}
-    ];
     try{
       map=new google.maps.Map($("map"),{
         center:routeOfDay.origin,zoom:12,disableDefaultUI:false,zoomControl:true,fullscreenControl:false,
         mapTypeControl:false,streetViewControl:false,scaleControl:true,gestureHandling:'greedy',
-        backgroundColor:'#0b1328',styles:style
+        backgroundColor:'#0b1328',styles:STYLE_DETAIL
       });
-      // Overview mini-map
+      // Switch to low-detail style when zoomed out (prevents super-bold label effect)
+      map.addListener('zoom_changed', ()=>{
+        const z=map.getZoom();
+        map.setOptions({styles: z<12 ? STYLE_LOW : STYLE_DETAIL});
+      });
+
       overviewMap=new google.maps.Map($("overview"),{
-        center:routeOfDay.origin,zoom:12,disableDefaultUI:true,styles:style,draggable:false,gestureHandling:'none'
+        center:routeOfDay.origin,zoom:12,disableDefaultUI:true,styles:STYLE_LOW,draggable:false,gestureHandling:'none'
       });
 
       directions=new google.maps.DirectionsService();
@@ -356,8 +393,10 @@
 
   function showMapDiag(msg){$("mapDiagMsg").textContent=msg;$("mapDiag").classList.remove("hidden");gaEvent&&gaEvent('map_error',{msg});}
 
+  let routeDash=null;
   function clearRouteLayers(){
     routePolys.forEach(p=>p.setMap(null)); routePolys=[];
+    if(routeDash){routeDash.setMap(null); routeDash=null;}
     if(originMarker){originMarker.setMap(null); originMarker=null;}
     if(destMarker){destMarker.setMap(null); destMarker=null;}
     if(overviewRect){overviewRect.setMap(null); overviewRect=null;}
@@ -367,6 +406,8 @@
     const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40"><g filter="url(#f)"><circle cx="20" cy="20" r="10" fill="${fill}" stroke="white" stroke-width="2"/></g><text x="20" y="24" text-anchor="middle" font-size="12" font-weight="700" fill="#0a1024" font-family="ui-sans-serif,system-ui">${letter}</text><defs><filter id="f"><feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="rgba(0,0,0,.5)"/></filter></defs></svg>`;
     return {url:'data:image/svg+xml;charset=UTF-8,'+encodeURIComponent(svg),scaledSize:new google.maps.Size(40,40)};
   }
+
+  function getVar(name){return getComputedStyle(document.documentElement).getPropertyValue(name).trim();}
 
   function renderRoute(){
     if(!(window.google&&google.maps)){showMarkersOnly();return;}
@@ -378,10 +419,9 @@
         const path=r.overview_path;
         currentBounds=r.bounds;
 
-        // distance badge
+        // distance badge (feel for scale without revealing time)
         const meters=google.maps.geometry.spherical.computeLength(path);
-        const mi=miles(meters).toFixed(1), kms=km(meters).toFixed(1);
-        $("distanceBadge").textContent=`≈ ${mi} mi / ${kms} km`;
+        $("distanceBadge").textContent=`≈ ${miles(meters).toFixed(1)} mi / ${km(meters).toFixed(1)} km`;
 
         map.fitBounds(currentBounds,{top:40,left:40,right:40,bottom:40});
         overviewMap.fitBounds(currentBounds);
@@ -390,20 +430,14 @@
         originMarker=new google.maps.Marker({position:routeOfDay.origin,map,title:`Origin: ${routeOfDay.origin.label}`,icon:svgMarker('A','#ff6b6b')});
         destMarker=new google.maps.Marker({position:routeOfDay.dest,map,title:`Destination: ${routeOfDay.dest.label}`,icon:svgMarker('B','#5eead4')});
 
-        // draw route (glow -> outline -> main)
+        // custom route (glow -> outline -> main)
         const glow=new google.maps.Polyline({path,map,strokeColor:getVar('--route-glow'),strokeOpacity:.55,strokeWeight:18});
         const outline=new google.maps.Polyline({path,map,strokeColor:getVar('--route-outline'),strokeOpacity:1,strokeWeight:12});
         const main=new google.maps.Polyline({path,map,strokeColor:getVar('--route-main'),strokeOpacity:1,strokeWeight:8});
         routePolys.push(glow,outline,main);
 
-        // overview rectangle
-        overviewRect=new google.maps.Rectangle({
-          map:overviewMap,
-          bounds:currentBounds,
-          strokeColor:'#60a5fa',strokeOpacity:.9,strokeWeight:2,fillOpacity:0
-        });
+        overviewRect=new google.maps.Rectangle({map:overviewMap,bounds:currentBounds,strokeColor:'#60a5fa',strokeOpacity:.9,strokeWeight:2,fillOpacity:0});
 
-        // minutes (kept internal)
         const leg=r.legs[0]; const seconds=(leg.duration_in_traffic?.value||leg.duration.value);
         liveMinutes=Math.round(seconds/60);
         gaEvent('route_shown',{city:routeOfDay.city});
@@ -411,8 +445,6 @@
       }else{showMarkersOnly();}
     });
   }
-
-  function getVar(name){return getComputedStyle(document.documentElement).getPropertyValue(name).trim();}
 
   function applyRouteStyle(){
     const high=$("contrastToggle").checked;
@@ -423,28 +455,26 @@
       main.setOptions({strokeWeight:high?8:6});
     }
     if(high && routePolys.length){
-      if(!routePolys._dash){
-        routePolys._dash=new google.maps.Polyline({
+      if(!routeDash){
+        routeDash=new google.maps.Polyline({
           path:routePolys[routePolys.length-1].getPath(), map,
           strokeColor:getVar('--route-alt'), strokeOpacity:.95, strokeWeight:3,
           icons:[{icon:{path:'M 0,-1 0,1',strokeOpacity:1,scale:4},offset:'0',repeat:'16px'}]
         });
-      }else{ routePolys._dash.setMap(map); }
-    }else if(routePolys._dash){ routePolys._dash.setMap(null); }
+      }else{ routeDash.setMap(map); }
+    }else if(routeDash){ routeDash.setMap(null); }
   }
 
   function showMarkersOnly(){
     if(window.google?.maps && !map){
-      map=new google.maps.Map($("map"),{center:routeOfDay.origin,zoom:12,disableDefaultUI:false,zoomControl:true,scaleControl:true,backgroundColor:'#0b1328'});
+      map=new google.maps.Map($("map"),{center:routeOfDay.origin,zoom:12,disableDefaultUI:false,zoomControl:true,scaleControl:true,backgroundColor:'#0b1328',styles:STYLE_DETAIL});
     }
     clearRouteLayers();
     if(window.google?.maps){
       originMarker=new google.maps.Marker({position:routeOfDay.origin,map,title:`Origin: ${routeOfDay.origin.label}`,icon:svgMarker('A','#ff6b6b')});
       destMarker=new google.maps.Marker({position:routeOfDay.dest,map,title:`Destination: ${routeOfDay.dest.label}`,icon:svgMarker('B','#5eead4')});
       const b=new google.maps.LatLngBounds(); b.extend(routeOfDay.origin); b.extend(routeOfDay.dest);
-      currentBounds=b;
-      map.fitBounds(b,{top:40,left:40,right:40,bottom:40});
-      if(overviewMap){overviewMap.fitBounds(b);}
+      currentBounds=b; map.fitBounds(b,{top:40,left:40,right:40,bottom:40}); if(overviewMap){overviewMap.fitBounds(b);}
     }
     liveMinutes=null; $("distanceBadge").textContent='—';
     gaEvent('route_fallback',{city:routeOfDay.city});
@@ -465,11 +495,20 @@
   function renderTables(){const tb1=$("tblDaily").querySelector('tbody');tb1.innerHTML='';guesses.forEach((g,i)=>{const tr=document.createElement('tr');tr.innerHTML=`<td>${i+1}</td><td>${g.min} min</td><td>${verdictEmoji(g.verdict)} ${g.verdict==='lose'?(g.dir==='high'?'(high)':'(low)'):''}</td><td>${new Date(g.ts).toLocaleTimeString()}</td>`;tb1.appendChild(tr);});const tb2=$("tblAllTime").querySelector('tbody');tb2.innerHTML='';(load(keyAllTime(),[])).slice(-10).forEach((r,i)=>{const tr=document.createElement('tr');tr.innerHTML=`<td>${i+1}</td><td>${r.city}</td><td>${verdictEmoji(r.result)}</td><td>${r.date}</td>`;tb2.appendChild(tr);});}
 
   /*************** SHARE ***************/
-  function buildShareCard(){let grid='';for(const g of guesses){grid+=g.verdict==='win'?'🟩':g.verdict==='near'?'🟨':'🟥';}grid+='⬜'.repeat(Math.max(0,MAX_GUESSES-guesses.length));const status=won?'Solved':(revealed?'Gave up':`${guesses.length}/${MAX_GUESSES}`);return `TripGuessr ${todayISO}\n${routeOfDay.city}\n${grid}\n${status}\ntripguessr.com`;}
-  function renderShareCard(){$("shareCard").textContent=buildShareCard();}
-  async function copyShare(){try{await navigator.clipboard.writeText(buildShareCard());$("shareNote").textContent='Copied!';gaEvent('share_copied',{city:routeOfDay.city});setTimeout(()=>$("shareNote").textContent='Wordle‑style text copied to clipboard',1200);}catch(e){$("shareNote").textContent='Copy failed — select text below';}}
+  function buildShareCard(){
+    let grid=''; for(const g of guesses){ grid += (g.verdict==='win'?'🟩':g.verdict==='near'?'🟨':'🟥'); }
+    grid += '⬜'.repeat(Math.max(0, MAX_GUESSES - guesses.length));
+    const status = won ? 'Solved' : revealed ? 'Gave up' : `${guesses.length}/${MAX_GUESSES}`;
+    return `TripGuessr ${todayISO}\n${routeOfDay.city}\n${grid}\n${status}\nhttps://jaceybarra.github.io/TripGuessr/`;
+  }
+  function renderShareCard(){ $("shareCard").textContent = buildShareCard(); }
+  async function copyShare(){
+    try{ await navigator.clipboard.writeText(buildShareCard()); $("shareNote").textContent='Copied!'; gaEvent('share_copied',{city:routeOfDay.city}); setTimeout(()=>$("shareNote").textContent='Wordle‑style text copied to clipboard',1200); }
+    catch(e){ $("shareNote").textContent='Copy failed — select text below'; }
+  }
 
-  document.addEventListener('DOMContentLoaded',appBoot);
+  // BOOT
+  document.addEventListener('DOMContentLoaded', appBoot);
   </script>
 </body>
 </html>
