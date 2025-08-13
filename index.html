@@ -21,9 +21,7 @@
     html, body { margin: 0; padding: 0; height: 100%; color: var(--text); background: linear-gradient(180deg, #0b1020, #0b1020 30%, #0e162b 100%); font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; }
     a { color: var(--accent); text-decoration: none; }
     .container { max-width: 1100px; margin: 0 auto; padding: 24px; }
-    header.hero {
-      display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 24px; align-items: center; margin: 12px 0 20px;
-    }
+    header.hero { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 24px; align-items: center; margin: 12px 0 20px; }
     .hero-card {
       background: radial-gradient(1200px 600px at -20% -60%, rgba(96,165,250,.15), rgba(96,165,250,0) 40%),
                   radial-gradient(900px 600px at 120% -40%, rgba(34,197,94,.15), rgba(34,197,94,0) 35%),
@@ -47,23 +45,17 @@
     .btn.ghost { background: transparent; border: 1px dashed #334166; }
     .toggleRow { display:flex; gap:10px; flex-wrap:wrap; margin-top:8px; }
     .toggle { display:inline-flex; gap:8px; align-items:center; border:1px solid var(--border); padding:8px 10px; border-radius:12px; font-size:13px; color:var(--muted); background:#0c142a; }
-    .panel {
-      background: var(--card); border:1px solid var(--border); border-radius: 18px; padding: 16px; margin-bottom: 16px;
-      box-shadow: 0 10px 30px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.04);
-    }
+    .panel { background: var(--card); border:1px solid var(--border); border-radius: 18px; padding: 16px; margin-bottom: 16px; box-shadow: 0 10px 30px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.04); }
     .grid { display:grid; grid-template-columns: 1.4fr 1fr; gap:16px; }
     #map { width: 100%; height: 420px; border-radius: 14px; border:1px solid var(--border); background:#0b1328; }
     .info { display:grid; gap:10px; }
     .row { display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
-    .pill {
-      border:1px solid var(--border); background:#0c142a; padding:8px 12px; border-radius:999px; color:var(--muted); font-size:13px;
-    }
+    .pill { border:1px solid var(--border); background:#0c142a; padding:8px 12px; border-radius:999px; color:var(--muted); font-size:13px; }
     .game-card { display:grid; gap:12px; }
     .guessRow { display:flex; gap:10px; align-items:center; }
     input[type=number] {
       width: 140px; padding: 12px 12px; background:#0b1328; color:var(--text);
-      border:1px solid var(--border); border-radius: 12px; font-size:16px;
-      outline:none;
+      border:1px solid var(--border); border-radius: 12px; font-size:16px; outline:none;
     }
     .result { font-weight: 800; padding: 10px 12px; border-radius: 12px; }
     .result.win { background: rgba(34,197,94,.1); border:1px solid rgba(34,197,94,.25); color:#86efac; }
@@ -82,8 +74,6 @@
     footer { color:var(--muted); font-size:12px; text-align:center; padding:24px 8px 56px; }
     .streak { font-weight:800; color:#93c5fd; }
     .hidden { display: none !important; }
-
-    /* Mobile */
     @media (max-width: 900px) {
       header.hero { grid-template-columns: 1fr; }
       .grid { grid-template-columns: 1fr; }
@@ -93,18 +83,17 @@
 </head>
 <body>
   <div class="container">
-    <!-- HERO -->
     <header class="hero">
       <div class="hero-card">
         <h1 class="title">TripGuessr</h1>
-        <p class="subtitle">Guess today’s real‑world driving time between two places somewhere in the U.S. A new city every day. Nail it, nearly nail it, or try again tomorrow.</p>
+        <p class="subtitle">Guess today’s real‑world driving time between two places somewhere in the U.S. A new city every day.</p>
         <div class="ctaRow">
           <a href="#game" class="btn primary" id="ctaPlay">Play today’s route</a>
           <button class="btn ghost" id="btnShareRules">How it works</button>
         </div>
         <div class="toggleRow">
-          <label class="toggle"><input type="checkbox" id="darkToggle" /> Dark mode</label>
-          <span class="muted">Daily tolerance: ±5% (min 2 min) for a “So Close!”</span>
+          <label class="toggle"><input type="checkbox" id="darkToggle" checked /> Dark mode</label>
+          <span class="muted">Near‑miss window is fixed daily. We won’t show % or how far off.</span>
         </div>
       </div>
       <div class="panel">
@@ -119,7 +108,6 @@
       </div>
     </header>
 
-    <!-- GAME -->
     <section id="game" class="grid">
       <div class="panel game-card">
         <div class="row">
@@ -134,7 +122,7 @@
         </div>
 
         <div id="resultBox" class="result hidden"></div>
-        <div class="muted">You get up to 6 guesses. Exact = Win 🟩 | Near miss = 🟨 | Otherwise 🟥</div>
+        <div class="muted">You get up to 6 guesses. We’ll only tell you if you’re too high or too low (or “So close!”).</div>
 
         <div class="shareBox">
           <div class="row">
@@ -151,34 +139,33 @@
           <div>
             <h4 style="margin:8px 0;">Daily (this device)</h4>
             <table id="tblDaily">
-              <thead><tr><th>#</th><th>Guess</th><th>Off by</th><th>Time</th></tr></thead>
+              <thead><tr><th>#</th><th>Guess</th><th>Result</th><th>Time</th></tr></thead>
               <tbody></tbody>
             </table>
           </div>
           <div>
-            <h4 style="margin:8px 0;">All‑Time Best (this device)</h4>
+            <h4 style="margin:8px 0;">All‑Time (this device)</h4>
             <table id="tblAllTime">
-              <thead><tr><th>#</th><th>City</th><th>Diff</th><th>Date</th></tr></thead>
+              <thead><tr><th>#</th><th>City</th><th>Result</th><th>Date</th></tr></thead>
               <tbody></tbody>
             </table>
           </div>
         </div>
-        <div class="muted" style="margin-top:6px;">Pro tip: use the share card after you win to challenge friends.</div>
+        <div class="muted" style="margin-top:6px;">Share your grid after you finish to challenge friends.</div>
       </div>
     </section>
 
     <footer>
       <div id="howItWorks" class="hidden">
-        <p><strong>How it works:</strong> A new U.S. city is selected each day. We show a real route; you guess the driving time (in minutes). We use live directions if possible; if not, we fall back to a stored baseline time. You get 6 tries. Exact = 🟩, within ±5% (min 2 min) = 🟨, else 🟥. Come back tomorrow for a new route!</p>
+        <p><strong>How it works:</strong> A new U.S. city is selected each day. We show a real route; you guess the driving time (in minutes). We’ll never show how far off you are during the game—only “Too high/Too low” or “So close!”. You get 6 tries.</p>
       </div>
       <p>© <span id="year"></span> TripGuessr</p>
     </footer>
   </div>
 
-  <!-- Confetti for wins/near-misses -->
   <canvas id="confetti" class="hidden" style="position:fixed; inset:0; pointer-events:none;"></canvas>
 
-  <!-- Google Analytics (GA4) -->
+  <!-- GA4 -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
@@ -188,14 +175,13 @@
     function gaEvent(name, params={}) { try { gtag('event', name, params); } catch(e){} }
   </script>
 
+  <!-- Google Maps JavaScript API -->
   <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDJhWz8jA_KfdQCZ1jE_z8RPGuvcQBVKFM&callback=initApp&libraries=geometry"></script>
 
   <script>
-    /***************
-     * DATA: 50 U.S. city routes (one per city), each with:
-     * city, origin {lat,lng,label}, dest {lat,lng,label}, baselineMinutes (fallback)
-     * NOTE: Baselines are conservative approximations. Live API overrides when available.
-     ***************/
+    /* =========================
+       DATA: 50 U.S. city routes
+       ========================= */
     const ROUTES = [
       { city:"New York, NY", origin:{lat:40.758, lng:-73.9855, label:"Times Sq"}, dest:{lat:40.7061, lng:-74.0087, label:"Wall St"}, baselineMinutes:22 },
       { city:"Los Angeles, CA", origin:{lat:34.1381, lng:-118.3534, label:"Universal Studios"}, dest:{lat:34.011, lng:-118.495, label:"Santa Monica Pier"}, baselineMinutes:38 },
@@ -240,7 +226,7 @@
       { city:"Minneapolis, MN", origin:{lat:44.979, lng:-93.265, label:"Nicollet Mall"}, dest:{lat:44.974, lng:-93.258, label:"US Bank Stadium"}, baselineMinutes:10 },
       { city:"New Orleans, LA", origin:{lat:29.9547, lng:-90.0751, label:"Jackson Sq"}, dest:{lat:29.949, lng:-90.081, label:"Caesars Superdome"}, baselineMinutes:11 },
       { city:"Honolulu, HI", origin:{lat:21.3069, lng:-157.8583, label:"Iolani Palace"}, dest:{lat:21.2767, lng:-157.827, label:"Waikiki"}, baselineMinutes:22 },
-      { city:"Salt Lake City, UT", origin:{lat:40.7608, lng:-111.8910, label:"Temple Sq"}, dest:{lat:40.768, lng:-111.901, label:"Vivint/SLC Delta"}, baselineMinutes:10 },
+      { city:"Salt Lake City, UT", origin:{lat:40.7608, lng:-111.8910, label:"Temple Sq"}, dest:{lat:40.768, lng:-111.901, label:"Delta Center"}, baselineMinutes:10 },
       { city:"Boise, ID", origin:{lat:43.615, lng:-116.202, label:"Capitol"}, dest:{lat:43.608, lng:-116.215, label:"Albertsons Stadium"}, baselineMinutes:11 },
       { city:"Anchorage, AK", origin:{lat:61.2181, lng:-149.9003, label:"Town Sq"}, dest:{lat:61.187, lng:-149.887, label:"Airport vicinity"}, baselineMinutes:24 },
       { city:"Birmingham, AL", origin:{lat:33.5207, lng:-86.8025, label:"Railroad Park"}, dest:{lat:33.511, lng:-86.843, label:"Protective Stadium"}, baselineMinutes:13 },
@@ -251,21 +237,20 @@
       { city:"Tampa, FL", origin:{lat:27.9506, lng:-82.4572, label:"Riverwalk"}, dest:{lat:27.9427, lng:-82.451, label:"Amalie Arena"}, baselineMinutes:10 }
     ];
 
-    /***************
-     * CONFIG + CONSTANTS
-     ***************/
+    /* ================
+       CONFIG/CONSTS
+       ================ */
     const MAX_GUESSES = 6;
     const NEAR_TOL_PCT = 0.05; // 5%
     const NEAR_TOL_MIN = 2;    // minutes
-    const STORAGE_PREFIX = "tripguessr_v3";
+    const STORAGE_PREFIX = "tripguessr_v4";
     const todayISO = new Date().toISOString().slice(0,10);
     const yearEl = () => document.getElementById("year").textContent = new Date().getFullYear();
 
-    /***************
-     * UTILITIES
-     ***************/
+    /* ===========
+       UTILITIES
+       =========== */
     function seededIndex(seedStr, mod) {
-      // simple xorshift-ish from date string to stable int
       let h = 2166136261;
       for (let i=0;i<seedStr.length;i++) {
         h ^= seedStr.charCodeAt(i);
@@ -275,40 +260,39 @@
     }
     function store(key, value){ localStorage.setItem(`${STORAGE_PREFIX}:${key}`, JSON.stringify(value)); }
     function load(key, def=null){ const v = localStorage.getItem(`${STORAGE_PREFIX}:${key}`); return v ? JSON.parse(v) : def; }
-    const fmt = (m) => `${Math.round(m)} min`;
     const clamp = (n,mi,ma)=> Math.max(mi, Math.min(ma,n));
 
-    /***************
-     * STATE
-     ***************/
+    /* =====
+       STATE
+       ===== */
     let map, directions, directionsRenderer;
-    let routeOfDay = null;            // selected from ROUTES
-    let liveMinutes = null;           // minutes from Maps Directions if available
-    let fallbackMinutes = null;       // baselineMinutes
-    let guesses = [];                 // array of {min, diff, verdict}
-    let won = false;                  // exact
-    let nearHit = false;              // near
-    let revealed = false;             // gave up
+    let routeOfDay = null;
+    let liveMinutes = null;
+    let fallbackMinutes = null;
+    let guesses = [];
+    let won = false;
+    let nearHit = false;
+    let revealed = false;
     let confettiCtx, confettiTimer;
 
-    /***************
-     * INIT
-     ***************/
+    /* ====
+       INIT
+       ==== */
     window.initApp = function() {
       yearEl();
       document.getElementById('pillDate').textContent = todayISO;
 
-      // pick today's route (random but stable by date)
+      // Stable daily pick
       const idx = seededIndex(todayISO + '-US50', ROUTES.length);
       routeOfDay = ROUTES[idx];
       fallbackMinutes = routeOfDay.baselineMinutes;
 
-      // set labels
+      // Labels
       document.getElementById('pillCity').textContent = routeOfDay.city;
       document.getElementById('originLabel').textContent = routeOfDay.origin.label;
       document.getElementById('destLabel').textContent = routeOfDay.dest.label;
 
-      // map
+      // Map
       map = new google.maps.Map(document.getElementById('map'), {
         center: routeOfDay.origin, zoom: 12, disableDefaultUI: true, backgroundColor: '#0b1328',
         styles: [{elementType:'geometry', stylers:[{color:'#0b1328'}]},{elementType:'labels.text.fill', stylers:[{color:'#94a3b8'}]}]
@@ -316,16 +300,16 @@
       directions = new google.maps.DirectionsService();
       directionsRenderer = new google.maps.DirectionsRenderer({ map, suppressMarkers: false, preserveViewport: false, polylineOptions: { strokeOpacity:.9, strokeWeight:6 }});
 
-      // render route automatically on load
+      // ✅ Auto‑render route on load (no button needed)
       renderRoute();
 
-      // restore progress if any
+      // Restore today’s progress
       restoreDailyState();
 
-      // bind UI
+      // Bind UI
       bindUI();
 
-      // GA: page load
+      // GA
       gaEvent('page_view', { page_title: 'TripGuessr', page_location: location.href });
     };
 
@@ -337,41 +321,35 @@
       document.getElementById('btnShareRules').addEventListener('click', ()=> toggleHowItWorks());
       document.getElementById('ctaPlay').addEventListener('click', ()=> document.getElementById('guessMinutes').focus());
       document.getElementById('darkToggle').addEventListener('change', (e)=> toggleDark(e.target.checked));
-      // init dark toggle to ON by default
-      document.getElementById('darkToggle').checked = true;
     }
 
     function toggleHowItWorks(){
-      const el = document.getElementById('howItWorks');
-      el.classList.toggle('hidden');
+      document.getElementById('howItWorks').classList.toggle('hidden');
     }
     function toggleDark(on){
       document.body.style.background = on ? 'linear-gradient(180deg, #0b1020, #0b1020 30%, #0e162b 100%)' : '#f5f7fb';
     }
 
-    /***************
-     * MAPS + ROUTE
-     ***************/
+    /* ===========
+       MAPS/ROUTE
+       =========== */
     function renderRoute(){
       const req = {
         origin: routeOfDay.origin,
         destination: routeOfDay.dest,
         travelMode: google.maps.TravelMode.DRIVING,
         provideRouteAlternatives: false,
-        drivingOptions: { departureTime: new Date(Date.now() + 60*1000) } // "current-ish" time for traffic
+        drivingOptions: { departureTime: new Date(Date.now() + 60*1000) }
       };
       directions.route(req, (res, status)=>{
         if(status === 'OK' && res.routes?.[0]?.legs?.[0]){
           directionsRenderer.setDirections(res);
           const leg = res.routes[0].legs[0];
-          // prefer duration_in_traffic; fallback to duration
           const seconds = (leg.duration_in_traffic?.value || leg.duration.value);
           liveMinutes = Math.round(seconds/60);
-          // center fit
           map.fitBounds(res.routes[0].bounds);
-          gaEvent('route_shown', { city: routeOfDay.city, minutes_live: liveMinutes });
+          gaEvent('route_shown', { city: routeOfDay.city });
         } else {
-          // fallback visuals: place start/end markers manually
           new google.maps.Marker({ position: routeOfDay.origin, map, title: routeOfDay.origin.label });
           new google.maps.Marker({ position: routeOfDay.dest, map, title: routeOfDay.dest.label });
           liveMinutes = null;
@@ -379,20 +357,20 @@
         }
       });
     }
+    const answerMinutes = ()=> (liveMinutes ?? fallbackMinutes);
 
-    function answerMinutes(){
-      return (liveMinutes ?? fallbackMinutes);
-    }
+    /* ===========
+       GAME LOGIC
+       =========== */
+    const NEAR_TOL_PCT = 0.05; // 5%
+    const NEAR_TOL_MIN = 2;
 
-    /***************
-     * GAME LOGIC
-     ***************/
     function verdictForGuess(guess, answer){
       const diff = Math.abs(guess - answer);
-      if (guess === answer) return { verdict:'win', diff };
+      if (guess === answer) return { verdict:'win' };
       const tol = Math.max(NEAR_TOL_MIN, Math.round(answer * NEAR_TOL_PCT));
-      if (diff <= tol) return { verdict:'near', diff };
-      return { verdict:'lose', diff };
+      if (diff <= tol) return { verdict:'near', dir: guess > answer ? 'high' : 'low' };
+      return { verdict:'lose', dir: guess > answer ? 'high' : 'low' };
     }
 
     function onGuess(){
@@ -404,40 +382,32 @@
         showResult('Please enter a valid positive number of minutes.', 'lose', true);
         return;
       }
+      const gmin = Math.round(val);
       const answer = answerMinutes();
-      const result = verdictForGuess(Math.round(val), answer);
-      guesses.push({ min: Math.round(val), diff: result.diff, verdict: result.verdict, ts: Date.now() });
+      const result = verdictForGuess(gmin, answer);
 
-      // update state
+      guesses.push({ min: gmin, verdict: result.verdict, dir: result.dir || null, ts: Date.now() });
+
       if (result.verdict === 'win') { won = true; addStreak(1); celebrate('win'); }
-      if (result.verdict === 'near') { nearHit = true; celebrate('near'); }
-      if (guesses.length >= MAX_GUESSES && !won) { revealed = true; addStreak(0); }
+      else if (result.verdict === 'near') { nearHit = true; celebrate('near'); }
+      else if (guesses.length >= MAX_GUESSES) { revealed = true; addStreak(0); }
 
-      // show message
+      // ✅ No numbers or % given away — just direction or “So close!”
       if (result.verdict === 'win'){
-        showResult(`Exact! ${fmt(answer)} 🟩`, 'win');
+        showResult(`Exact! ${answer} min 🟩`, 'win');
       } else if (result.verdict === 'near') {
-        const tol = Math.max(NEAR_TOL_MIN, Math.round(answer * NEAR_TOL_PCT));
-        showResult(`So close! Off by ${result.diff} min (tolerance ±${tol} min). Answer is ${fmt(answer)}. 🟨`, 'near');
+        showResult(`So close! 🟨`, 'near');
       } else {
-        const remaining = MAX_GUESSES - guesses.length;
-        if (remaining > 0) {
-          showResult(`Nope. You’re off by ${result.diff} min. ${remaining} guesses left. 🟥`, 'lose');
-        } else {
-          showResult(`Out of guesses. Answer: ${fmt(answer)}.`, 'lose');
-        }
+        showResult(result.dir === 'high' ? 'Too high.' : 'Too low.', 'lose');
       }
 
-      // GA event
       gaEvent('guess_submitted', {
         city: routeOfDay.city,
-        guess: Math.round(val),
-        answer: answer,
+        guess: gmin,
         verdict: result.verdict,
         guess_index: guesses.length
       });
 
-      // persist + refresh UI
       persistDailyState();
       renderTables();
       renderShareCard();
@@ -450,8 +420,8 @@
       revealed = true;
       addStreak(0);
       const ans = answerMinutes();
-      showResult(`You gave up. Answer: ${fmt(ans)}.`, 'lose');
-      gaEvent('gave_up', { city: routeOfDay.city, answer: ans });
+      showResult(`You gave up. Answer: ${ans} min.`, 'lose');
+      gaEvent('gave_up', { city: routeOfDay.city });
       persistDailyState();
       renderTables();
       renderShareCard();
@@ -462,9 +432,7 @@
       el.className = `result ${type}`;
       el.textContent = text;
       el.classList.remove('hidden');
-      if (transient){
-        setTimeout(()=> el.classList.add('hidden'), 2200);
-      }
+      if (transient) setTimeout(()=> el.classList.add('hidden'), 2000);
     }
 
     function celebrate(kind){
@@ -493,9 +461,9 @@
       setTimeout(()=>{ clearInterval(confettiTimer); canvas.classList.add('hidden'); }, 1800);
     }
 
-    /***************
-     * PERSISTENCE (local device leaderboards + streaks)
-     ***************/
+    /* =================
+       PERSIST & TABLES
+       ================= */
     function keyDaily(){ return `daily:${todayISO}`; }
     function keyAllTime(){ return `alltime`; }
     function keyStreak(){ return `streak`; }
@@ -505,109 +473,88 @@
       const data = { city: routeOfDay.city, answer: answerMinutes(), guesses, won, nearHit, revealed };
       store(keyDaily(), data);
 
-      // update all-time bests
-      if (guesses.length){
-        const last = guesses[guesses.length-1];
+      // All-time “finished attempts” log (no diffs stored to avoid reverse‑calc meta)
+      if (won || revealed) {
         const bests = load(keyAllTime(), []);
         bests.push({
-          date: todayISO, city: routeOfDay.city, diff: last.diff, verdict: last.verdict, guess: last.min, answer: answerMinutes()
+          date: todayISO, city: routeOfDay.city, result: won ? 'win' : (nearHit ? 'near' : 'gave up')
         });
-        // keep top 100 by smallest diff
-        bests.sort((a,b)=> a.diff - b.diff); 
-        store(keyAllTime(), bests.slice(0,100));
+        store(keyAllTime(), bests.slice(-100));
       }
     }
 
     function restoreDailyState(){
-      // streak
-      const last = load(keyLastPlayed(), null);
-      if (last && last !== todayISO){
-        // if yesterday won, keep streak, else reset (handled in addStreak when they play)
-      }
       const s = load(keyStreak(), 0);
       document.getElementById('streakVal').textContent = s;
 
-      // daily state
       const data = load(keyDaily(), null);
       if (data && data.city === routeOfDay.city){
         guesses = data.guesses || [];
         won = !!data.won; nearHit = !!data.nearHit; revealed = !!data.revealed;
         renderTables();
         renderShareCard();
-        if (won) showResult(`Carried over: You already won today! ${fmt(data.answer)} 🟩`,'win');
-        else if (revealed) showResult(`Carried over: Answer was ${fmt(data.answer)}.`,'lose');
+        if (won) showResult(`Carried over: You already won today! ${data.answer} min 🟩`,'win');
+        else if (revealed) showResult(`Carried over: Answer was ${data.answer} min.`,'lose');
       }
       store(keyLastPlayed(), todayISO);
     }
 
-    function addStreak(outcome){
-      // outcome 1 = success (win/near), 0 = fail/give up
+    function addStreak(ok){
       let s = load(keyStreak(), 0);
-      if (outcome === 1) s += 1; else s = 0;
+      s = ok ? s+1 : 0;
       store(keyStreak(), s);
       document.getElementById('streakVal').textContent = s;
     }
 
+    function verdictEmoji(v){
+      return v==='win'?'🟩':(v==='near'?'🟨':'🟥');
+    }
+
     function renderTables(){
-      // Daily table = list of your guesses for today
       const tb1 = document.querySelector('#tblDaily tbody'); tb1.innerHTML = '';
       guesses.forEach((g, i)=>{
         const tr = document.createElement('tr');
-        tr.innerHTML = `<td>${i+1}</td><td>${g.min} min</td><td>${g.diff} min</td><td>${new Date(g.ts).toLocaleTimeString()}</td>`;
+        tr.innerHTML = `<td>${i+1}</td><td>${g.min} min</td><td>${verdictEmoji(g.verdict)} ${g.verdict==='lose'?(g.dir==='high'?'(high)':'(low)'):''}</td><td>${new Date(g.ts).toLocaleTimeString()}</td>`;
         tb1.appendChild(tr);
       });
-      // All-time = top diffs (smallest first)
+
       const tb2 = document.querySelector('#tblAllTime tbody'); tb2.innerHTML = '';
-      (load(keyAllTime(), [])).slice(0,10).forEach((r,i)=>{
+      (load(keyAllTime(), [])).slice(-10).forEach((r,i)=>{
         const tr = document.createElement('tr');
-        tr.innerHTML = `<td>${i+1}</td><td>${r.city}</td><td>${r.diff} min</td><td>${r.date}</td>`;
+        tr.innerHTML = `<td>${i+1}</td><td>${r.city}</td><td>${verdictEmoji(r.result)}</td><td>${r.date}</td>`;
         tb2.appendChild(tr);
       });
     }
 
-    /***************
-     * SHARE CARD (Wordle style)
-     ***************/
+    /* ===============
+       SHARE (no answer given away in grid text)
+       =============== */
     function buildShareCard(){
-      const answer = answerMinutes();
-      const header = `TripGuessr ${todayISO}\n${routeOfDay.city} • ${routeOfDay.origin.label} → ${routeOfDay.dest.label}\n`;
+      const header = `TripGuessr ${todayISO}\n${routeOfDay.city}\n`;
       let grid = '';
-      let firstNearShown = false;
-      const tol = Math.max(NEAR_TOL_MIN, Math.round(answer * NEAR_TOL_PCT));
       for (let i=0;i<guesses.length;i++){
-        const g = guesses[i];
-        if (g.verdict === 'win') grid += '🟩';
-        else if (g.verdict === 'near') { grid += '🟨'; firstNearShown = true; }
-        else grid += '🟥';
+        const v = guesses[i].verdict;
+        grid += v==='win'?'🟩':(v==='near'?'🟨':'🟥');
       }
-      // pad with gray for remaining attempts
       grid += '⬜'.repeat(Math.max(0, MAX_GUESSES - guesses.length));
-      const footer = `\n${won ? 'Solved' : revealed ? 'Gave up' : `${guesses.length}/${MAX_GUESSES}`} • Answer ${fmt(answer)}${firstNearShown?` (±${tol} min)`:''}\ntripguessr.com`;
+      const footer = `\n${won ? 'Solved' : revealed ? 'Gave up' : `${guesses.length}/${MAX_GUESSES}`}\ntripguessr.com`;
       return `${header}${grid}${footer}`;
     }
-
     function renderShareCard(){
-      const text = buildShareCard();
-      document.getElementById('shareCard').textContent = text;
+      document.getElementById('shareCard').textContent = buildShareCard();
     }
-
     async function copyShare(){
-      const text = buildShareCard();
       try {
-        await navigator.clipboard.writeText(text);
+        await navigator.clipboard.writeText(buildShareCard());
         document.getElementById('shareNote').textContent = 'Copied!';
         gaEvent('share_copied', { city: routeOfDay.city });
         setTimeout(()=> document.getElementById('shareNote').textContent = 'Wordle‑style text copied to clipboard', 1400);
       } catch(e){
-        // show the box, user can copy manually
         document.getElementById('shareNote').textContent = 'Copy failed — select text below';
       }
     }
 
-    /***************
-     * NICE TOUCHES
-     ***************/
-    // Auto-focus guess box on section view
+    /* Nice touch: focus input after jump */
     window.addEventListener('hashchange', ()=>{
       if (location.hash === '#game') setTimeout(()=> document.getElementById('guessMinutes').focus(), 100);
     });
