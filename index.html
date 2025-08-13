@@ -2,377 +2,615 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>TripGuesser – Daily Driving Challenge</title>
+  <title>TripGuessr – Daily Driving Challenge</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <!-- Keep your key here or load via env at build time -->
-  <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDJhWz8jA_KfdQCZ1jE_z8RPGuvcQBVKFM"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
+  <meta name="theme-color" content="#111827" />
   <style>
     :root {
-      --bg:#f6f7f9;
-      --card:#ffffff;
-      --text:#1f2328;
-      --muted:#6b7280;
-      --primary:#2563eb;
-      --primary-600:#1d4ed8;
-      --success:#16a34a;
-      --danger:#dc2626;
-      --border:#e5e7eb;
-      --chip:#eef2ff;
+      --bg: #0b1020;
+      --card: #121a33;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --accent: #60a5fa;
+      --win: #22c55e;
+      --near: #f59e0b;
+      --lose: #ef4444;
+      --border: #243053;
     }
     * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      display: grid;
-      place-items: center;
-      min-height: 100vh;
-      padding: 16px;
+    html, body { margin: 0; padding: 0; height: 100%; color: var(--text); background: linear-gradient(180deg, #0b1020, #0b1020 30%, #0e162b 100%); font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; }
+    a { color: var(--accent); text-decoration: none; }
+    .container { max-width: 1100px; margin: 0 auto; padding: 24px; }
+    header.hero {
+      display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 24px; align-items: center; margin: 12px 0 20px;
     }
-    #app {
-      background: var(--card);
+    .hero-card {
+      background: radial-gradient(1200px 600px at -20% -60%, rgba(96,165,250,.15), rgba(96,165,250,0) 40%),
+                  radial-gradient(900px 600px at 120% -40%, rgba(34,197,94,.15), rgba(34,197,94,0) 35%),
+                  var(--card);
       border: 1px solid var(--border);
-      border-radius: 14px;
-      box-shadow: 0 12px 30px rgba(0,0,0,.06);
-      overflow: hidden;
-      max-width: 1000px;
-      width: 100%;
-      display: grid;
-      grid-template-rows: auto auto 1fr;
+      border-radius: 20px; padding: 28px;
+      box-shadow: 0 30px 70px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.03);
     }
-    /* Header */
-    #game-ui {
-      padding: 22px 20px 14px;
-      border-bottom: 1px solid var(--border);
+    .title { font-size: clamp(28px, 4vw, 44px); font-weight: 800; letter-spacing: .2px; line-height: 1.05; margin: 0 0 10px; }
+    .subtitle { color: var(--muted); font-size: clamp(14px, 2.2vw, 18px); margin: 0 0 18px; }
+    .ctaRow { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+    .btn {
+      background: linear-gradient(180deg, #1f2937, #111827);
+      color: var(--text); border: 1px solid var(--border);
+      padding: 12px 16px; border-radius: 14px; font-weight: 700; cursor: pointer;
+      box-shadow: 0 8px 24px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.06);
+      transition: transform .08s ease, box-shadow .12s ease, border-color .12s ease;
     }
-    #top-row { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
-    #title-wrap { display:flex; align-items:center; gap:10px; }
-    #game-title { font-size: 26px; margin: 0; }
-    #city-chip {
-      font-size: 13px; color: var(--primary);
-      background: var(--chip); border: 1px solid #dbe3ff;
-      padding: 6px 10px; border-radius: 999px; font-weight:600;
+    .btn:hover { transform: translateY(-1px); border-color:#2f3e6a; box-shadow: 0 10px 30px rgba(0,0,0,.32), inset 0 1px 0 rgba(255,255,255,.08); }
+    .btn.primary { background: linear-gradient(180deg, #2563eb, #1d4ed8); border-color: #1e3a8a; }
+    .btn.ghost { background: transparent; border: 1px dashed #334166; }
+    .toggleRow { display:flex; gap:10px; flex-wrap:wrap; margin-top:8px; }
+    .toggle { display:inline-flex; gap:8px; align-items:center; border:1px solid var(--border); padding:8px 10px; border-radius:12px; font-size:13px; color:var(--muted); background:#0c142a; }
+    .panel {
+      background: var(--card); border:1px solid var(--border); border-radius: 18px; padding: 16px; margin-bottom: 16px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.04);
     }
-    #game-subtitle { margin: 6px 0 0; color: var(--muted); font-size: 14px; }
-    /* Controls */
-    #controls {
-      display: grid; gap: 10px; padding: 14px 20px 6px;
-      grid-template-columns: 1fr auto;
-    }
-    .control {
-      display:flex; align-items:center; gap:8px; border:1px solid var(--border); border-radius:10px; padding:10px 12px; background:#fff;
-    }
-    .control label { font-size:12px; color:var(--muted); white-space:nowrap; }
-    .control input[type="number"] { width:100%; border:none; outline:none; font-size:16px; }
-    button.primary {
-      background: var(--primary); color:#fff; border:none; border-radius:10px; padding:12px 16px; font-weight:700; cursor:pointer;
-    }
-    button.primary:hover { background: var(--primary-600); }
-    button.secondary {
-      background:#fff; border:1px solid var(--border); border-radius:10px; padding:12px 14px; cursor:pointer; font-weight:600;
-    }
-    /* Progress + Result */
-    #meta {
-      display:flex; align-items:center; justify-content:space-between; gap:12px; padding: 0 20px 14px;
-    }
-    #progress-wrap { width:100%; background:#f1f5f9; border-radius:999px; height:10px; overflow:hidden; border:1px solid var(--border); }
-    #progress { height:100%; width:0%; background:var(--primary); transition:width .25s ease; }
-    #result {
-      padding: 10px 14px; margin: 0 20px 12px;
-      border-radius:10px; border:1px dashed var(--border); color:var(--muted); font-weight:600; min-height: 44px;
-      display:flex; align-items:center; justify-content:space-between; gap:8px;
-    }
-    #result .actual { color:var(--text); font-weight:700; }
-    /* Guess history */
-    #history {
-      padding: 0 20px 14px; display:flex; gap:8px; flex-wrap:wrap;
-    }
+    .grid { display:grid; grid-template-columns: 1.4fr 1fr; gap:16px; }
+    #map { width: 100%; height: 420px; border-radius: 14px; border:1px solid var(--border); background:#0b1328; }
+    .info { display:grid; gap:10px; }
+    .row { display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
     .pill {
-      border-radius:999px; padding:6px 10px; font-size:13px; border:1px solid var(--border); background:#fff;
+      border:1px solid var(--border); background:#0c142a; padding:8px 12px; border-radius:999px; color:var(--muted); font-size:13px;
     }
-    .pill.ok { background:#ecfdf5; border-color:#bbf7d0; color:var(--success); }
-    .pill.high { background:#fef2f2; border-color:#fecaca; color:var(--danger); }
-    .pill.low  { background:#eff6ff; border-color:#bfdbfe; color:#1d4ed8; }
-    /* Map */
-    #map-container { height: 440px; width: 100%; border-top:1px solid var(--border); }
-    #map { height: 100%; width: 100%; }
-    /* Share row */
-    #actions {
-      padding: 12px 20px 18px; display:flex; gap:10px; justify-content:flex-end; align-items:center; border-top:1px solid var(--border);
+    .game-card { display:grid; gap:12px; }
+    .guessRow { display:flex; gap:10px; align-items:center; }
+    input[type=number] {
+      width: 140px; padding: 12px 12px; background:#0b1328; color:var(--text);
+      border:1px solid var(--border); border-radius: 12px; font-size:16px;
+      outline:none;
     }
-    #shareBtn { display:none; }
-    .hint { color:var(--muted); font-size:12px; margin-right:auto; }
-    @media (max-width: 720px) {
-      #controls { grid-template-columns: 1fr; }
-      #map-container { height: 360px; }
-      #actions { flex-wrap:wrap; }
+    .result { font-weight: 800; padding: 10px 12px; border-radius: 12px; }
+    .result.win { background: rgba(34,197,94,.1); border:1px solid rgba(34,197,94,.25); color:#86efac; }
+    .result.near{ background: rgba(245,158,11,.08); border:1px solid rgba(245,158,11,.25); color:#fcd34d; }
+    .result.lose{ background: rgba(239,68,68,.08); border:1px solid rgba(239,68,68,.25); color:#fecaca; }
+    .shareBox { display:grid; gap:10px; }
+    .shareCard {
+      white-space: pre; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      background:#0b1328; color:#d1d5db; border:1px dashed #2b3b66; border-radius:12px; padding:10px; overflow:auto; max-height:160px;
+    }
+    .leaderboards { display:grid; grid-template-columns: 1fr 1fr; gap:12px; }
+    table { width:100%; border-collapse: collapse; font-size:14px; }
+    th, td { padding:10px; border-bottom:1px solid #233259; text-align:left; color:#d6d8df; }
+    th { color:#9fb6ec; font-weight:800; }
+    .muted { color: var(--muted); font-size: 13px; }
+    footer { color:var(--muted); font-size:12px; text-align:center; padding:24px 8px 56px; }
+    .streak { font-weight:800; color:#93c5fd; }
+    .hidden { display: none !important; }
+
+    /* Mobile */
+    @media (max-width: 900px) {
+      header.hero { grid-template-columns: 1fr; }
+      .grid { grid-template-columns: 1fr; }
+      #map { height: 360px; }
     }
   </style>
 </head>
 <body>
-  <div id="app" role="application" aria-label="TripGuesser game">
-    <div id="game-ui">
-      <div id="top-row">
-        <div id="title-wrap">
-          <h1 id="game-title">🚗 TripGuesser</h1>
-          <span id="city-chip" aria-live="polite">City: —</span>
+  <div class="container">
+    <!-- HERO -->
+    <header class="hero">
+      <div class="hero-card">
+        <h1 class="title">TripGuessr</h1>
+        <p class="subtitle">Guess today’s real‑world driving time between two places somewhere in the U.S. A new city every day. Nail it, nearly nail it, or try again tomorrow.</p>
+        <div class="ctaRow">
+          <a href="#game" class="btn primary" id="ctaPlay">Play today’s route</a>
+          <button class="btn ghost" id="btnShareRules">How it works</button>
         </div>
-        <button class="secondary" id="newRouteBtn">🎲 New Route</button>
+        <div class="toggleRow">
+          <label class="toggle"><input type="checkbox" id="darkToggle" /> Dark mode</label>
+          <span class="muted">Daily tolerance: ±5% (min 2 min) for a “So Close!”</span>
+        </div>
       </div>
-      <p id="game-subtitle">Guess today’s <strong>live traffic</strong> drive time from A → B. You’ve got <strong>5 tries</strong>. Win if you’re within <strong>±10%</strong> of the actual time.</p>
-    </div>
-
-    <div id="controls" aria-label="Game controls">
-      <div class="control" title="Your guess in minutes">
-        <label for="guessInput">Guess (min)</label>
-        <input type="number" id="guessInput" inputmode="decimal" placeholder="e.g., 18" min="1" />
+      <div class="panel">
+        <div class="info">
+          <div class="row">
+            <span class="pill" id="pillDate">Today</span>
+            <span class="pill" id="pillCity">City</span>
+            <span class="pill">Streak: <span class="streak" id="streakVal">0</span></span>
+          </div>
+          <div id="map"></div>
+        </div>
       </div>
-      <button class="primary" id="submitBtn">✅ Submit Guess</button>
-    </div>
+    </header>
 
-    <div id="meta">
-      <div id="progress-wrap" aria-label="Guess progress">
-        <div id="progress"></div>
+    <!-- GAME -->
+    <section id="game" class="grid">
+      <div class="panel game-card">
+        <div class="row">
+          <div class="pill">Origin: <strong id="originLabel">—</strong></div>
+          <div class="pill">Destination: <strong id="destLabel">—</strong></div>
+        </div>
+
+        <div class="guessRow">
+          <input id="guessMinutes" type="number" min="1" step="1" placeholder="Your guess (minutes)" />
+          <button class="btn" id="btnGuess">Submit Guess</button>
+          <button class="btn ghost" id="btnGiveUp">Give up</button>
+        </div>
+
+        <div id="resultBox" class="result hidden"></div>
+        <div class="muted">You get up to 6 guesses. Exact = Win 🟩 | Near miss = 🟨 | Otherwise 🟥</div>
+
+        <div class="shareBox">
+          <div class="row">
+            <button class="btn" id="btnShare">Copy Share Card</button>
+            <span class="muted" id="shareNote">Wordle‑style text copied to clipboard</span>
+          </div>
+          <div class="shareCard" id="shareCard"></div>
+        </div>
       </div>
-      <span class="hint" id="triesHint">0/5</span>
-    </div>
 
-    <div id="result" aria-live="polite">
-      <span id="resultText">Press “New Route” to start.</span>
-      <span id="actualWrap" style="display:none;">Actual: <span class="actual" id="actualTime"></span> min</span>
-    </div>
+      <div class="panel">
+        <h3 style="margin:6px 0 2px;">Leaderboards</h3>
+        <div class="leaderboards">
+          <div>
+            <h4 style="margin:8px 0;">Daily (this device)</h4>
+            <table id="tblDaily">
+              <thead><tr><th>#</th><th>Guess</th><th>Off by</th><th>Time</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <div>
+            <h4 style="margin:8px 0;">All‑Time Best (this device)</h4>
+            <table id="tblAllTime">
+              <thead><tr><th>#</th><th>City</th><th>Diff</th><th>Date</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="muted" style="margin-top:6px;">Pro tip: use the share card after you win to challenge friends.</div>
+      </div>
+    </section>
 
-    <div id="history" aria-label="Guess history"></div>
-
-    <div id="map-container"><div id="map"></div></div>
-
-    <div id="actions">
-      <span class="hint">Auto tolerance: ±10% of actual time.</span>
-      <button class="secondary" id="shareBtn">📤 Share Result</button>
-    </div>
+    <footer>
+      <div id="howItWorks" class="hidden">
+        <p><strong>How it works:</strong> A new U.S. city is selected each day. We show a real route; you guess the driving time (in minutes). We use live directions if possible; if not, we fall back to a stored baseline time. You get 6 tries. Exact = 🟩, within ±5% (min 2 min) = 🟨, else 🟥. Come back tomorrow for a new route!</p>
+      </div>
+      <p>© <span id="year"></span> TripGuessr</p>
+    </footer>
   </div>
 
+  <!-- Confetti for wins/near-misses -->
+  <canvas id="confetti" class="hidden" style="position:fixed; inset:0; pointer-events:none;"></canvas>
+
+  <!-- Google Analytics (GA4) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
   <script>
-    // -------- Constants / State --------
-    const TOL_PCT = 10;           // Fixed tolerance (best-practice)
-    const maxGuesses = 5;
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){ dataLayer.push(arguments); }
+    gtag('js', new Date());
+    gtag('config', 'G-XXXXXXXXXX'); // TODO: replace with your GA4 Measurement ID
+    function gaEvent(name, params={}) { try { gtag('event', name, params); } catch(e){} }
+  </script>
 
-    let map, directionsService, directionsRenderer;
-    let markers = [];
-    let routeData = null;
-    let guessCount = 0;
+  <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDJhWz8jA_KfdQCZ1jE_z8RPGuvcQBVKFM&callback=initApp&libraries=geometry"></script>
 
-    const CITY_BOUNDS = {
-      "San Francisco": { minLat:37.735, maxLat:37.81,  minLng:-122.52, maxLng:-122.38, center:{lat:37.7749, lng:-122.4194}},
-      "New York":      { minLat:40.70,  maxLat:40.82,  minLng:-74.02,  maxLng:-73.92,  center:{lat:40.77,   lng:-73.97}},
-      "Chicago":       { minLat:41.83,  maxLat:41.95,  minLng:-87.72,  maxLng:-87.60,  center:{lat:41.88,   lng:-87.63}},
-      "Los Angeles":   { minLat:34.00,  maxLat:34.15,  minLng:-118.30, maxLng:-118.15, center:{lat:34.05,   lng:-118.25}},
-      "Seattle":       { minLat:47.58,  maxLat:47.70,  minLng:-122.36, maxLng:-122.30, center:{lat:47.61,   lng:-122.33}},
+  <script>
+    /***************
+     * DATA: 50 U.S. city routes (one per city), each with:
+     * city, origin {lat,lng,label}, dest {lat,lng,label}, baselineMinutes (fallback)
+     * NOTE: Baselines are conservative approximations. Live API overrides when available.
+     ***************/
+    const ROUTES = [
+      { city:"New York, NY", origin:{lat:40.758, lng:-73.9855, label:"Times Sq"}, dest:{lat:40.7061, lng:-74.0087, label:"Wall St"}, baselineMinutes:22 },
+      { city:"Los Angeles, CA", origin:{lat:34.1381, lng:-118.3534, label:"Universal Studios"}, dest:{lat:34.011, lng:-118.495, label:"Santa Monica Pier"}, baselineMinutes:38 },
+      { city:"Chicago, IL", origin:{lat:41.8827, lng:-87.6233, label:"Millennium Park"}, dest:{lat:41.8796, lng:-87.6237, label:"Willis Tower"}, baselineMinutes:8 },
+      { city:"Houston, TX", origin:{lat:29.7602, lng:-95.3694, label:"Downtown"}, dest:{lat:29.721, lng:-95.391, label:"NRG Stadium"}, baselineMinutes:17 },
+      { city:"Phoenix, AZ", origin:{lat:33.4484, lng:-112.074, label:"City Center"}, dest:{lat:33.422, lng:-111.937, label:"ASU Stadium"}, baselineMinutes:22 },
+      { city:"Philadelphia, PA", origin:{lat:39.9526, lng:-75.1652, label:"City Hall"}, dest:{lat:39.9496, lng:-75.1503, label:"Liberty Bell"}, baselineMinutes:7 },
+      { city:"San Antonio, TX", origin:{lat:29.4252, lng:-98.4946, label:"The Alamo"}, dest:{lat:29.4260, lng:-98.4861, label:"River Walk"}, baselineMinutes:9 },
+      { city:"San Diego, CA", origin:{lat:32.7341, lng:-117.1446, label:"Balboa Park"}, dest:{lat:32.7137, lng:-117.1611, label:"Seaport Village"}, baselineMinutes:16 },
+      { city:"Dallas, TX", origin:{lat:32.7791, lng:-96.8089, label:"Arts District"}, dest:{lat:32.7757, lng:-96.7967, label:"Deep Ellum"}, baselineMinutes:12 },
+      { city:"San Jose, CA", origin:{lat:37.3337, lng:-121.8907, label:"Downtown"}, dest:{lat:37.3317, lng:-121.882, label:"SJSU"}, baselineMinutes:8 },
+      { city:"Austin, TX", origin:{lat:30.2653, lng:-97.7431, label:"6th Street"}, dest:{lat:30.285, lng:-97.739, label:"UT Tower"}, baselineMinutes:10 },
+      { city:"Jacksonville, FL", origin:{lat:30.328, lng:-81.656, label:"Downtown"}, dest:{lat:30.323, lng:-81.659, label:"TIAA Bank Field"}, baselineMinutes:9 },
+      { city:"San Francisco, CA", origin:{lat:37.8087, lng:-122.4098, label:"Fisherman’s Wharf"}, dest:{lat:37.8199, lng:-122.4783, label:"Golden Gate"}, baselineMinutes:24 },
+      { city:"Columbus, OH", origin:{lat:39.9623, lng:-83.0007, label:"Statehouse"}, dest:{lat:39.969, lng:-83.006, label:"Ohio Stadium"}, baselineMinutes:11 },
+      { city:"Fort Worth, TX", origin:{lat:32.7532, lng:-97.3294, label:"Sundance Sq"}, dest:{lat:32.7356, lng:-97.1081, label:"AT&T Stadium"}, baselineMinutes:26 },
+      { city:"Indianapolis, IN", origin:{lat:39.7684, lng:-86.1581, label:"Monument Cir"}, dest:{lat:39.7601, lng:-86.1639, label:"Lucas Oil"}, baselineMinutes:10 },
+      { city:"Charlotte, NC", origin:{lat:35.2271, lng:-80.8431, label:"Uptown"}, dest:{lat:35.225, lng:-80.84, label:"Spectrum Ctr"}, baselineMinutes:7 },
+      { city:"Seattle, WA", origin:{lat:47.6205, lng:-122.3493, label:"Space Needle"}, dest:{lat:47.6097, lng:-122.3425, label:"Pike Place"}, baselineMinutes:13 },
+      { city:"Denver, CO", origin:{lat:39.7392, lng:-104.9903, label:"Civic Ctr"}, dest:{lat:39.7487, lng:-104.995, label:"Coors Field"}, baselineMinutes:10 },
+      { city:"Washington, DC", origin:{lat:38.8895, lng:-77.0353, label:"Washington Monument"}, dest:{lat:38.8893, lng:-77.0502, label:"Lincoln Memorial"}, baselineMinutes:9 },
+      { city:"Boston, MA", origin:{lat:42.3601, lng:-71.0589, label:"Faneuil Hall"}, dest:{lat:42.3467, lng:-71.0972, label:"Fenway Park"}, baselineMinutes:20 },
+      { city:"El Paso, TX", origin:{lat:31.7619, lng:-106.485, label:"Downtown"}, dest:{lat:31.7725, lng:-106.5044, label:"UTEP"}, baselineMinutes:12 },
+      { city:"Nashville, TN", origin:{lat:36.1627, lng:-86.7816, label:"Broadway"}, dest:{lat:36.1665, lng:-86.7775, label:"Ryman"}, baselineMinutes:7 },
+      { city:"Detroit, MI", origin:{lat:42.3314, lng:-83.0458, label:"Campus Martius"}, dest:{lat:42.339, lng:-83.048, label:"Little Caesars"}, baselineMinutes:10 },
+      { city:"Oklahoma City, OK", origin:{lat:35.4676, lng:-97.5164, label:"Bricktown"}, dest:{lat:35.4634, lng:-97.5151, label:"Paycom Ctr"}, baselineMinutes:9 },
+      { city:"Portland, OR", origin:{lat:45.5231, lng:-122.6765, label:"Pioneer Sq"}, dest:{lat:45.5316, lng:-122.6668, label:"Moda Center"}, baselineMinutes:14 },
+      { city:"Las Vegas, NV", origin:{lat:36.1147, lng:-115.1728, label:"The Strip"}, dest:{lat:36.102, lng:-115.174, label:"T‑Mobile Arena"}, baselineMinutes:13 },
+      { city:"Memphis, TN", origin:{lat:35.1382, lng:-90.0506, label:"Beale St"}, dest:{lat:35.1358, lng:-90.057, label:"FedExForum"}, baselineMinutes:8 },
+      { city:"Louisville, KY", origin:{lat:38.257, lng:-85.758, label:"Churchill Downs"}, dest:{lat:38.256, lng:-85.751, label:"UofL"}, baselineMinutes:10 },
+      { city:"Baltimore, MD", origin:{lat:39.285, lng:-76.61, label:"Inner Harbor"}, dest:{lat:39.284, lng:-76.622, label:"Camden Yards"}, baselineMinutes:10 },
+      { city:"Milwaukee, WI", origin:{lat:43.0389, lng:-87.9065, label:"City Hall"}, dest:{lat:43.0437, lng:-87.9166, label:"Fiserv"}, baselineMinutes:9 },
+      { city:"Albuquerque, NM", origin:{lat:35.0844, lng:-106.6504, label:"Old Town"}, dest:{lat:35.087, lng:-106.651, label:"BioPark"}, baselineMinutes:9 },
+      { city:"Tucson, AZ", origin:{lat:32.2226, lng:-110.9747, label:"Downtown"}, dest:{lat:32.228, lng:-110.948, label:"Arizona Stadium"}, baselineMinutes:15 },
+      { city:"Fresno, CA", origin:{lat:36.7378, lng:-119.7871, label:"Downtown"}, dest:{lat:36.807, lng:-119.746, label:"River Park"}, baselineMinutes:21 },
+      { city:"Sacramento, CA", origin:{lat:38.5816, lng:-121.4944, label:"Capitol"}, dest:{lat:38.5802, lng:-121.4997, label:"Golden 1 Ctr"}, baselineMinutes:9 },
+      { city:"Kansas City, MO", origin:{lat:39.0997, lng:-94.5786, label:"Power & Light"}, dest:{lat:39.0489, lng:-94.4839, label:"GEHA Field"}, baselineMinutes:24 },
+      { city:"Atlanta, GA", origin:{lat:33.7488, lng:-84.3877, label:"Centennial Park"}, dest:{lat:33.7573, lng:-84.3963, label:"Mercedes‑Benz"}, baselineMinutes:11 },
+      { city:"Miami, FL", origin:{lat:25.7617, lng:-80.1918, label:"Bayfront"}, dest:{lat:25.7906, lng:-80.1300, label:"South Beach"}, baselineMinutes:25 },
+      { city:"Raleigh, NC", origin:{lat:35.7796, lng:-78.6382, label:"Capitol"}, dest:{lat:35.8033, lng:-78.7218, label:"PNC Arena"}, baselineMinutes:20 },
+      { city:"Cleveland, OH", origin:{lat:41.4993, lng:-81.6944, label:"Public Sq"}, dest:{lat:41.4966, lng:-81.6880, label:"Rocket Mortgage"}, baselineMinutes:9 },
+      { city:"Minneapolis, MN", origin:{lat:44.979, lng:-93.265, label:"Nicollet Mall"}, dest:{lat:44.974, lng:-93.258, label:"US Bank Stadium"}, baselineMinutes:10 },
+      { city:"New Orleans, LA", origin:{lat:29.9547, lng:-90.0751, label:"Jackson Sq"}, dest:{lat:29.949, lng:-90.081, label:"Caesars Superdome"}, baselineMinutes:11 },
+      { city:"Honolulu, HI", origin:{lat:21.3069, lng:-157.8583, label:"Iolani Palace"}, dest:{lat:21.2767, lng:-157.827, label:"Waikiki"}, baselineMinutes:22 },
+      { city:"Salt Lake City, UT", origin:{lat:40.7608, lng:-111.8910, label:"Temple Sq"}, dest:{lat:40.768, lng:-111.901, label:"Vivint/SLC Delta"}, baselineMinutes:10 },
+      { city:"Boise, ID", origin:{lat:43.615, lng:-116.202, label:"Capitol"}, dest:{lat:43.608, lng:-116.215, label:"Albertsons Stadium"}, baselineMinutes:11 },
+      { city:"Anchorage, AK", origin:{lat:61.2181, lng:-149.9003, label:"Town Sq"}, dest:{lat:61.187, lng:-149.887, label:"Airport vicinity"}, baselineMinutes:24 },
+      { city:"Birmingham, AL", origin:{lat:33.5207, lng:-86.8025, label:"Railroad Park"}, dest:{lat:33.511, lng:-86.843, label:"Protective Stadium"}, baselineMinutes:13 },
+      { city:"Omaha, NE", origin:{lat:41.2565, lng:-95.9345, label:"Old Market"}, dest:{lat:41.2647, lng:-95.9477, label:"Charles Schwab Field"}, baselineMinutes:12 },
+      { city:"Buffalo, NY", origin:{lat:42.8864, lng:-78.8784, label:"Canalside"}, dest:{lat:42.875, lng:-78.876, label:"KeyBank Ctr"}, baselineMinutes:12 },
+      { city:"Pittsburgh, PA", origin:{lat:40.4406, lng:-79.9959, label:"Point State Park"}, dest:{lat:40.4468, lng:-80.0158, label:"PNC Park"}, baselineMinutes:11 },
+      { city:"Richmond, VA", origin:{lat:37.5407, lng:-77.4360, label:"Capitol"}, dest:{lat:37.5538, lng:-77.4603, label:"The Diamond"}, baselineMinutes:12 },
+      { city:"Tampa, FL", origin:{lat:27.9506, lng:-82.4572, label:"Riverwalk"}, dest:{lat:27.9427, lng:-82.451, label:"Amalie Arena"}, baselineMinutes:10 }
+    ];
+
+    /***************
+     * CONFIG + CONSTANTS
+     ***************/
+    const MAX_GUESSES = 6;
+    const NEAR_TOL_PCT = 0.05; // 5%
+    const NEAR_TOL_MIN = 2;    // minutes
+    const STORAGE_PREFIX = "tripguessr_v3";
+    const todayISO = new Date().toISOString().slice(0,10);
+    const yearEl = () => document.getElementById("year").textContent = new Date().getFullYear();
+
+    /***************
+     * UTILITIES
+     ***************/
+    function seededIndex(seedStr, mod) {
+      // simple xorshift-ish from date string to stable int
+      let h = 2166136261;
+      for (let i=0;i<seedStr.length;i++) {
+        h ^= seedStr.charCodeAt(i);
+        h += (h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24);
+      }
+      return Math.abs(h) % mod;
+    }
+    function store(key, value){ localStorage.setItem(`${STORAGE_PREFIX}:${key}`, JSON.stringify(value)); }
+    function load(key, def=null){ const v = localStorage.getItem(`${STORAGE_PREFIX}:${key}`); return v ? JSON.parse(v) : def; }
+    const fmt = (m) => `${Math.round(m)} min`;
+    const clamp = (n,mi,ma)=> Math.max(mi, Math.min(ma,n));
+
+    /***************
+     * STATE
+     ***************/
+    let map, directions, directionsRenderer;
+    let routeOfDay = null;            // selected from ROUTES
+    let liveMinutes = null;           // minutes from Maps Directions if available
+    let fallbackMinutes = null;       // baselineMinutes
+    let guesses = [];                 // array of {min, diff, verdict}
+    let won = false;                  // exact
+    let nearHit = false;              // near
+    let revealed = false;             // gave up
+    let confettiCtx, confettiTimer;
+
+    /***************
+     * INIT
+     ***************/
+    window.initApp = function() {
+      yearEl();
+      document.getElementById('pillDate').textContent = todayISO;
+
+      // pick today's route (random but stable by date)
+      const idx = seededIndex(todayISO + '-US50', ROUTES.length);
+      routeOfDay = ROUTES[idx];
+      fallbackMinutes = routeOfDay.baselineMinutes;
+
+      // set labels
+      document.getElementById('pillCity').textContent = routeOfDay.city;
+      document.getElementById('originLabel').textContent = routeOfDay.origin.label;
+      document.getElementById('destLabel').textContent = routeOfDay.dest.label;
+
+      // map
+      map = new google.maps.Map(document.getElementById('map'), {
+        center: routeOfDay.origin, zoom: 12, disableDefaultUI: true, backgroundColor: '#0b1328',
+        styles: [{elementType:'geometry', stylers:[{color:'#0b1328'}]},{elementType:'labels.text.fill', stylers:[{color:'#94a3b8'}]}]
+      });
+      directions = new google.maps.DirectionsService();
+      directionsRenderer = new google.maps.DirectionsRenderer({ map, suppressMarkers: false, preserveViewport: false, polylineOptions: { strokeOpacity:.9, strokeWeight:6 }});
+
+      // render route automatically on load
+      renderRoute();
+
+      // restore progress if any
+      restoreDailyState();
+
+      // bind UI
+      bindUI();
+
+      // GA: page load
+      gaEvent('page_view', { page_title: 'TripGuessr', page_location: location.href });
     };
 
-    // -------- Utilities --------
-    function seededRandom(seed) { let x = Math.sin(seed) * 10000; return x - Math.floor(x); }
-    function getUTCSeed(offset = 0) {
-      const now = new Date();
-      return now.getUTCFullYear() * 10000 + now.getUTCMonth() * 100 + now.getUTCDate() + offset;
+    function bindUI(){
+      document.getElementById('btnGuess').addEventListener('click', onGuess);
+      document.getElementById('guessMinutes').addEventListener('keydown', (e)=>{ if(e.key==='Enter') onGuess(); });
+      document.getElementById('btnGiveUp').addEventListener('click', giveUp);
+      document.getElementById('btnShare').addEventListener('click', copyShare);
+      document.getElementById('btnShareRules').addEventListener('click', ()=> toggleHowItWorks());
+      document.getElementById('ctaPlay').addEventListener('click', ()=> document.getElementById('guessMinutes').focus());
+      document.getElementById('darkToggle').addEventListener('change', (e)=> toggleDark(e.target.checked));
+      // init dark toggle to ON by default
+      document.getElementById('darkToggle').checked = true;
     }
-    function getCityOfTheDay() {
-      const cityNames = Object.keys(CITY_BOUNDS);
-      const index = Math.floor(seededRandom(getUTCSeed()) * cityNames.length);
-      return cityNames[index];
+
+    function toggleHowItWorks(){
+      const el = document.getElementById('howItWorks');
+      el.classList.toggle('hidden');
     }
-    function dailyLatLng(seedOffset = 0) {
-      const city = getCityOfTheDay();
-      const b = CITY_BOUNDS[city];
-      const seed = getUTCSeed(seedOffset);
-      return {
-        lat: b.minLat + seededRandom(seed) * (b.maxLat - b.minLat),
-        lng: b.minLng + seededRandom(seed + 42) * (b.maxLng - b.minLng),
+    function toggleDark(on){
+      document.body.style.background = on ? 'linear-gradient(180deg, #0b1020, #0b1020 30%, #0e162b 100%)' : '#f5f7fb';
+    }
+
+    /***************
+     * MAPS + ROUTE
+     ***************/
+    function renderRoute(){
+      const req = {
+        origin: routeOfDay.origin,
+        destination: routeOfDay.dest,
+        travelMode: google.maps.TravelMode.DRIVING,
+        provideRouteAlternatives: false,
+        drivingOptions: { departureTime: new Date(Date.now() + 60*1000) } // "current-ish" time for traffic
       };
+      directions.route(req, (res, status)=>{
+        if(status === 'OK' && res.routes?.[0]?.legs?.[0]){
+          directionsRenderer.setDirections(res);
+          const leg = res.routes[0].legs[0];
+          // prefer duration_in_traffic; fallback to duration
+          const seconds = (leg.duration_in_traffic?.value || leg.duration.value);
+          liveMinutes = Math.round(seconds/60);
+          // center fit
+          map.fitBounds(res.routes[0].bounds);
+          gaEvent('route_shown', { city: routeOfDay.city, minutes_live: liveMinutes });
+        } else {
+          // fallback visuals: place start/end markers manually
+          new google.maps.Marker({ position: routeOfDay.origin, map, title: routeOfDay.origin.label });
+          new google.maps.Marker({ position: routeOfDay.dest, map, title: routeOfDay.dest.label });
+          liveMinutes = null;
+          gaEvent('route_fallback', { city: routeOfDay.city });
+        }
+      });
     }
-    function distance(p1, p2) {
-      const R = 6371; // km
-      const dLat = (p2.lat - p1.lat) * Math.PI / 180;
-      const dLon = (p2.lng - p1.lng) * Math.PI / 180;
-      const a = Math.sin(dLat/2)**2 +
-        Math.cos(p1.lat * Math.PI/180) * Math.cos(p2.lat * Math.PI/180) * Math.sin(dLon/2)**2;
-      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-      return R * c;
-    }
-    function getMidpoint(p1, p2) { return { lat: (p1.lat + p2.lat)/2, lng: (p1.lng + p2.lng)/2 }; }
-    function clearMarkers() { for (const m of markers) m.setMap(null); markers = []; }
-    function isWithinTolerance(guess, actual) { return Math.abs(actual - guess) <= (actual * TOL_PCT / 100); }
 
-    function setProgress() {
-      const pct = (guessCount / maxGuesses) * 100;
-      document.getElementById("progress").style.width = `${pct}%`;
-      document.getElementById("triesHint").textContent = `${guessCount}/${maxGuesses}`;
+    function answerMinutes(){
+      return (liveMinutes ?? fallbackMinutes);
     }
-    function addHistoryPill(guess, actual) {
-      const pill = document.createElement("span");
-      let cls = "pill";
-      if (isWithinTolerance(guess, actual)) cls += " ok";
-      else if (guess > actual) cls += " high";
-      else cls += " low";
-      pill.className = cls;
-      const diffPct = Math.round((Math.abs(actual - guess)/actual)*100);
-      pill.textContent = `${guess} min · ${guess > actual ? "high" : (guess < actual ? "low" : "exact")} · ${diffPct}%`;
-      document.getElementById("history").appendChild(pill);
+
+    /***************
+     * GAME LOGIC
+     ***************/
+    function verdictForGuess(guess, answer){
+      const diff = Math.abs(guess - answer);
+      if (guess === answer) return { verdict:'win', diff };
+      const tol = Math.max(NEAR_TOL_MIN, Math.round(answer * NEAR_TOL_PCT));
+      if (diff <= tol) return { verdict:'near', diff };
+      return { verdict:'lose', diff };
     }
-    function lockInputs() {
-      document.getElementById("guessInput").disabled = true;
-      document.getElementById("submitBtn").disabled = true;
+
+    function onGuess(){
+      if (won || revealed || guesses.length >= MAX_GUESSES) return;
+
+      const input = document.getElementById('guessMinutes');
+      const val = Number(input.value);
+      if (!Number.isFinite(val) || val <= 0) {
+        showResult('Please enter a valid positive number of minutes.', 'lose', true);
+        return;
+      }
+      const answer = answerMinutes();
+      const result = verdictForGuess(Math.round(val), answer);
+      guesses.push({ min: Math.round(val), diff: result.diff, verdict: result.verdict, ts: Date.now() });
+
+      // update state
+      if (result.verdict === 'win') { won = true; addStreak(1); celebrate('win'); }
+      if (result.verdict === 'near') { nearHit = true; celebrate('near'); }
+      if (guesses.length >= MAX_GUESSES && !won) { revealed = true; addStreak(0); }
+
+      // show message
+      if (result.verdict === 'win'){
+        showResult(`Exact! ${fmt(answer)} 🟩`, 'win');
+      } else if (result.verdict === 'near') {
+        const tol = Math.max(NEAR_TOL_MIN, Math.round(answer * NEAR_TOL_PCT));
+        showResult(`So close! Off by ${result.diff} min (tolerance ±${tol} min). Answer is ${fmt(answer)}. 🟨`, 'near');
+      } else {
+        const remaining = MAX_GUESSES - guesses.length;
+        if (remaining > 0) {
+          showResult(`Nope. You’re off by ${result.diff} min. ${remaining} guesses left. 🟥`, 'lose');
+        } else {
+          showResult(`Out of guesses. Answer: ${fmt(answer)}.`, 'lose');
+        }
+      }
+
+      // GA event
+      gaEvent('guess_submitted', {
+        city: routeOfDay.city,
+        guess: Math.round(val),
+        answer: answer,
+        verdict: result.verdict,
+        guess_index: guesses.length
+      });
+
+      // persist + refresh UI
+      persistDailyState();
+      renderTables();
+      renderShareCard();
+      input.value = '';
+      input.focus();
     }
-    function unlockInputs() {
-      document.getElementById("guessInput").disabled = false;
-      document.getElementById("submitBtn").disabled = false;
+
+    function giveUp(){
+      if (won || revealed) return;
+      revealed = true;
+      addStreak(0);
+      const ans = answerMinutes();
+      showResult(`You gave up. Answer: ${fmt(ans)}.`, 'lose');
+      gaEvent('gave_up', { city: routeOfDay.city, answer: ans });
+      persistDailyState();
+      renderTables();
+      renderShareCard();
     }
-    function setResult(text, color) {
-      const el = document.getElementById("resultText");
+
+    function showResult(text, type, transient=false){
+      const el = document.getElementById('resultBox');
+      el.className = `result ${type}`;
       el.textContent = text;
-      el.style.color = color || "inherit";
+      el.classList.remove('hidden');
+      if (transient){
+        setTimeout(()=> el.classList.add('hidden'), 2200);
+      }
     }
 
-    // -------- Map / Route --------
-    function initializeMap() {
-      const city = getCityOfTheDay();
-      document.getElementById("city-chip").textContent = `City: ${city}`;
-      const center = CITY_BOUNDS[city].center;
+    function celebrate(kind){
+      const canvas = document.getElementById('confetti');
+      canvas.classList.remove('hidden');
+      canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+      const ctx = canvas.getContext('2d'); confettiCtx = ctx;
+      const parts = Array.from({length: kind==='win'?180:90}, ()=> ({
+        x: Math.random() * canvas.width,
+        y: -10 - Math.random()*50,
+        s: 2 + Math.random()*4,
+        vy: 2 + Math.random()*3,
+        vx: (Math.random()-.5)*2,
+        life: 100 + Math.random()*80
+      }));
+      clearInterval(confettiTimer);
+      confettiTimer = setInterval(()=>{
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        for (const p of parts){
+          p.x += p.vx; p.y += p.vy; p.vy *= 0.995; p.life -= 2;
+          ctx.globalAlpha = Math.max(0, p.life/180);
+          ctx.fillStyle = kind==='win' ? '#22c55e' : '#f59e0b';
+          ctx.fillRect(p.x, p.y, p.s, p.s*2);
+        }
+      }, 16);
+      setTimeout(()=>{ clearInterval(confettiTimer); canvas.classList.add('hidden'); }, 1800);
+    }
 
-      map = new google.maps.Map(document.getElementById("map"), { center, zoom: 13 });
-      directionsService = new google.maps.DirectionsService();
-      directionsRenderer = new google.maps.DirectionsRenderer({
-        map, suppressMarkers:true, preserveViewport:true,
-        polylineOptions: { strokeOpacity: 0.9 }
+    /***************
+     * PERSISTENCE (local device leaderboards + streaks)
+     ***************/
+    function keyDaily(){ return `daily:${todayISO}`; }
+    function keyAllTime(){ return `alltime`; }
+    function keyStreak(){ return `streak`; }
+    function keyLastPlayed(){ return `lastPlayed`; }
+
+    function persistDailyState(){
+      const data = { city: routeOfDay.city, answer: answerMinutes(), guesses, won, nearHit, revealed };
+      store(keyDaily(), data);
+
+      // update all-time bests
+      if (guesses.length){
+        const last = guesses[guesses.length-1];
+        const bests = load(keyAllTime(), []);
+        bests.push({
+          date: todayISO, city: routeOfDay.city, diff: last.diff, verdict: last.verdict, guess: last.min, answer: answerMinutes()
+        });
+        // keep top 100 by smallest diff
+        bests.sort((a,b)=> a.diff - b.diff); 
+        store(keyAllTime(), bests.slice(0,100));
+      }
+    }
+
+    function restoreDailyState(){
+      // streak
+      const last = load(keyLastPlayed(), null);
+      if (last && last !== todayISO){
+        // if yesterday won, keep streak, else reset (handled in addStreak when they play)
+      }
+      const s = load(keyStreak(), 0);
+      document.getElementById('streakVal').textContent = s;
+
+      // daily state
+      const data = load(keyDaily(), null);
+      if (data && data.city === routeOfDay.city){
+        guesses = data.guesses || [];
+        won = !!data.won; nearHit = !!data.nearHit; revealed = !!data.revealed;
+        renderTables();
+        renderShareCard();
+        if (won) showResult(`Carried over: You already won today! ${fmt(data.answer)} 🟩`,'win');
+        else if (revealed) showResult(`Carried over: Answer was ${fmt(data.answer)}.`,'lose');
+      }
+      store(keyLastPlayed(), todayISO);
+    }
+
+    function addStreak(outcome){
+      // outcome 1 = success (win/near), 0 = fail/give up
+      let s = load(keyStreak(), 0);
+      if (outcome === 1) s += 1; else s = 0;
+      store(keyStreak(), s);
+      document.getElementById('streakVal').textContent = s;
+    }
+
+    function renderTables(){
+      // Daily table = list of your guesses for today
+      const tb1 = document.querySelector('#tblDaily tbody'); tb1.innerHTML = '';
+      guesses.forEach((g, i)=>{
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${i+1}</td><td>${g.min} min</td><td>${g.diff} min</td><td>${new Date(g.ts).toLocaleTimeString()}</td>`;
+        tb1.appendChild(tr);
       });
-      new google.maps.TrafficLayer().setMap(map);
-    }
-
-    async function setupDailyRoute() {
-      clearMarkers();
-      document.getElementById("resultText").textContent = "Generating today’s route…";
-      document.getElementById("actualWrap").style.display = "none";
-      document.getElementById("actualTime").textContent = "";
-      document.getElementById("history").innerHTML = "";
-      document.getElementById("guessInput").value = "";
-      document.getElementById("shareBtn").style.display = "none";
-      routeData = null;
-      guessCount = 0; setProgress(); unlockInputs();
-
-      const city = getCityOfTheDay();
-      document.getElementById("city-chip").textContent = `City: ${city}`;
-
-      const origin = dailyLatLng(0);
-      const destination = dailyLatLng(1);
-      const dist = distance(origin, destination);
-
-      // keep routes reasonable
-      if (dist < 1 || dist > 30) {
-        setResult("🚫 Invalid daily route generated. Try again.", "var(--danger)");
-        return;
-      }
-
-      const route = await fetchRoute(origin, destination);
-      if (route && route.routes?.[0]?.legs?.[0]?.duration_in_traffic) {
-        const leg = route.routes[0].legs[0];
-        const trafficMin = Math.max(1, Math.round(leg.duration_in_traffic.value / 60));
-        routeData = { trafficMin, correctGuess: false, response: route };
-
-        directionsRenderer.setDirections(route);
-        markers.push(new google.maps.Marker({ position: origin, map, label: "A" }));
-        markers.push(new google.maps.Marker({ position: destination, map, label: "B" }));
-        map.setCenter(getMidpoint(origin, destination));
-        map.setZoom(13);
-
-        setResult(`Route ready. Win if you're within ±${TOL_PCT}% of the actual time.`);
-      } else {
-        setResult("❌ Could not load today’s route. Try refreshing.", "var(--danger)");
-      }
-    }
-
-    function fetchRoute(origin, destination) {
-      return new Promise((resolve) => {
-        const now = new Date(Date.now() + 60000); // 1 min ahead helps traffic calc
-        const request = {
-          origin, destination,
-          travelMode: google.maps.TravelMode.DRIVING,
-          drivingOptions: { departureTime: now, trafficModel: google.maps.TrafficModel.BEST_GUESS },
-        };
-        directionsService.route(request, (response, status) => resolve(status === "OK" ? response : null));
-      });
-    }
-
-    // -------- Gameplay --------
-    function checkGuess() {
-      if (!routeData) { setResult("Start a route first.", "var(--danger)"); return; }
-      if (routeData.correctGuess || guessCount >= maxGuesses) {
-        setResult("🚫 The game is over. Start a new route.", "var(--danger)"); return;
-      }
-
-      const val = document.getElementById("guessInput").value.trim();
-      const guess = parseFloat(val);
-
-      if (!val || isNaN(guess) || guess <= 0) {
-        setResult("⚠️ Enter a valid positive number for minutes.", "var(--danger)");
-        return;
-      }
-
-      guessCount++; setProgress();
-      const actual = routeData.trafficMin;
-      const within = isWithinTolerance(guess, actual);
-      const diff = Math.abs(actual - guess);
-      const hiLo = guess > actual ? "too high" : (guess < actual ? "too low" : "exact");
-
-      addHistoryPill(guess, actual);
-
-      if (within) {
-        routeData.correctGuess = true;
-        setResult(`🎯 Nailed it within ±${TOL_PCT}% in ${guessCount} ${guessCount===1?"try":"tries"}!`, "var(--success)");
-        document.getElementById("actualTime").textContent = actual;
-        document.getElementById("actualWrap").style.display = "inline";
-        document.getElementById("shareBtn").style.display = "inline-block";
-        lockInputs();
-        return;
-      }
-
-      if (guessCount < maxGuesses) {
-        const left = maxGuesses - guessCount;
-        const pctOff = Math.round((diff/actual)*100);
-        setResult(`❌ ${guess} min is ${hiLo} (${pctOff}% off). ${left} ${left===1?"guess":"guesses"} left.`);
-      } else {
-        setResult(`🛑 Out of guesses.`, "var(--danger)");
-        document.getElementById("actualTime").textContent = actual;
-        document.getElementById("actualWrap").style.display = "inline";
-        document.getElementById("shareBtn").style.display = "inline-block";
-        lockInputs();
-      }
-    }
-
-    function shareRoute() {
-      const today = new Date().toDateString();
-      const city = getCityOfTheDay();
-      const didWin = routeData?.correctGuess ?? false;
-
-      const message = didWin
-        ? `🎯 I got within ±${TOL_PCT}% in ${guessCount} ${guessCount === 1 ? "try" : "tries"}!`
-        : `🛑 Used all ${maxGuesses} guesses on today’s route. Can you do better?`;
-      const shareText =
-        `🚗 TripGuesser – ${today}\n${message}\n📍 City: ${city}\n👉 Play: https://jaceybarra.github.io/TripGuessr/`;
-
-      navigator.clipboard.writeText(shareText).then(() => {
-        alert("✅ Result copied to clipboard!");
+      // All-time = top diffs (smallest first)
+      const tb2 = document.querySelector('#tblAllTime tbody'); tb2.innerHTML = '';
+      (load(keyAllTime(), [])).slice(0,10).forEach((r,i)=>{
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${i+1}</td><td>${r.city}</td><td>${r.diff} min</td><td>${r.date}</td>`;
+        tb2.appendChild(tr);
       });
     }
 
-    // -------- Wire-up --------
-    document.getElementById("submitBtn").addEventListener("click", checkGuess);
-    document.getElementById("shareBtn").addEventListener("click", shareRoute);
-    document.getElementById("newRouteBtn").addEventListener("click", setupDailyRoute);
-    document.getElementById("guessInput").addEventListener("keydown", (e)=>{ if(e.key==="Enter") checkGuess(); });
+    /***************
+     * SHARE CARD (Wordle style)
+     ***************/
+    function buildShareCard(){
+      const answer = answerMinutes();
+      const header = `TripGuessr ${todayISO}\n${routeOfDay.city} • ${routeOfDay.origin.label} → ${routeOfDay.dest.label}\n`;
+      let grid = '';
+      let firstNearShown = false;
+      const tol = Math.max(NEAR_TOL_MIN, Math.round(answer * NEAR_TOL_PCT));
+      for (let i=0;i<guesses.length;i++){
+        const g = guesses[i];
+        if (g.verdict === 'win') grid += '🟩';
+        else if (g.verdict === 'near') { grid += '🟨'; firstNearShown = true; }
+        else grid += '🟥';
+      }
+      // pad with gray for remaining attempts
+      grid += '⬜'.repeat(Math.max(0, MAX_GUESSES - guesses.length));
+      const footer = `\n${won ? 'Solved' : revealed ? 'Gave up' : `${guesses.length}/${MAX_GUESSES}`} • Answer ${fmt(answer)}${firstNearShown?` (±${tol} min)`:''}\ntripguessr.com`;
+      return `${header}${grid}${footer}`;
+    }
 
-    window.onload = initializeMap;
+    function renderShareCard(){
+      const text = buildShareCard();
+      document.getElementById('shareCard').textContent = text;
+    }
+
+    async function copyShare(){
+      const text = buildShareCard();
+      try {
+        await navigator.clipboard.writeText(text);
+        document.getElementById('shareNote').textContent = 'Copied!';
+        gaEvent('share_copied', { city: routeOfDay.city });
+        setTimeout(()=> document.getElementById('shareNote').textContent = 'Wordle‑style text copied to clipboard', 1400);
+      } catch(e){
+        // show the box, user can copy manually
+        document.getElementById('shareNote').textContent = 'Copy failed — select text below';
+      }
+    }
+
+    /***************
+     * NICE TOUCHES
+     ***************/
+    // Auto-focus guess box on section view
+    window.addEventListener('hashchange', ()=>{
+      if (location.hash === '#game') setTimeout(()=> document.getElementById('guessMinutes').focus(), 100);
+    });
   </script>
 </body>
 </html>
