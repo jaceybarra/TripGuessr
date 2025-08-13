@@ -10,6 +10,10 @@
       --bg:#0b1020;--bg2:#0e162b;--card:#111b33;--card2:#0c142a;--text:#e7e9ee;--muted:#a6b0c2;
       --accent:#60a5fa;--accent2:#1d4ed8;--win:#22c55e;--near:#f59e0b;--lose:#ef4444;--border:#223153;
       --shadow:0 20px 60px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.04);
+      --route-main:#00e5ff;      /* bright cyan for maximum visibility */
+      --route-outline:#0a1024;   /* dark outline to separate from map */
+      --route-glow:#5be7ff;      /* soft outer glow */
+      --route-alt:#ffd400;       /* alt color for color-blind-friendly dash */
     }
     *{box-sizing:border-box}
     html,body{height:100%;margin:0}
@@ -47,6 +51,13 @@
     /* Map card */
     #mapWrap{position:relative;height:420px;border-radius:16px;border:1px solid var(--border);overflow:hidden;background:#0b1328}
     #map{width:100%;height:100%}
+
+    /* Map controls overlay */
+    .mapControls{position:absolute;top:10px;right:10px;display:flex;gap:6px;z-index:2}
+    .ctrl{background:rgba(10,16,36,.85);border:1px solid var(--border);color:#cfe3ff;border-radius:10px;padding:6px 8px;font-size:12px}
+    .legend{display:flex;align-items:center;gap:8px}
+    .legendSwatch{width:30px;height:6px;border-radius:999px;background:linear-gradient(90deg,var(--route-glow),var(--route-main));box-shadow:0 0 8px rgba(91,231,255,.7)}
+    .chk{display:inline-flex;gap:6px;align-items:center}
 
     /* Skeleton shimmer while the map is loading */
     .skeleton::before{
@@ -119,8 +130,20 @@
         <div id="mapWrap" class="skeleton">
           <div id="map"></div>
 
+          <!-- Overlay controls -->
+          <div class="mapControls">
+            <div class="ctrl legend" aria-hidden="true">
+              <div class="legendSwatch"></div>
+              Route
+            </div>
+            <label class="ctrl chk">
+              <input type="checkbox" id="contrastToggle" checked />
+              High‑contrast route
+            </label>
+          </div>
+
           <!-- Map diagnostics & loader -->
-          <div id="mapDiag" class="hidden">
+          <div id="mapDiag" class="hidden" role="alert">
             <div class="box">
               <strong>Map didn’t load</strong>
               <p id="mapDiagMsg">Check your API key, billing, and HTTP referrers. Then press Retry.</p>
@@ -264,7 +287,7 @@
   const MAX_GUESSES=6;
   const NEAR_TOL_PCT=0.05; // 5%
   const NEAR_TOL_MIN=2;    // minutes
-  const STORAGE_PREFIX="tripguessr_v7";
+  const STORAGE_PREFIX="tripguessr_v8";
   const todayISO=new Date().toISOString().slice(0,10);
   const GOOGLE_MAPS_KEY = "AIzaSyDJhWz8jA_KfdQCZ1jE_z8RPGuvcQBVKFM"; // your key
 
@@ -272,6 +295,9 @@
   let map, directions, renderer, routeOfDay=null, liveMinutes=null, fallbackMinutes=null;
   let guesses=[], won=false, nearHit=false, revealed=false;
   let confettiTimer;
+  // custom route layers
+  let routePolys = [];
+  let originMarker = null, destMarker = null;
 
   /*************** UTIL ***************/
   const seedIndex=(seed,mod)=>{let h=2166136261;for(let i=0;i<seed.length;i++){h^=seed.charCodeAt(i);h+=(h<<1)+(h<<4)+(h<<7)+(h<<8)+(h<<24);}return Math.abs(h)%mod}
@@ -297,7 +323,6 @@
     bindUI();
     restoreDaily();
 
-    // Dynamically load Google Maps (no fragile ?callback timing)
     loadGoogleMaps()
       .then(()=> initMapCore())
       .catch((msg)=> showMapDiag(msg||"Maps script failed to load. Check the API key and network."));
@@ -316,6 +341,7 @@
     $("btnShare").onclick = copyShare;
     $("retryMapBtn").onclick = ()=> { $("mapDiag").classList.add("hidden"); loadGoogleMaps(true).then(()=> initMapCore()).catch(showMapDiag); };
     $("showMarkersBtn").onclick = showMarkersOnly;
+    $("contrastToggle").onchange = ()=> applyRouteStyle();
     $("darkToggle").onchange = (e)=>{document.body.style.background = e.target.checked
       ? 'radial-gradient(1200px 800px at -10% -20%, rgba(96,165,250,.08), transparent 45%), radial-gradient(900px 700px at 110% -10%, rgba(34,197,94,.08), transparent 40%), linear-gradient(180deg, var(--bg), var(--bg) 30%, var(--bg2) 100%)'
       : '#f6f8fb'}
@@ -335,21 +361,14 @@
         return;
       }
       if(window.google && google.maps && !forceReload){ resolve(); return; }
-      // Remove any existing script if reloading
-      const old = document.getElementById('gmaps-sdk');
-      if(old){ old.remove(); }
-
+      const old = document.getElementById('gmaps-sdk'); if(old){ old.remove(); }
       const s = document.createElement('script');
       s.id = 'gmaps-sdk';
       s.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(GOOGLE_MAPS_KEY)}&libraries=geometry`;
       s.async = true; s.defer = true;
-      s.onload = ()=> {
-        if(window.google && google.maps) resolve(); else reject("Google Maps loaded but window.google is undefined.");
-      };
+      s.onload = ()=> (window.google && google.maps) ? resolve() : reject("Google Maps loaded but window.google is undefined.");
       s.onerror = ()=> reject("Network or CSP blocked Google Maps. Check ad‑blockers, CSP, and referrers.");
       document.head.appendChild(s);
-
-      // safety timeout
       setTimeout(()=>{ if(!(window.google && google.maps)) reject("Timed out loading Google Maps."); }, 8000);
     });
   }
@@ -359,16 +378,25 @@
     const wrap=$("mapWrap");
     wrap.classList.add("skeleton");
     try{
+      const baseStyle = [
+        {elementType:'geometry',stylers:[{color:'#0b1328'}]},
+        {elementType:'labels.text.fill',stylers:[{color:'#a8b3c9'}]},
+        {featureType:'poi', stylers:[{visibility:'off'}]},
+        {featureType:'transit', stylers:[{visibility:'off'}]},
+        {featureType:'road', elementType:'labels.icon', stylers:[{visibility:'off'}]}
+      ];
       map = new google.maps.Map($("map"),{
         center: routeOfDay.origin, zoom: 12, disableDefaultUI: true, backgroundColor:'#0b1328',
-        styles:[{elementType:'geometry',stylers:[{color:'#0b1328'}]},{elementType:'labels.text.fill',stylers:[{color:'#a8b3c9'}]}]
+        styles: baseStyle
       });
+
       directions = new google.maps.DirectionsService();
+      // We’ll draw our own polylines + markers for better visibility
       renderer   = new google.maps.DirectionsRenderer({
-        map, suppressMarkers:false, preserveViewport:false,
-        polylineOptions:{strokeOpacity:.95, strokeWeight:6}
+        map, suppressMarkers:true, suppressPolylines:true, preserveViewport:false
       });
-      renderRoute(); // ✅ auto‑render on load
+
+      renderRoute(); // auto‑render on load
     }catch(e){
       showMapDiag("Map failed to initialize: " + (e?.message||e));
     }finally{
@@ -382,6 +410,25 @@
     gaEvent && gaEvent('map_error',{msg});
   }
 
+  function clearRouteLayers(){
+    routePolys.forEach(p=>p.setMap(null));
+    routePolys = [];
+    if(originMarker){ originMarker.setMap(null); originMarker=null; }
+    if(destMarker){ destMarker.setMap(null); destMarker=null; }
+  }
+
+  function svgMarker(letter, fill){
+    const svg = `
+      <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40">
+        <g filter="url(#f)"><circle cx="20" cy="20" r="10" fill="${fill}" stroke="white" stroke-width="2"/></g>
+        <text x="20" y="24" text-anchor="middle" font-size="12" font-weight="700" fill="#0a1024" font-family="ui-sans-serif,system-ui">${letter}</text>
+        <defs>
+          <filter id="f"><feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="rgba(0,0,0,.5)"/></filter>
+        </defs>
+      </svg>`;
+    return { url: 'data:image/svg+xml;charset=UTF-8,'+encodeURIComponent(svg), scaledSize: new google.maps.Size(40,40) };
+  }
+
   function renderRoute(){
     if(!(window.google && google.maps)){ showMarkersOnly(); return; }
     const req={
@@ -391,16 +438,66 @@
     };
     directions.route(req,(res,status)=>{
       if(status==='OK' && res.routes?.[0]?.legs?.[0]){
-        renderer.setDirections(res);
+        renderer.setDirections(res); // for bounds/overview
+        const path = res.routes[0].overview_path;
+        const bounds = res.routes[0].bounds;
+        map.fitBounds(bounds);
+
+        // custom markers (accessible)
+        clearRouteLayers();
+        originMarker = new google.maps.Marker({
+          position: routeOfDay.origin, map, title: `Origin: ${routeOfDay.origin.label}`, icon: svgMarker('A','#ff6b6b')
+        });
+        destMarker = new google.maps.Marker({
+          position: routeOfDay.dest, map, title: `Destination: ${routeOfDay.dest.label}`, icon: svgMarker('B','#5eead4')
+        });
+
+        // Draw multi-layered polyline: glow -> outline -> main
+        const glow = new google.maps.Polyline({ path, map, strokeColor:getComputedStyle(document.documentElement).getPropertyValue('--route-glow').trim(), strokeOpacity:0.5, strokeWeight:16 });
+        const outline = new google.maps.Polyline({ path, map, strokeColor:getComputedStyle(document.documentElement).getPropertyValue('--route-outline').trim(), strokeOpacity:1, strokeWeight:12 });
+        const main = new google.maps.Polyline({ path, map, strokeColor:getComputedStyle(document.documentElement).getPropertyValue('--route-main').trim(), strokeOpacity:1, strokeWeight:8 });
+        routePolys.push(glow, outline, main);
+
+        // live minutes
         const leg=res.routes[0].legs[0];
         const seconds=(leg.duration_in_traffic?.value || leg.duration.value);
         liveMinutes=Math.round(seconds/60);
-        map.fitBounds(res.routes[0].bounds);
         gaEvent('route_shown',{city:routeOfDay.city});
+
+        applyRouteStyle(); // apply contrast/dash if needed
       }else{
         showMarkersOnly();
       }
     });
+  }
+
+  function applyRouteStyle(){
+    // Toggle a dashed alt layer for additional accessibility (helps some color‑vision types)
+    const high = $("contrastToggle").checked;
+    if(routePolys.length){
+      const [glow, outline, main] = routePolys;
+      glow.setOptions({ strokeOpacity: high?0.55:0.35, strokeWeight: high?18:14 });
+      outline.setOptions({ strokeWeight: high?12:10 });
+      main.setOptions({ strokeWeight: high?8:6 });
+    }
+    // Optional: dashed overlay using alt color
+    if(high && routePolys.length){
+      // add or update dashed overlay
+      if(!routePolys._dash){
+        routePolys._dash = new google.maps.Polyline({
+          path: routePolys[routePolys.length-1].getPath(),
+          map,
+          strokeColor: getComputedStyle(document.documentElement).getPropertyValue('--route-alt').trim(),
+          strokeOpacity: 0.9,
+          strokeWeight: 3,
+          icons: [{ icon: { path: 'M 0,-1 0,1', strokeOpacity: 1, scale: 4 }, offset: '0', repeat: '16px' }]
+        });
+      } else {
+        routePolys._dash.setMap(map);
+      }
+    } else {
+      if(routePolys._dash){ routePolys._dash.setMap(null); }
+    }
   }
 
   function showMarkersOnly(){
@@ -408,9 +505,10 @@
     if(window.google?.maps && !map){
       map = new google.maps.Map($("map"),{center: routeOfDay.origin, zoom: 12, disableDefaultUI:true, backgroundColor:'#0b1328'});
     }
+    clearRouteLayers();
     if(window.google?.maps){
-      new google.maps.Marker({position:routeOfDay.origin,map,title:routeOfDay.origin.label});
-      new google.maps.Marker({position:routeOfDay.dest,map,title:routeOfDay.dest.label});
+      originMarker = new google.maps.Marker({position:routeOfDay.origin,map,title:`Origin: ${routeOfDay.origin.label}`,icon: svgMarker('A','#ff6b6b')});
+      destMarker = new google.maps.Marker({position:routeOfDay.dest,map,title:`Destination: ${routeOfDay.dest.label}`,icon: svgMarker('B','#5eead4')});
       if(map && routeOfDay.origin && routeOfDay.dest){
         const b=new google.maps.LatLngBounds(); b.extend(routeOfDay.origin); b.extend(routeOfDay.dest); map.fitBounds(b);
       }
