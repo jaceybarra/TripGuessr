@@ -4,125 +4,155 @@
   <meta charset="UTF-8" />
   <title>TripGuessr – Daily Driving Challenge</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#111827" />
+  <meta name="theme-color" content="#0b1020" />
   <style>
-    :root {
-      --bg: #0b1020;
-      --card: #121a33;
-      --text: #e5e7eb;
-      --muted: #9ca3af;
-      --accent: #60a5fa;
-      --win: #22c55e;
-      --near: #f59e0b;
-      --lose: #ef4444;
-      --border: #243053;
+    :root{
+      --bg:#0b1020;--bg2:#0e162b;--card:#111b33;--card2:#0c142a;--text:#e7e9ee;--muted:#a6b0c2;
+      --accent:#60a5fa;--accent2:#1d4ed8;--win:#22c55e;--near:#f59e0b;--lose:#ef4444;--border:#223153;
+      --shadow:0 20px 60px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.04);
     }
-    * { box-sizing: border-box; }
-    html, body { margin: 0; padding: 0; height: 100%; color: var(--text); background: linear-gradient(180deg, #0b1020, #0b1020 30%, #0e162b 100%); font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; }
-    a { color: var(--accent); text-decoration: none; }
-    .container { max-width: 1100px; margin: 0 auto; padding: 24px; }
-    header.hero { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 24px; align-items: center; margin: 12px 0 20px; }
-    .hero-card {
-      background: radial-gradient(1200px 600px at -20% -60%, rgba(96,165,250,.15), rgba(96,165,250,0) 40%),
-                  radial-gradient(900px 600px at 120% -40%, rgba(34,197,94,.15), rgba(34,197,94,0) 35%),
-                  var(--card);
-      border: 1px solid var(--border);
-      border-radius: 20px; padding: 28px;
-      box-shadow: 0 30px 70px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.03);
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0}
+    body{
+      color:var(--text);
+      background:radial-gradient(1200px 800px at -10% -20%, rgba(96,165,250,.08), transparent 45%),
+                 radial-gradient(900px 700px at 110% -10%, rgba(34,197,94,.08), transparent 40%),
+                 linear-gradient(180deg, var(--bg), var(--bg) 30%, var(--bg2) 100%);
+      font-family: ui-sans-serif, -apple-system, Segoe UI, Roboto, Helvetica, Arial, system-ui;
+      -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
     }
-    .title { font-size: clamp(28px, 4vw, 44px); font-weight: 800; letter-spacing: .2px; line-height: 1.05; margin: 0 0 10px; }
-    .subtitle { color: var(--muted); font-size: clamp(14px, 2.2vw, 18px); margin: 0 0 18px; }
-    .ctaRow { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
-    .btn {
-      background: linear-gradient(180deg, #1f2937, #111827);
-      color: var(--text); border: 1px solid var(--border);
-      padding: 12px 16px; border-radius: 14px; font-weight: 700; cursor: pointer;
-      box-shadow: 0 8px 24px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.06);
-      transition: transform .08s ease, box-shadow .12s ease, border-color .12s ease;
+    a{color:var(--accent);text-decoration:none}
+    .container{max-width:1140px;margin:0 auto;padding:24px}
+    .hero{display:grid;grid-template-columns:1.1fr 0.9fr;gap:24px;align-items:stretch;margin-bottom:18px}
+    .card{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:20px;
+      box-shadow:var(--shadow);
+      padding:24px;
     }
-    .btn:hover { transform: translateY(-1px); border-color:#2f3e6a; box-shadow: 0 10px 30px rgba(0,0,0,.32), inset 0 1px 0 rgba(255,255,255,.08); }
-    .btn.primary { background: linear-gradient(180deg, #2563eb, #1d4ed8); border-color: #1e3a8a; }
-    .btn.ghost { background: transparent; border: 1px dashed #334166; }
-    .toggleRow { display:flex; gap:10px; flex-wrap:wrap; margin-top:8px; }
-    .toggle { display:inline-flex; gap:8px; align-items:center; border:1px solid var(--border); padding:8px 10px; border-radius:12px; font-size:13px; color:var(--muted); background:#0c142a; }
-    .panel { background: var(--card); border:1px solid var(--border); border-radius: 18px; padding: 16px; margin-bottom: 16px; box-shadow: 0 10px 30px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.04); }
-    .grid { display:grid; grid-template-columns: 1.4fr 1fr; gap:16px; }
-    #map { width: 100%; height: 420px; border-radius: 14px; border:1px solid var(--border); background:#0b1328; }
-    .info { display:grid; gap:10px; }
-    .row { display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
-    .pill { border:1px solid var(--border); background:#0c142a; padding:8px 12px; border-radius:999px; color:var(--muted); font-size:13px; }
-    .game-card { display:grid; gap:12px; }
-    .guessRow { display:flex; gap:10px; align-items:center; }
-    input[type=number] {
-      width: 140px; padding: 12px 12px; background:#0b1328; color:var(--text);
-      border:1px solid var(--border); border-radius: 12px; font-size:16px; outline:none;
+    .title{margin:0 0 8px;font-weight:900;letter-spacing:.2px;line-height:1.05;font-size:clamp(28px,4vw,44px)}
+    .subtitle{color:var(--muted);margin:0 0 14px;font-size:clamp(14px,2.2vw,18px)}
+    .ctaRow{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .btn{
+      appearance:none;border-radius:14px;border:1px solid var(--border);
+      background:linear-gradient(180deg,#1f2937,#0f172a);color:var(--text);
+      padding:12px 16px;font-weight:800;cursor:pointer;
+      box-shadow:0 10px 30px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.06);
+      transition:transform .08s ease, box-shadow .12s ease, border-color .12s ease, filter .12s ease;
+      user-select:none
     }
-    .result { font-weight: 800; padding: 10px 12px; border-radius: 12px; }
-    .result.win { background: rgba(34,197,94,.1); border:1px solid rgba(34,197,94,.25); color:#86efac; }
-    .result.near{ background: rgba(245,158,11,.08); border:1px solid rgba(245,158,11,.25); color:#fcd34d; }
-    .result.lose{ background: rgba(239,68,68,.08); border:1px solid rgba(239,68,68,.25); color:#fecaca; }
-    .shareBox { display:grid; gap:10px; }
-    .shareCard {
-      white-space: pre; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-      background:#0b1328; color:#d1d5db; border:1px dashed #2b3b66; border-radius:12px; padding:10px; overflow:auto; max-height:160px;
+    .btn:hover{transform:translateY(-1px);border-color:#2b3a63;filter:brightness(1.05)}
+    .btn:active{transform:translateY(0)}
+    .btn.primary{background:linear-gradient(180deg,#2563eb,#1d4ed8);border-color:#1b3a86}
+    .btn.ghost{background:transparent;border:1px dashed #324068}
+    .toggleRow{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+    .toggle{display:inline-flex;gap:8px;align-items:center;border:1px solid var(--border);background:var(--card2);padding:8px 10px;border-radius:12px;font-size:13px;color:var(--muted)}
+    .grid{display:grid;grid-template-columns:1.35fr 1fr;gap:16px}
+    /* Map card */
+    #mapWrap{position:relative;min-height:420px;border-radius:16px;border:1px solid var(--border);overflow:hidden;background:#0b1328}
+    #map{width:100%;height:100%}
+    /* Skeleton shimmer while the map is loading */
+    .skeleton::before{
+      content:"";position:absolute;inset:0;background:
+        linear-gradient(100deg, rgba(255,255,255,0) 40%, rgba(255,255,255,.06) 50%, rgba(255,255,255,0) 60%),
+        linear-gradient(180deg,#0b1328,#0b1328);
+      background-size:200% 100%, 100% 100%;
+      animation:shimmer 1.2s infinite;
     }
-    .leaderboards { display:grid; grid-template-columns: 1fr 1fr; gap:12px; }
-    table { width:100%; border-collapse: collapse; font-size:14px; }
-    th, td { padding:10px; border-bottom:1px solid #233259; text-align:left; color:#d6d8df; }
-    th { color:#9fb6ec; font-weight:800; }
-    .muted { color: var(--muted); font-size: 13px; }
-    footer { color:var(--muted); font-size:12px; text-align:center; padding:24px 8px 56px; }
-    .streak { font-weight:800; color:#93c5fd; }
-    .hidden { display: none !important; }
-    @media (max-width: 900px) {
-      header.hero { grid-template-columns: 1fr; }
-      .grid { grid-template-columns: 1fr; }
-      #map { height: 360px; }
+    @keyframes shimmer{0%{background-position:-120% 0, 0 0}100%{background-position:220% 0, 0 0}}
+    .pill{display:inline-flex;gap:6px;align-items:center;border:1px solid var(--border);background:var(--card2);padding:7px 12px;border-radius:999px;color:var(--muted);font-size:13px}
+    .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+    .game-card{display:grid;gap:12px}
+    .guessRow{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    input[type=number]{width:160px;padding:12px;background:#0b1328;color:var(--text);border:1px solid var(--border);border-radius:12px;font-size:16px;outline:none}
+    .result{font-weight:900;padding:10px 12px;border-radius:12px}
+    .result.win{background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.25);color:#86efac}
+    .result.near{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25);color:#fcd34d}
+    .result.lose{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.25);color:#fecaca}
+    .feedbackChips{display:flex;gap:6px;flex-wrap:wrap}
+    .chip{border:1px solid var(--border);background:var(--card2);padding:6px 10px;border-radius:999px;font-size:12px;color:var(--muted)}
+    .shareBox{display:grid;gap:10px}
+    .shareCard{white-space:pre;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;background:#0b1328;color:#d1d5db;border:1px dashed #2b3b66;border-radius:12px;padding:10px;overflow:auto;max-height:160px}
+    .leaderboards{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    table{width:100%;border-collapse:collapse;font-size:14px}
+    th,td{padding:10px;border-bottom:1px solid #233259;text-align:left;color:#d6d8df}
+    th{color:#9fb6ec;font-weight:900}
+    .muted{color:var(--muted);font-size:13px}
+    footer{color:var(--muted);font-size:12px;text-align:center;padding:24px 8px 56px}
+    .streak{font-weight:900;color:#93c5fd}
+    .hidden{display:none!important}
+    /* Map diagnostics overlay */
+    #mapDiag{position:absolute;inset:0;display:grid;place-items:center;background:rgba(7,12,26,.72);backdrop-filter:saturate(120%) blur(2px);color:#c8d2e5;padding:18px;text-align:center}
+    #mapDiag .box{background:var(--card);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow);padding:14px}
+    #mapDiag p{margin:8px 0 0;font-size:13px;color:#9fb0d0}
+    /* Mobile */
+    @media (max-width:980px){
+      .hero{grid-template-columns:1fr}
+      .grid{grid-template-columns:1fr}
+      #mapWrap{min-height:360px}
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <header class="hero">
-      <div class="hero-card">
+    <!-- HERO -->
+    <section class="hero">
+      <div class="card">
         <h1 class="title">TripGuessr</h1>
         <p class="subtitle">Guess today’s real‑world driving time between two places somewhere in the U.S. A new city every day.</p>
         <div class="ctaRow">
           <a href="#game" class="btn primary" id="ctaPlay">Play today’s route</a>
-          <button class="btn ghost" id="btnShareRules">How it works</button>
+          <button class="btn ghost" id="btnRules">How it works</button>
         </div>
         <div class="toggleRow">
           <label class="toggle"><input type="checkbox" id="darkToggle" checked /> Dark mode</label>
-          <span class="muted">Near‑miss window is fixed daily. We won’t show % or how far off.</span>
+          <span class="muted">We won’t show % or how far off. You’ll see “Too high”, “Too low”, or “So close!”.</span>
         </div>
       </div>
-      <div class="panel">
-        <div class="info">
-          <div class="row">
-            <span class="pill" id="pillDate">Today</span>
-            <span class="pill" id="pillCity">City</span>
-            <span class="pill">Streak: <span class="streak" id="streakVal">0</span></span>
-          </div>
-          <div id="map"></div>
-        </div>
-      </div>
-    </header>
 
-    <section id="game" class="grid">
-      <div class="panel game-card">
+      <div class="card">
         <div class="row">
-          <div class="pill">Origin: <strong id="originLabel">—</strong></div>
-          <div class="pill">Destination: <strong id="destLabel">—</strong></div>
+          <span class="pill" id="pillDate">Today</span>
+          <span class="pill" id="pillCity">City</span>
+          <span class="pill">Streak: <span class="streak" id="streakVal">0</span></span>
+        </div>
+
+        <div id="mapWrap" class="skeleton">
+          <div id="map"></div>
+
+          <!-- Map diagnostics & loader -->
+          <div id="mapDiag" class="hidden">
+            <div class="box">
+              <strong>Map didn’t load</strong>
+              <p id="mapDiagMsg">Check your API key, billing, and referrer restrictions, then press retry.</p>
+              <div style="margin-top:10px;display:flex;gap:8px;justify-content:center">
+                <button class="btn" id="retryMapBtn">Retry</button>
+                <button class="btn ghost" id="showMarkersBtn">Show markers only</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- GAME -->
+    <section id="game" class="grid">
+      <div class="card game-card">
+        <div class="row">
+          <span class="pill">Origin: <strong id="originLabel">—</strong></span>
+          <span class="pill">Destination: <strong id="destLabel">—</strong></span>
         </div>
 
         <div class="guessRow">
-          <input id="guessMinutes" type="number" min="1" step="1" placeholder="Your guess (minutes)" />
-          <button class="btn" id="btnGuess">Submit Guess</button>
-          <button class="btn ghost" id="btnGiveUp">Give up</button>
+          <input id="guessMinutes" type="number" inputmode="numeric" min="1" step="1" placeholder="Your guess (minutes)" aria-label="Your guess in minutes" />
+          <button class="btn" id="btnGuess" aria-label="Submit guess">Submit Guess</button>
+          <button class="btn ghost" id="btnGiveUp" aria-label="Give up">Give up</button>
         </div>
 
-        <div id="resultBox" class="result hidden"></div>
-        <div class="muted">You get up to 6 guesses. We’ll only tell you if you’re too high or too low (or “So close!”).</div>
+        <div class="feedbackChips" id="lastFeedback"></div>
+        <div id="resultBox" class="result hidden" role="status" aria-live="polite"></div>
+        <div class="muted">6 guesses max. Use ↑/↓ to nudge by 1 min. Enter submits.</div>
 
         <div class="shareBox">
           <div class="row">
@@ -133,7 +163,7 @@
         </div>
       </div>
 
-      <div class="panel">
+      <div class="card">
         <h3 style="margin:6px 0 2px;">Leaderboards</h3>
         <div class="leaderboards">
           <div>
@@ -157,407 +187,357 @@
 
     <footer>
       <div id="howItWorks" class="hidden">
-        <p><strong>How it works:</strong> A new U.S. city is selected each day. We show a real route; you guess the driving time (in minutes). We’ll never show how far off you are during the game—only “Too high/Too low” or “So close!”. You get 6 tries.</p>
+        <p><strong>How it works:</strong> A new U.S. city is selected each day. We render a real route via Google Directions. Guess the minutes. We’ll only say “Too high/Too low” or “So close!”. 6 tries.</p>
       </div>
       <p>© <span id="year"></span> TripGuessr</p>
     </footer>
   </div>
 
-  <canvas id="confetti" class="hidden" style="position:fixed; inset:0; pointer-events:none;"></canvas>
+  <!-- Confetti -->
+  <canvas id="confetti" class="hidden" style="position:fixed;inset:0;pointer-events:none"></canvas>
 
-  <!-- GA4 -->
+  <!-- GA4 (replace G-XXXXXXXXXX) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
   <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){ dataLayer.push(arguments); }
-    gtag('js', new Date());
-    gtag('config', 'G-XXXXXXXXXX'); // TODO: replace with your GA4 Measurement ID
-    function gaEvent(name, params={}) { try { gtag('event', name, params); } catch(e){} }
+    window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}
+    gtag('js',new Date()); gtag('config','G-XXXXXXXXXX');
+    const gaEvent=(name,params={})=>{try{gtag('event',name,params)}catch(e){}}
   </script>
 
-  <!-- Google Maps JavaScript API -->
+  <!-- Google Maps (replace YOUR_GOOGLE_MAPS_API_KEY) -->
   <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDJhWz8jA_KfdQCZ1jE_z8RPGuvcQBVKFM&callback=initApp&libraries=geometry"></script>
 
   <script>
-    /* =========================
-       DATA: 50 U.S. city routes
-       ========================= */
-    const ROUTES = [
-      { city:"New York, NY", origin:{lat:40.758, lng:-73.9855, label:"Times Sq"}, dest:{lat:40.7061, lng:-74.0087, label:"Wall St"}, baselineMinutes:22 },
-      { city:"Los Angeles, CA", origin:{lat:34.1381, lng:-118.3534, label:"Universal Studios"}, dest:{lat:34.011, lng:-118.495, label:"Santa Monica Pier"}, baselineMinutes:38 },
-      { city:"Chicago, IL", origin:{lat:41.8827, lng:-87.6233, label:"Millennium Park"}, dest:{lat:41.8796, lng:-87.6237, label:"Willis Tower"}, baselineMinutes:8 },
-      { city:"Houston, TX", origin:{lat:29.7602, lng:-95.3694, label:"Downtown"}, dest:{lat:29.721, lng:-95.391, label:"NRG Stadium"}, baselineMinutes:17 },
-      { city:"Phoenix, AZ", origin:{lat:33.4484, lng:-112.074, label:"City Center"}, dest:{lat:33.422, lng:-111.937, label:"ASU Stadium"}, baselineMinutes:22 },
-      { city:"Philadelphia, PA", origin:{lat:39.9526, lng:-75.1652, label:"City Hall"}, dest:{lat:39.9496, lng:-75.1503, label:"Liberty Bell"}, baselineMinutes:7 },
-      { city:"San Antonio, TX", origin:{lat:29.4252, lng:-98.4946, label:"The Alamo"}, dest:{lat:29.4260, lng:-98.4861, label:"River Walk"}, baselineMinutes:9 },
-      { city:"San Diego, CA", origin:{lat:32.7341, lng:-117.1446, label:"Balboa Park"}, dest:{lat:32.7137, lng:-117.1611, label:"Seaport Village"}, baselineMinutes:16 },
-      { city:"Dallas, TX", origin:{lat:32.7791, lng:-96.8089, label:"Arts District"}, dest:{lat:32.7757, lng:-96.7967, label:"Deep Ellum"}, baselineMinutes:12 },
-      { city:"San Jose, CA", origin:{lat:37.3337, lng:-121.8907, label:"Downtown"}, dest:{lat:37.3317, lng:-121.882, label:"SJSU"}, baselineMinutes:8 },
-      { city:"Austin, TX", origin:{lat:30.2653, lng:-97.7431, label:"6th Street"}, dest:{lat:30.285, lng:-97.739, label:"UT Tower"}, baselineMinutes:10 },
-      { city:"Jacksonville, FL", origin:{lat:30.328, lng:-81.656, label:"Downtown"}, dest:{lat:30.323, lng:-81.659, label:"TIAA Bank Field"}, baselineMinutes:9 },
-      { city:"San Francisco, CA", origin:{lat:37.8087, lng:-122.4098, label:"Fisherman’s Wharf"}, dest:{lat:37.8199, lng:-122.4783, label:"Golden Gate"}, baselineMinutes:24 },
-      { city:"Columbus, OH", origin:{lat:39.9623, lng:-83.0007, label:"Statehouse"}, dest:{lat:39.969, lng:-83.006, label:"Ohio Stadium"}, baselineMinutes:11 },
-      { city:"Fort Worth, TX", origin:{lat:32.7532, lng:-97.3294, label:"Sundance Sq"}, dest:{lat:32.7356, lng:-97.1081, label:"AT&T Stadium"}, baselineMinutes:26 },
-      { city:"Indianapolis, IN", origin:{lat:39.7684, lng:-86.1581, label:"Monument Cir"}, dest:{lat:39.7601, lng:-86.1639, label:"Lucas Oil"}, baselineMinutes:10 },
-      { city:"Charlotte, NC", origin:{lat:35.2271, lng:-80.8431, label:"Uptown"}, dest:{lat:35.225, lng:-80.84, label:"Spectrum Ctr"}, baselineMinutes:7 },
-      { city:"Seattle, WA", origin:{lat:47.6205, lng:-122.3493, label:"Space Needle"}, dest:{lat:47.6097, lng:-122.3425, label:"Pike Place"}, baselineMinutes:13 },
-      { city:"Denver, CO", origin:{lat:39.7392, lng:-104.9903, label:"Civic Ctr"}, dest:{lat:39.7487, lng:-104.995, label:"Coors Field"}, baselineMinutes:10 },
-      { city:"Washington, DC", origin:{lat:38.8895, lng:-77.0353, label:"Washington Monument"}, dest:{lat:38.8893, lng:-77.0502, label:"Lincoln Memorial"}, baselineMinutes:9 },
-      { city:"Boston, MA", origin:{lat:42.3601, lng:-71.0589, label:"Faneuil Hall"}, dest:{lat:42.3467, lng:-71.0972, label:"Fenway Park"}, baselineMinutes:20 },
-      { city:"El Paso, TX", origin:{lat:31.7619, lng:-106.485, label:"Downtown"}, dest:{lat:31.7725, lng:-106.5044, label:"UTEP"}, baselineMinutes:12 },
-      { city:"Nashville, TN", origin:{lat:36.1627, lng:-86.7816, label:"Broadway"}, dest:{lat:36.1665, lng:-86.7775, label:"Ryman"}, baselineMinutes:7 },
-      { city:"Detroit, MI", origin:{lat:42.3314, lng:-83.0458, label:"Campus Martius"}, dest:{lat:42.339, lng:-83.048, label:"Little Caesars"}, baselineMinutes:10 },
-      { city:"Oklahoma City, OK", origin:{lat:35.4676, lng:-97.5164, label:"Bricktown"}, dest:{lat:35.4634, lng:-97.5151, label:"Paycom Ctr"}, baselineMinutes:9 },
-      { city:"Portland, OR", origin:{lat:45.5231, lng:-122.6765, label:"Pioneer Sq"}, dest:{lat:45.5316, lng:-122.6668, label:"Moda Center"}, baselineMinutes:14 },
-      { city:"Las Vegas, NV", origin:{lat:36.1147, lng:-115.1728, label:"The Strip"}, dest:{lat:36.102, lng:-115.174, label:"T‑Mobile Arena"}, baselineMinutes:13 },
-      { city:"Memphis, TN", origin:{lat:35.1382, lng:-90.0506, label:"Beale St"}, dest:{lat:35.1358, lng:-90.057, label:"FedExForum"}, baselineMinutes:8 },
-      { city:"Louisville, KY", origin:{lat:38.257, lng:-85.758, label:"Churchill Downs"}, dest:{lat:38.256, lng:-85.751, label:"UofL"}, baselineMinutes:10 },
-      { city:"Baltimore, MD", origin:{lat:39.285, lng:-76.61, label:"Inner Harbor"}, dest:{lat:39.284, lng:-76.622, label:"Camden Yards"}, baselineMinutes:10 },
-      { city:"Milwaukee, WI", origin:{lat:43.0389, lng:-87.9065, label:"City Hall"}, dest:{lat:43.0437, lng:-87.9166, label:"Fiserv"}, baselineMinutes:9 },
-      { city:"Albuquerque, NM", origin:{lat:35.0844, lng:-106.6504, label:"Old Town"}, dest:{lat:35.087, lng:-106.651, label:"BioPark"}, baselineMinutes:9 },
-      { city:"Tucson, AZ", origin:{lat:32.2226, lng:-110.9747, label:"Downtown"}, dest:{lat:32.228, lng:-110.948, label:"Arizona Stadium"}, baselineMinutes:15 },
-      { city:"Fresno, CA", origin:{lat:36.7378, lng:-119.7871, label:"Downtown"}, dest:{lat:36.807, lng:-119.746, label:"River Park"}, baselineMinutes:21 },
-      { city:"Sacramento, CA", origin:{lat:38.5816, lng:-121.4944, label:"Capitol"}, dest:{lat:38.5802, lng:-121.4997, label:"Golden 1 Ctr"}, baselineMinutes:9 },
-      { city:"Kansas City, MO", origin:{lat:39.0997, lng:-94.5786, label:"Power & Light"}, dest:{lat:39.0489, lng:-94.4839, label:"GEHA Field"}, baselineMinutes:24 },
-      { city:"Atlanta, GA", origin:{lat:33.7488, lng:-84.3877, label:"Centennial Park"}, dest:{lat:33.7573, lng:-84.3963, label:"Mercedes‑Benz"}, baselineMinutes:11 },
-      { city:"Miami, FL", origin:{lat:25.7617, lng:-80.1918, label:"Bayfront"}, dest:{lat:25.7906, lng:-80.1300, label:"South Beach"}, baselineMinutes:25 },
-      { city:"Raleigh, NC", origin:{lat:35.7796, lng:-78.6382, label:"Capitol"}, dest:{lat:35.8033, lng:-78.7218, label:"PNC Arena"}, baselineMinutes:20 },
-      { city:"Cleveland, OH", origin:{lat:41.4993, lng:-81.6944, label:"Public Sq"}, dest:{lat:41.4966, lng:-81.6880, label:"Rocket Mortgage"}, baselineMinutes:9 },
-      { city:"Minneapolis, MN", origin:{lat:44.979, lng:-93.265, label:"Nicollet Mall"}, dest:{lat:44.974, lng:-93.258, label:"US Bank Stadium"}, baselineMinutes:10 },
-      { city:"New Orleans, LA", origin:{lat:29.9547, lng:-90.0751, label:"Jackson Sq"}, dest:{lat:29.949, lng:-90.081, label:"Caesars Superdome"}, baselineMinutes:11 },
-      { city:"Honolulu, HI", origin:{lat:21.3069, lng:-157.8583, label:"Iolani Palace"}, dest:{lat:21.2767, lng:-157.827, label:"Waikiki"}, baselineMinutes:22 },
-      { city:"Salt Lake City, UT", origin:{lat:40.7608, lng:-111.8910, label:"Temple Sq"}, dest:{lat:40.768, lng:-111.901, label:"Delta Center"}, baselineMinutes:10 },
-      { city:"Boise, ID", origin:{lat:43.615, lng:-116.202, label:"Capitol"}, dest:{lat:43.608, lng:-116.215, label:"Albertsons Stadium"}, baselineMinutes:11 },
-      { city:"Anchorage, AK", origin:{lat:61.2181, lng:-149.9003, label:"Town Sq"}, dest:{lat:61.187, lng:-149.887, label:"Airport vicinity"}, baselineMinutes:24 },
-      { city:"Birmingham, AL", origin:{lat:33.5207, lng:-86.8025, label:"Railroad Park"}, dest:{lat:33.511, lng:-86.843, label:"Protective Stadium"}, baselineMinutes:13 },
-      { city:"Omaha, NE", origin:{lat:41.2565, lng:-95.9345, label:"Old Market"}, dest:{lat:41.2647, lng:-95.9477, label:"Charles Schwab Field"}, baselineMinutes:12 },
-      { city:"Buffalo, NY", origin:{lat:42.8864, lng:-78.8784, label:"Canalside"}, dest:{lat:42.875, lng:-78.876, label:"KeyBank Ctr"}, baselineMinutes:12 },
-      { city:"Pittsburgh, PA", origin:{lat:40.4406, lng:-79.9959, label:"Point State Park"}, dest:{lat:40.4468, lng:-80.0158, label:"PNC Park"}, baselineMinutes:11 },
-      { city:"Richmond, VA", origin:{lat:37.5407, lng:-77.4360, label:"Capitol"}, dest:{lat:37.5538, lng:-77.4603, label:"The Diamond"}, baselineMinutes:12 },
-      { city:"Tampa, FL", origin:{lat:27.9506, lng:-82.4572, label:"Riverwalk"}, dest:{lat:27.9427, lng:-82.451, label:"Amalie Arena"}, baselineMinutes:10 }
-    ];
+  /***************
+   * ROUTE DATA – 50 U.S. cities (baseline minutes are conservative)
+   ***************/
+  const ROUTES = [
+    { city:"New York, NY", origin:{lat:40.758, lng:-73.9855, label:"Times Sq"}, dest:{lat:40.7061, lng:-74.0087, label:"Wall St"}, baselineMinutes:22 },
+    { city:"Los Angeles, CA", origin:{lat:34.1381, lng:-118.3534, label:"Universal Studios"}, dest:{lat:34.011, lng:-118.495, label:"Santa Monica Pier"}, baselineMinutes:38 },
+    { city:"Chicago, IL", origin:{lat:41.8827, lng:-87.6233, label:"Millennium Park"}, dest:{lat:41.8796, lng:-87.6237, label:"Willis Tower"}, baselineMinutes:8 },
+    { city:"Houston, TX", origin:{lat:29.7602, lng:-95.3694, label:"Downtown"}, dest:{lat:29.721, lng:-95.391, label:"NRG Stadium"}, baselineMinutes:17 },
+    { city:"Phoenix, AZ", origin:{lat:33.4484, lng:-112.074, label:"City Center"}, dest:{lat:33.422, lng:-111.937, label:"ASU Stadium"}, baselineMinutes:22 },
+    { city:"Philadelphia, PA", origin:{lat:39.9526, lng:-75.1652, label:"City Hall"}, dest:{lat:39.9496, lng:-75.1503, label:"Liberty Bell"}, baselineMinutes:7 },
+    { city:"San Antonio, TX", origin:{lat:29.4252, lng:-98.4946, label:"The Alamo"}, dest:{lat:29.4260, lng:-98.4861, label:"River Walk"}, baselineMinutes:9 },
+    { city:"San Diego, CA", origin:{lat:32.7341, lng:-117.1446, label:"Balboa Park"}, dest:{lat:32.7137, lng:-117.1611, label:"Seaport Village"}, baselineMinutes:16 },
+    { city:"Dallas, TX", origin:{lat:32.7791, lng:-96.8089, label:"Arts District"}, dest:{lat:32.7757, lng:-96.7967, label:"Deep Ellum"}, baselineMinutes:12 },
+    { city:"San Jose, CA", origin:{lat:37.3337, lng:-121.8907, label:"Downtown"}, dest:{lat:37.3317, lng:-121.882, label:"SJSU"}, baselineMinutes:8 },
+    { city:"Austin, TX", origin:{lat:30.2653, lng:-97.7431, label:"6th Street"}, dest:{lat:30.285, lng:-97.739, label:"UT Tower"}, baselineMinutes:10 },
+    { city:"Jacksonville, FL", origin:{lat:30.328, lng:-81.656, label:"Downtown"}, dest:{lat:30.323, lng:-81.659, label:"TIAA Bank Field"}, baselineMinutes:9 },
+    { city:"San Francisco, CA", origin:{lat:37.8087, lng:-122.4098, label:"Fisherman’s Wharf"}, dest:{lat:37.8199, lng:-122.4783, label:"Golden Gate"}, baselineMinutes:24 },
+    { city:"Columbus, OH", origin:{lat:39.9623, lng:-83.0007, label:"Statehouse"}, dest:{lat:39.969, lng:-83.006, label:"Ohio Stadium"}, baselineMinutes:11 },
+    { city:"Fort Worth, TX", origin:{lat:32.7532, lng:-97.3294, label:"Sundance Sq"}, dest:{lat:32.7356, lng:-97.1081, label:"AT&T Stadium"}, baselineMinutes:26 },
+    { city:"Indianapolis, IN", origin:{lat:39.7684, lng:-86.1581, label:"Monument Cir"}, dest:{lat:39.7601, lng:-86.1639, label:"Lucas Oil"}, baselineMinutes:10 },
+    { city:"Charlotte, NC", origin:{lat:35.2271, lng:-80.8431, label:"Uptown"}, dest:{lat:35.225, lng:-80.84, label:"Spectrum Ctr"}, baselineMinutes:7 },
+    { city:"Seattle, WA", origin:{lat:47.6205, lng:-122.3493, label:"Space Needle"}, dest:{lat:47.6097, lng:-122.3425, label:"Pike Place"}, baselineMinutes:13 },
+    { city:"Denver, CO", origin:{lat:39.7392, lng:-104.9903, label:"Civic Ctr"}, dest:{lat:39.7487, lng:-104.995, label:"Coors Field"}, baselineMinutes:10 },
+    { city:"Washington, DC", origin:{lat:38.8895, lng:-77.0353, label:"Washington Monument"}, dest:{lat:38.8893, lng:-77.0502, label:"Lincoln Memorial"}, baselineMinutes:9 },
+    { city:"Boston, MA", origin:{lat:42.3601, lng:-71.0589, label:"Faneuil Hall"}, dest:{lat:42.3467, lng:-71.0972, label:"Fenway Park"}, baselineMinutes:20 },
+    { city:"El Paso, TX", origin:{lat:31.7619, lng:-106.485, label:"Downtown"}, dest:{lat:31.7725, lng:-106.5044, label:"UTEP"}, baselineMinutes:12 },
+    { city:"Nashville, TN", origin:{lat:36.1627, lng:-86.7816, label:"Broadway"}, dest:{lat:36.1665, lng:-86.7775, label:"Ryman"}, baselineMinutes:7 },
+    { city:"Detroit, MI", origin:{lat:42.3314, lng:-83.0458, label:"Campus Martius"}, dest:{lat:42.339, lng:-83.048, label:"Little Caesars"}, baselineMinutes:10 },
+    { city:"Oklahoma City, OK", origin:{lat:35.4676, lng:-97.5164, label:"Bricktown"}, dest:{lat:35.4634, lng:-97.5151, label:"Paycom Ctr"}, baselineMinutes:9 },
+    { city:"Portland, OR", origin:{lat:45.5231, lng:-122.6765, label:"Pioneer Sq"}, dest:{lat:45.5316, lng:-122.6668, label:"Moda Center"}, baselineMinutes:14 },
+    { city:"Las Vegas, NV", origin:{lat:36.1147, lng:-115.1728, label:"The Strip"}, dest:{lat:36.102, lng:-115.174, label:"T‑Mobile Arena"}, baselineMinutes:13 },
+    { city:"Memphis, TN", origin:{lat:35.1382, lng:-90.0506, label:"Beale St"}, dest:{lat:35.1358, lng:-90.057, label:"FedExForum"}, baselineMinutes:8 },
+    { city:"Louisville, KY", origin:{lat:38.257, lng:-85.758, label:"Churchill Downs"}, dest:{lat:38.256, lng:-85.751, label:"UofL"}, baselineMinutes:10 },
+    { city:"Baltimore, MD", origin:{lat:39.285, lng:-76.61, label:"Inner Harbor"}, dest:{lat:39.284, lng:-76.622, label:"Camden Yards"}, baselineMinutes:10 },
+    { city:"Milwaukee, WI", origin:{lat:43.0389, lng:-87.9065, label:"City Hall"}, dest:{lat:43.0437, lng:-87.9166, label:"Fiserv"}, baselineMinutes:9 },
+    { city:"Albuquerque, NM", origin:{lat:35.0844, lng:-106.6504, label:"Old Town"}, dest:{lat:35.087, lng:-106.651, label:"BioPark"}, baselineMinutes:9 },
+    { city:"Tucson, AZ", origin:{lat:32.2226, lng:-110.9747, label:"Downtown"}, dest:{lat:32.228, lng:-110.948, label:"Arizona Stadium"}, baselineMinutes:15 },
+    { city:"Fresno, CA", origin:{lat:36.7378, lng:-119.7871, label:"Downtown"}, dest:{lat:36.807, lng:-119.746, label:"River Park"}, baselineMinutes:21 },
+    { city:"Sacramento, CA", origin:{lat:38.5816, lng:-121.4944, label:"Capitol"}, dest:{lat:38.5802, lng:-121.4997, label:"Golden 1 Ctr"}, baselineMinutes:9 },
+    { city:"Kansas City, MO", origin:{lat:39.0997, lng:-94.5786, label:"Power & Light"}, dest:{lat:39.0489, lng:-94.4839, label:"GEHA Field"}, baselineMinutes:24 },
+    { city:"Atlanta, GA", origin:{lat:33.7488, lng:-84.3877, label:"Centennial Park"}, dest:{lat:33.7573, lng:-84.3963, label:"Mercedes‑Benz"}, baselineMinutes:11 },
+    { city:"Miami, FL", origin:{lat:25.7617, lng:-80.1918, label:"Bayfront"}, dest:{lat:25.7906, lng:-80.1300, label:"South Beach"}, baselineMinutes:25 },
+    { city:"Raleigh, NC", origin:{lat:35.7796, lng:-78.6382, label:"Capitol"}, dest:{lat:35.8033, lng:-78.7218, label:"PNC Arena"}, baselineMinutes:20 },
+    { city:"Cleveland, OH", origin:{lat:41.4993, lng:-81.6944, label:"Public Sq"}, dest:{lat:41.4966, lng:-81.6880, label:"Rocket Mortgage"}, baselineMinutes:9 },
+    { city:"Minneapolis, MN", origin:{lat:44.979, lng:-93.265, label:"Nicollet Mall"}, dest:{lat:44.974, lng:-93.258, label:"US Bank Stadium"}, baselineMinutes:10 },
+    { city:"New Orleans, LA", origin:{lat:29.9547, lng:-90.0751, label:"Jackson Sq"}, dest:{lat:29.949, lng:-90.081, label:"Caesars Superdome"}, baselineMinutes:11 },
+    { city:"Honolulu, HI", origin:{lat:21.3069, lng:-157.8583, label:"Iolani Palace"}, dest:{lat:21.2767, lng:-157.827, label:"Waikiki"}, baselineMinutes:22 },
+    { city:"Salt Lake City, UT", origin:{lat:40.7608, lng:-111.8910, label:"Temple Sq"}, dest:{lat:40.768, lng:-111.901, label:"Delta Center"}, baselineMinutes:10 },
+    { city:"Boise, ID", origin:{lat:43.615, lng:-116.202, label:"Capitol"}, dest:{lat:43.608, lng:-116.215, label:"Albertsons Stadium"}, baselineMinutes:11 },
+    { city:"Anchorage, AK", origin:{lat:61.2181, lng:-149.9003, label:"Town Sq"}, dest:{lat:61.187, lng:-149.887, label:"Airport vicinity"}, baselineMinutes:24 },
+    { city:"Birmingham, AL", origin:{lat:33.5207, lng:-86.8025, label:"Railroad Park"}, dest:{lat:33.511, lng:-86.843, label:"Protective Stadium"}, baselineMinutes:13 },
+    { city:"Omaha, NE", origin:{lat:41.2565, lng:-95.9345, label:"Old Market"}, dest:{lat:41.2647, lng:-95.9477, label:"Charles Schwab Field"}, baselineMinutes:12 },
+    { city:"Buffalo, NY", origin:{lat:42.8864, lng:-78.8784, label:"Canalside"}, dest:{lat:42.875, lng:-78.876, label:"KeyBank Ctr"}, baselineMinutes:12 },
+    { city:"Pittsburgh, PA", origin:{lat:40.4406, lng:-79.9959, label:"Point State Park"}, dest:{lat:40.4468, lng:-80.0158, label:"PNC Park"}, baselineMinutes:11 },
+    { city:"Richmond, VA", origin:{lat:37.5407, lng:-77.4360, label:"Capitol"}, dest:{lat:37.5538, lng:-77.4603, label:"The Diamond"}, baselineMinutes:12 },
+    { city:"Tampa, FL", origin:{lat:27.9506, lng:-82.4572, label:"Riverwalk"}, dest:{lat:27.9427, lng:-82.451, label:"Amalie Arena"}, baselineMinutes:10 }
+  ];
 
-    /* ================
-       CONFIG/CONSTS
-       ================ */
-    const MAX_GUESSES = 6;
-    const NEAR_TOL_PCT = 0.05; // 5%
-    const NEAR_TOL_MIN = 2;    // minutes
-    const STORAGE_PREFIX = "tripguessr_v4";
-    const todayISO = new Date().toISOString().slice(0,10);
-    const yearEl = () => document.getElementById("year").textContent = new Date().getFullYear();
+  /*************** CONFIG ***************/
+  const MAX_GUESSES=6, NEAR_TOL_PCT=0.05, NEAR_TOL_MIN=2;
+  const STORAGE_PREFIX="tripguessr_v5";
+  const todayISO=new Date().toISOString().slice(0,10);
 
-    /* ===========
-       UTILITIES
-       =========== */
-    function seededIndex(seedStr, mod) {
-      let h = 2166136261;
-      for (let i=0;i<seedStr.length;i++) {
-        h ^= seedStr.charCodeAt(i);
-        h += (h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24);
-      }
-      return Math.abs(h) % mod;
+  /*************** STATE ***************/
+  let map, directions, renderer, routeOfDay=null, liveMinutes=null, fallbackMinutes=null;
+  let guesses=[], won=false, nearHit=false, revealed=false;
+  let confettiTimer;
+
+  /*************** UTIL ***************/
+  const seedIndex=(seed,mod)=>{let h=2166136261;for(let c of seed){h^=c.charCodeAt(0);h+= (h<<1)+(h<<4)+(h<<7)+(h<<8)+(h<<24);}return Math.abs(h)%mod}
+  const $=(id)=>document.getElementById(id);
+  const store=(k,v)=>localStorage.setItem(`${STORAGE_PREFIX}:${k}`,JSON.stringify(v));
+  const load=(k,def=null)=>{const v=localStorage.getItem(`${STORAGE_PREFIX}:${k}`);return v?JSON.parse(v):def}
+  const answerMinutes=()=> (liveMinutes ?? fallbackMinutes);
+  const keyDaily=()=>`daily:${todayISO}`, keyAllTime=()=>`alltime`, keyStreak=()=>`streak`, keyLastPlayed=()=>`lastPlayed`;
+
+  /*************** INIT (callback from Google script) ***************/
+  window.initApp = function(){
+    // Basic page init
+    $("year").textContent = new Date().getFullYear();
+    $("pillDate").textContent = todayISO;
+
+    // Pick today’s route
+    routeOfDay = ROUTES[seedIndex(todayISO + "-US50", ROUTES.length)];
+    fallbackMinutes = routeOfDay.baselineMinutes;
+    $("pillCity").textContent = routeOfDay.city;
+    $("originLabel").textContent = routeOfDay.origin.label;
+    $("destLabel").textContent = routeOfDay.dest.label;
+
+    // Bind UI
+    bindUI();
+
+    // Try to init map; show skeleton while loading
+    setupMap();
+
+    // Restore today’s progress
+    restoreDaily();
+
+    gaEvent('page_view',{page_title:'TripGuessr',page_location:location.href});
+  };
+
+  function bindUI(){
+    $("btnRules").onclick = ()=> $("howItWorks").classList.toggle("hidden");
+    $("ctaPlay").onclick = ()=> { location.hash="#game"; setTimeout(()=> $("guessMinutes").focus(),80); };
+    $("btnGuess").onclick = onGuess;
+    $("guessMinutes").addEventListener('keydown',(e)=>{
+      if(e.key==='Enter') onGuess();
+      if(e.key==='ArrowUp'){e.preventDefault(); nudge(1);}
+      if(e.key==='ArrowDown'){e.preventDefault(); nudge(-1);}
+    });
+    $("btnGiveUp").onclick = giveUp;
+    $("btnShare").onclick = copyShare;
+    $("retryMapBtn").onclick = ()=> { $("mapDiag").classList.add("hidden"); setupMap(true); };
+    $("showMarkersBtn").onclick = showMarkersOnly;
+    $("darkToggle").onchange = (e)=>{document.body.style.background = e.target.checked
+      ? 'radial-gradient(1200px 800px at -10% -20%, rgba(96,165,250,.08), transparent 45%), radial-gradient(900px 700px at 110% -10%, rgba(34,197,94,.08), transparent 40%), linear-gradient(180deg, var(--bg), var(--bg) 30%, var(--bg2) 100%)'
+      : '#f6f8fb'}
+  }
+  function nudge(delta){
+    const el=$("guessMinutes");
+    const v = Math.max(1, (parseInt(el.value||'0',10)||0) + delta);
+    el.value = v;
+  }
+
+  /*************** MAP ***************/
+  function setupMap(isRetry=false){
+    const wrap=$("mapWrap");
+    wrap.classList.add("skeleton");
+    // detect google availability
+    const ready = !!(window.google && google.maps);
+    if(!ready){
+      // give it a brief moment (script is async/defer)
+      setTimeout(()=>{
+        if(!(window.google && google.maps)){
+          showMapDiag("Google Maps JS not detected. Confirm API Key, billing, and HTTP referrer restrictions. For local dev, allow http://localhost and http://127.0.0.1.");
+          wrap.classList.remove("skeleton");
+          return;
+        }
+        // else continue
+        initMapCore();
+      }, 600);
+      return;
     }
-    function store(key, value){ localStorage.setItem(`${STORAGE_PREFIX}:${key}`, JSON.stringify(value)); }
-    function load(key, def=null){ const v = localStorage.getItem(`${STORAGE_PREFIX}:${key}`); return v ? JSON.parse(v) : def; }
-    const clamp = (n,mi,ma)=> Math.max(mi, Math.min(ma,n));
+    initMapCore();
+  }
 
-    /* =====
-       STATE
-       ===== */
-    let map, directions, directionsRenderer;
-    let routeOfDay = null;
-    let liveMinutes = null;
-    let fallbackMinutes = null;
-    let guesses = [];
-    let won = false;
-    let nearHit = false;
-    let revealed = false;
-    let confettiCtx, confettiTimer;
-
-    /* ====
-       INIT
-       ==== */
-    window.initApp = function() {
-      yearEl();
-      document.getElementById('pillDate').textContent = todayISO;
-
-      // Stable daily pick
-      const idx = seededIndex(todayISO + '-US50', ROUTES.length);
-      routeOfDay = ROUTES[idx];
-      fallbackMinutes = routeOfDay.baselineMinutes;
-
-      // Labels
-      document.getElementById('pillCity').textContent = routeOfDay.city;
-      document.getElementById('originLabel').textContent = routeOfDay.origin.label;
-      document.getElementById('destLabel').textContent = routeOfDay.dest.label;
-
-      // Map
-      map = new google.maps.Map(document.getElementById('map'), {
-        center: routeOfDay.origin, zoom: 12, disableDefaultUI: true, backgroundColor: '#0b1328',
-        styles: [{elementType:'geometry', stylers:[{color:'#0b1328'}]},{elementType:'labels.text.fill', stylers:[{color:'#94a3b8'}]}]
+  function initMapCore(){
+    const wrap=$("mapWrap");
+    try{
+      map = new google.maps.Map($("map"),{
+        center: routeOfDay.origin, zoom: 12, disableDefaultUI: true, backgroundColor:'#0b1328',
+        styles:[{elementType:'geometry',stylers:[{color:'#0b1328'}]},{elementType:'labels.text.fill',stylers:[{color:'#a8b3c9'}]}]
       });
       directions = new google.maps.DirectionsService();
-      directionsRenderer = new google.maps.DirectionsRenderer({ map, suppressMarkers: false, preserveViewport: false, polylineOptions: { strokeOpacity:.9, strokeWeight:6 }});
-
-      // ✅ Auto‑render route on load (no button needed)
+      renderer   = new google.maps.DirectionsRenderer({ map, suppressMarkers:false, preserveViewport:false, polylineOptions:{strokeOpacity:.95, strokeWeight:6} });
       renderRoute();
+    }catch(e){
+      showMapDiag("Map failed to initialize: " + (e?.message||e));
+    }finally{
+      wrap.classList.remove("skeleton");
+    }
+  }
 
-      // Restore today’s progress
-      restoreDailyState();
+  function showMapDiag(msg){
+    $("mapDiagMsg").textContent = msg;
+    $("mapDiag").classList.remove("hidden");
+    gaEvent('map_error',{msg});
+  }
 
-      // Bind UI
-      bindUI();
-
-      // GA
-      gaEvent('page_view', { page_title: 'TripGuessr', page_location: location.href });
+  function renderRoute(){
+    if(!(google && google.maps)){ showMarkersOnly(); return; }
+    const req={
+      origin: routeOfDay.origin, destination: routeOfDay.dest,
+      travelMode: google.maps.TravelMode.DRIVING, provideRouteAlternatives:false,
+      drivingOptions:{ departureTime: new Date(Date.now()+60*1000) }
     };
-
-    function bindUI(){
-      document.getElementById('btnGuess').addEventListener('click', onGuess);
-      document.getElementById('guessMinutes').addEventListener('keydown', (e)=>{ if(e.key==='Enter') onGuess(); });
-      document.getElementById('btnGiveUp').addEventListener('click', giveUp);
-      document.getElementById('btnShare').addEventListener('click', copyShare);
-      document.getElementById('btnShareRules').addEventListener('click', ()=> toggleHowItWorks());
-      document.getElementById('ctaPlay').addEventListener('click', ()=> document.getElementById('guessMinutes').focus());
-      document.getElementById('darkToggle').addEventListener('change', (e)=> toggleDark(e.target.checked));
-    }
-
-    function toggleHowItWorks(){
-      document.getElementById('howItWorks').classList.toggle('hidden');
-    }
-    function toggleDark(on){
-      document.body.style.background = on ? 'linear-gradient(180deg, #0b1020, #0b1020 30%, #0e162b 100%)' : '#f5f7fb';
-    }
-
-    /* ===========
-       MAPS/ROUTE
-       =========== */
-    function renderRoute(){
-      const req = {
-        origin: routeOfDay.origin,
-        destination: routeOfDay.dest,
-        travelMode: google.maps.TravelMode.DRIVING,
-        provideRouteAlternatives: false,
-        drivingOptions: { departureTime: new Date(Date.now() + 60*1000) }
-      };
-      directions.route(req, (res, status)=>{
-        if(status === 'OK' && res.routes?.[0]?.legs?.[0]){
-          directionsRenderer.setDirections(res);
-          const leg = res.routes[0].legs[0];
-          const seconds = (leg.duration_in_traffic?.value || leg.duration.value);
-          liveMinutes = Math.round(seconds/60);
-          map.fitBounds(res.routes[0].bounds);
-          gaEvent('route_shown', { city: routeOfDay.city });
-        } else {
-          new google.maps.Marker({ position: routeOfDay.origin, map, title: routeOfDay.origin.label });
-          new google.maps.Marker({ position: routeOfDay.dest, map, title: routeOfDay.dest.label });
-          liveMinutes = null;
-          gaEvent('route_fallback', { city: routeOfDay.city });
-        }
-      });
-    }
-    const answerMinutes = ()=> (liveMinutes ?? fallbackMinutes);
-
-    /* ===========
-       GAME LOGIC
-       =========== */
-    const NEAR_TOL_PCT = 0.05; // 5%
-    const NEAR_TOL_MIN = 2;
-
-    function verdictForGuess(guess, answer){
-      const diff = Math.abs(guess - answer);
-      if (guess === answer) return { verdict:'win' };
-      const tol = Math.max(NEAR_TOL_MIN, Math.round(answer * NEAR_TOL_PCT));
-      if (diff <= tol) return { verdict:'near', dir: guess > answer ? 'high' : 'low' };
-      return { verdict:'lose', dir: guess > answer ? 'high' : 'low' };
-    }
-
-    function onGuess(){
-      if (won || revealed || guesses.length >= MAX_GUESSES) return;
-
-      const input = document.getElementById('guessMinutes');
-      const val = Number(input.value);
-      if (!Number.isFinite(val) || val <= 0) {
-        showResult('Please enter a valid positive number of minutes.', 'lose', true);
-        return;
+    directions.route(req,(res,status)=>{
+      if(status==='OK' && res.routes?.[0]?.legs?.[0]){
+        renderer.setDirections(res);
+        const leg=res.routes[0].legs[0];
+        const seconds=(leg.duration_in_traffic?.value || leg.duration.value);
+        liveMinutes=Math.round(seconds/60);
+        map.fitBounds(res.routes[0].bounds);
+        gaEvent('route_shown',{city:routeOfDay.city});
+      }else{
+        showMarkersOnly();
       }
-      const gmin = Math.round(val);
-      const answer = answerMinutes();
-      const result = verdictForGuess(gmin, answer);
-
-      guesses.push({ min: gmin, verdict: result.verdict, dir: result.dir || null, ts: Date.now() });
-
-      if (result.verdict === 'win') { won = true; addStreak(1); celebrate('win'); }
-      else if (result.verdict === 'near') { nearHit = true; celebrate('near'); }
-      else if (guesses.length >= MAX_GUESSES) { revealed = true; addStreak(0); }
-
-      // ✅ No numbers or % given away — just direction or “So close!”
-      if (result.verdict === 'win'){
-        showResult(`Exact! ${answer} min 🟩`, 'win');
-      } else if (result.verdict === 'near') {
-        showResult(`So close! 🟨`, 'near');
-      } else {
-        showResult(result.dir === 'high' ? 'Too high.' : 'Too low.', 'lose');
-      }
-
-      gaEvent('guess_submitted', {
-        city: routeOfDay.city,
-        guess: gmin,
-        verdict: result.verdict,
-        guess_index: guesses.length
-      });
-
-      persistDailyState();
-      renderTables();
-      renderShareCard();
-      input.value = '';
-      input.focus();
-    }
-
-    function giveUp(){
-      if (won || revealed) return;
-      revealed = true;
-      addStreak(0);
-      const ans = answerMinutes();
-      showResult(`You gave up. Answer: ${ans} min.`, 'lose');
-      gaEvent('gave_up', { city: routeOfDay.city });
-      persistDailyState();
-      renderTables();
-      renderShareCard();
-    }
-
-    function showResult(text, type, transient=false){
-      const el = document.getElementById('resultBox');
-      el.className = `result ${type}`;
-      el.textContent = text;
-      el.classList.remove('hidden');
-      if (transient) setTimeout(()=> el.classList.add('hidden'), 2000);
-    }
-
-    function celebrate(kind){
-      const canvas = document.getElementById('confetti');
-      canvas.classList.remove('hidden');
-      canvas.width = window.innerWidth; canvas.height = window.innerHeight;
-      const ctx = canvas.getContext('2d'); confettiCtx = ctx;
-      const parts = Array.from({length: kind==='win'?180:90}, ()=> ({
-        x: Math.random() * canvas.width,
-        y: -10 - Math.random()*50,
-        s: 2 + Math.random()*4,
-        vy: 2 + Math.random()*3,
-        vx: (Math.random()-.5)*2,
-        life: 100 + Math.random()*80
-      }));
-      clearInterval(confettiTimer);
-      confettiTimer = setInterval(()=>{
-        ctx.clearRect(0,0,canvas.width,canvas.height);
-        for (const p of parts){
-          p.x += p.vx; p.y += p.vy; p.vy *= 0.995; p.life -= 2;
-          ctx.globalAlpha = Math.max(0, p.life/180);
-          ctx.fillStyle = kind==='win' ? '#22c55e' : '#f59e0b';
-          ctx.fillRect(p.x, p.y, p.s, p.s*2);
-        }
-      }, 16);
-      setTimeout(()=>{ clearInterval(confettiTimer); canvas.classList.add('hidden'); }, 1800);
-    }
-
-    /* =================
-       PERSIST & TABLES
-       ================= */
-    function keyDaily(){ return `daily:${todayISO}`; }
-    function keyAllTime(){ return `alltime`; }
-    function keyStreak(){ return `streak`; }
-    function keyLastPlayed(){ return `lastPlayed`; }
-
-    function persistDailyState(){
-      const data = { city: routeOfDay.city, answer: answerMinutes(), guesses, won, nearHit, revealed };
-      store(keyDaily(), data);
-
-      // All-time “finished attempts” log (no diffs stored to avoid reverse‑calc meta)
-      if (won || revealed) {
-        const bests = load(keyAllTime(), []);
-        bests.push({
-          date: todayISO, city: routeOfDay.city, result: won ? 'win' : (nearHit ? 'near' : 'gave up')
-        });
-        store(keyAllTime(), bests.slice(-100));
-      }
-    }
-
-    function restoreDailyState(){
-      const s = load(keyStreak(), 0);
-      document.getElementById('streakVal').textContent = s;
-
-      const data = load(keyDaily(), null);
-      if (data && data.city === routeOfDay.city){
-        guesses = data.guesses || [];
-        won = !!data.won; nearHit = !!data.nearHit; revealed = !!data.revealed;
-        renderTables();
-        renderShareCard();
-        if (won) showResult(`Carried over: You already won today! ${data.answer} min 🟩`,'win');
-        else if (revealed) showResult(`Carried over: Answer was ${data.answer} min.`,'lose');
-      }
-      store(keyLastPlayed(), todayISO);
-    }
-
-    function addStreak(ok){
-      let s = load(keyStreak(), 0);
-      s = ok ? s+1 : 0;
-      store(keyStreak(), s);
-      document.getElementById('streakVal').textContent = s;
-    }
-
-    function verdictEmoji(v){
-      return v==='win'?'🟩':(v==='near'?'🟨':'🟥');
-    }
-
-    function renderTables(){
-      const tb1 = document.querySelector('#tblDaily tbody'); tb1.innerHTML = '';
-      guesses.forEach((g, i)=>{
-        const tr = document.createElement('tr');
-        tr.innerHTML = `<td>${i+1}</td><td>${g.min} min</td><td>${verdictEmoji(g.verdict)} ${g.verdict==='lose'?(g.dir==='high'?'(high)':'(low)'):''}</td><td>${new Date(g.ts).toLocaleTimeString()}</td>`;
-        tb1.appendChild(tr);
-      });
-
-      const tb2 = document.querySelector('#tblAllTime tbody'); tb2.innerHTML = '';
-      (load(keyAllTime(), [])).slice(-10).forEach((r,i)=>{
-        const tr = document.createElement('tr');
-        tr.innerHTML = `<td>${i+1}</td><td>${r.city}</td><td>${verdictEmoji(r.result)}</td><td>${r.date}</td>`;
-        tb2.appendChild(tr);
-      });
-    }
-
-    /* ===============
-       SHARE (no answer given away in grid text)
-       =============== */
-    function buildShareCard(){
-      const header = `TripGuessr ${todayISO}\n${routeOfDay.city}\n`;
-      let grid = '';
-      for (let i=0;i<guesses.length;i++){
-        const v = guesses[i].verdict;
-        grid += v==='win'?'🟩':(v==='near'?'🟨':'🟥');
-      }
-      grid += '⬜'.repeat(Math.max(0, MAX_GUESSES - guesses.length));
-      const footer = `\n${won ? 'Solved' : revealed ? 'Gave up' : `${guesses.length}/${MAX_GUESSES}`}\ntripguessr.com`;
-      return `${header}${grid}${footer}`;
-    }
-    function renderShareCard(){
-      document.getElementById('shareCard').textContent = buildShareCard();
-    }
-    async function copyShare(){
-      try {
-        await navigator.clipboard.writeText(buildShareCard());
-        document.getElementById('shareNote').textContent = 'Copied!';
-        gaEvent('share_copied', { city: routeOfDay.city });
-        setTimeout(()=> document.getElementById('shareNote').textContent = 'Wordle‑style text copied to clipboard', 1400);
-      } catch(e){
-        document.getElementById('shareNote').textContent = 'Copy failed — select text below';
-      }
-    }
-
-    /* Nice touch: focus input after jump */
-    window.addEventListener('hashchange', ()=>{
-      if (location.hash === '#game') setTimeout(()=> document.getElementById('guessMinutes').focus(), 100);
     });
+  }
+
+  function showMarkersOnly(){
+    // Fallback visual: drop two markers; use baseline for timing
+    if(google?.maps && !map){
+      map = new google.maps.Map($("map"),{center: routeOfDay.origin, zoom: 12, disableDefaultUI:true, backgroundColor:'#0b1328'});
+    }
+    if(google?.maps){
+      new google.maps.Marker({position:routeOfDay.origin,map,title:routeOfDay.origin.label});
+      new google.maps.Marker({position:routeOfDay.dest,map,title:routeOfDay.dest.label});
+      if(map && routeOfDay.origin && routeOfDay.dest){
+        const b=new google.maps.LatLngBounds(); b.extend(routeOfDay.origin); b.extend(routeOfDay.dest); map.fitBounds(b);
+      }
+    }
+    liveMinutes=null;
+    gaEvent('route_fallback',{city:routeOfDay.city});
+  }
+
+  /*************** GAME ***************/
+  function verdictForGuess(guess, answer){
+    const diff=Math.abs(guess-answer);
+    if(guess===answer) return {verdict:'win'};
+    const tol=Math.max(NEAR_TOL_MIN, Math.round(answer*NEAR_TOL_PCT));
+    if(diff<=tol) return {verdict:'near', dir: guess>answer?'high':'low'};
+    return {verdict:'lose', dir: guess>answer?'high':'low'};
+  }
+
+  function pushFeedback(verdict, dir){
+    const chip=document.createElement('span');
+    chip.className='chip';
+    chip.textContent = verdict==='win' ? '🟩 Exact' :
+                       verdict==='near' ? '🟨 So close!' :
+                       dir==='high' ? '🡅 Too high' : '🡇 Too low';
+    $("lastFeedback").prepend(chip);
+    // keep last 6 chips
+    const chips=[...$("lastFeedback").children]; if(chips.length>6) chips.pop().remove();
+  }
+
+  function onGuess(){
+    if(won || revealed || guesses.length>=MAX_GUESSES) return;
+    const input=$("guessMinutes"); const val=Number(input.value);
+    if(!Number.isFinite(val) || val<=0){ showResult('Enter a positive number of minutes.', 'lose', true); return; }
+    const gmin=Math.round(val), answer=answerMinutes();
+    const result=verdictForGuess(gmin, answer);
+
+    guesses.push({min:gmin, verdict:result.verdict, dir:result.dir||null, ts:Date.now()});
+
+    if(result.verdict==='win'){ won=true; addStreak(true); celebrate('win'); showResult(`Exact! ${answer} min 🟩`, 'win'); }
+    else if(result.verdict==='near'){ nearHit=true; celebrate('near'); showResult('So close! 🟨','near'); }
+    else{
+      if(guesses.length>=MAX_GUESSES){ revealed=true; addStreak(false); showResult(`Out of guesses. Answer: ${answer} min.`, 'lose'); }
+      else showResult(result.dir==='high'?'Too high.':'Too low.','lose');
+    }
+
+    pushFeedback(result.verdict, result.dir);
+    gaEvent('guess_submitted',{city:routeOfDay.city, guess:gmin, verdict:result.verdict, guess_index:guesses.length});
+
+    persist(); renderTables(); renderShareCard();
+    input.value=''; input.focus();
+    if(navigator.vibrate){ try{ navigator.vibrate(result.verdict==='win'? [30,20,30] : 12); }catch(e){} }
+  }
+
+  function giveUp(){
+    if(won || revealed) return;
+    revealed=true; addStreak(false);
+    const ans=answerMinutes();
+    showResult(`You gave up. Answer: ${ans} min.`,'lose');
+    gaEvent('gave_up',{city:routeOfDay.city});
+    persist(); renderTables(); renderShareCard();
+  }
+
+  function showResult(text, type, transient=false){
+    const el=$("resultBox"); el.className=`result ${type}`; el.textContent=text; el.classList.remove('hidden');
+    if(transient) setTimeout(()=> el.classList.add('hidden'), 1600);
+  }
+
+  function celebrate(kind){
+    const canvas=$("confetti"); canvas.classList.remove('hidden');
+    canvas.width=innerWidth; canvas.height=innerHeight; const ctx=canvas.getContext('2d');
+    const parts=Array.from({length:kind==='win'?180:90},()=>({x:Math.random()*canvas.width,y:-10-Math.random()*50,s:2+Math.random()*4,vy:2+Math.random()*3,vx:(Math.random()-.5)*2,life:120+Math.random()*100}));
+    clearInterval(confettiTimer);
+    confettiTimer=setInterval(()=>{
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      for(const p of parts){ p.x+=p.vx; p.y+=p.vy; p.vy*=0.995; p.life-=2; ctx.globalAlpha=Math.max(0,p.life/200); ctx.fillStyle= kind==='win'?'#22c55e':'#f59e0b'; ctx.fillRect(p.x,p.y,p.s,p.s*2); }
+    },16);
+    setTimeout(()=>{ clearInterval(confettiTimer); canvas.classList.add('hidden'); }, 1600);
+  }
+
+  /*************** PERSIST / TABLES ***************/
+  function persist(){
+    store(keyDaily(),{city:routeOfDay.city, answer:answerMinutes(), guesses, won, nearHit, revealed});
+    if(won||revealed){
+      const all=load(keyAllTime(),[]);
+      all.push({date:todayISO, city:routeOfDay.city, result: won?'win':(nearHit?'near':'gave up')});
+      store(keyAllTime(), all.slice(-100));
+    }
+  }
+  function restoreDaily(){
+    // streak
+    $("streakVal").textContent = load(keyStreak(),0);
+    // daily
+    const data=load(keyDaily(), null);
+    if(data && data.city===routeOfDay.city){
+      guesses=data.guesses||[]; won=!!data.won; nearHit=!!data.nearHit; revealed=!!data.revealed;
+      renderTables(); renderShareCard();
+      if(won) showResult(`Carried over: You already won today! ${data.answer} min 🟩`,'win');
+      else if(revealed) showResult(`Carried over: Answer was ${data.answer} min.`,'lose');
+    }
+    store(keyLastPlayed(), todayISO);
+  }
+  function addStreak(ok){
+    let s=load(keyStreak(),0); s = ok ? s+1 : 0; store(keyStreak(),s); $("streakVal").textContent=s;
+  }
+  function verdictEmoji(v){ return v==='win'?'🟩':(v==='near'?'🟨':'🟥'); }
+  function renderTables(){
+    const tb1=$("tblDaily").querySelector('tbody'); tb1.innerHTML='';
+    guesses.forEach((g,i)=>{
+      const tr=document.createElement('tr');
+      tr.innerHTML=`<td>${i+1}</td><td>${g.min} min</td><td>${verdictEmoji(g.verdict)} ${g.verdict==='lose'?(g.dir==='high'?'(high)':'(low)'):''}</td><td>${new Date(g.ts).toLocaleTimeString()}</td>`;
+      tb1.appendChild(tr);
+    });
+    const tb2=$("tblAllTime").querySelector('tbody'); tb2.innerHTML='';
+    (load(keyAllTime(),[])).slice(-10).forEach((r,i)=>{
+      const tr=document.createElement('tr');
+      tr.innerHTML=`<td>${i+1}</td><td>${r.city}</td><td>${verdictEmoji(r.result)}</td><td>${r.date}</td>`;
+      tb2.appendChild(tr);
+    });
+  }
+
+  /*************** SHARE ***************/
+  function buildShareCard(){
+    let grid=''; for(const g of guesses){ grid += (g.verdict==='win'?'🟩':g.verdict==='near'?'🟨':'🟥'); }
+    grid += '⬜'.repeat(Math.max(0, MAX_GUESSES - guesses.length));
+    const status = won ? 'Solved' : revealed ? 'Gave up' : `${guesses.length}/${MAX_GUESSES}`;
+    return `TripGuessr ${todayISO}\n${routeOfDay.city}\n${grid}\n${status}\ntripguessr.com`;
+  }
+  function renderShareCard(){ $("shareCard").textContent = buildShareCard(); }
+  async function copyShare(){
+    try{ await navigator.clipboard.writeText(buildShareCard()); $("shareNote").textContent='Copied!'; gaEvent('share_copied',{city:routeOfDay.city}); setTimeout(()=>$("shareNote").textContent='Wordle‑style text copied to clipboard',1200); }
+    catch(e){ $("shareNote").textContent='Copy failed — select text below'; }
+  }
+
   </script>
 </body>
 </html>
