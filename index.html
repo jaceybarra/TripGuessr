@@ -10,10 +10,7 @@
       --bg:#0b1020;--bg2:#0e162b;--card:#111b33;--card2:#0c142a;--text:#e7e9ee;--muted:#a6b0c2;
       --accent:#60a5fa;--accent2:#1d4ed8;--win:#22c55e;--near:#f59e0b;--lose:#ef4444;--border:#223153;
       --shadow:0 20px 60px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.04);
-      --route-main:#00e5ff;      /* bright cyan for maximum visibility */
-      --route-outline:#0a1024;   /* dark outline to separate from map */
-      --route-glow:#5be7ff;      /* soft outer glow */
-      --route-alt:#ffd400;       /* alt color for color-blind-friendly dash */
+      --route-main:#00e5ff;--route-outline:#0a1024;--route-glow:#5be7ff;--route-alt:#ffd400;
     }
     *{box-sizing:border-box}
     html,body{height:100%;margin:0}
@@ -35,10 +32,10 @@
     .btn{
       appearance:none;border-radius:14px;border:1px solid var(--border);
       background:linear-gradient(180deg,#1f2937,#0f172a);color:var(--text);
-      padding:12px 16px;font-weight:800;cursor:pointer;
+      padding:10px 14px;font-weight:800;cursor:pointer;
       box-shadow:0 10px 30px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.06);
       transition:transform .08s ease, box-shadow .12s ease, border-color .12s ease, filter .12s ease;
-      user-select:none
+      user-select:none;font-size:14px
     }
     .btn:hover{transform:translateY(-1px);border-color:#2b3a63;filter:brightness(1.05)}
     .btn:active{transform:translateY(0)}
@@ -49,15 +46,22 @@
     .grid{display:grid;grid-template-columns:1.35fr 1fr;gap:16px}
 
     /* Map card */
-    #mapWrap{position:relative;height:420px;border-radius:16px;border:1px solid var(--border);overflow:hidden;background:#0b1328}
+    #mapWrap{position:relative;height:440px;border-radius:16px;border:1px solid var(--border);overflow:hidden;background:#0b1328}
     #map{width:100%;height:100%}
 
     /* Map controls overlay */
-    .mapControls{position:absolute;top:10px;right:10px;display:flex;gap:6px;z-index:2}
+    .mapControls{position:absolute;top:10px;right:10px;display:flex;gap:6px;z-index:2;flex-wrap:wrap}
     .ctrl{background:rgba(10,16,36,.85);border:1px solid var(--border);color:#cfe3ff;border-radius:10px;padding:6px 8px;font-size:12px}
     .legend{display:flex;align-items:center;gap:8px}
     .legendSwatch{width:30px;height:6px;border-radius:999px;background:linear-gradient(90deg,var(--route-glow),var(--route-main));box-shadow:0 0 8px rgba(91,231,255,.7)}
     .chk{display:inline-flex;gap:6px;align-items:center}
+    .viewBtns{display:flex;gap:6px}
+    .viewBtns .btn{padding:6px 10px;font-size:12px}
+
+    /* Overview mini‑map */
+    #overviewWrap{position:absolute;left:10px;bottom:10px;width:170px;height:120px;border-radius:10px;border:1px solid var(--border);overflow:hidden;background:#081022;z-index:2}
+    #overview{width:100%;height:100%}
+    .overviewBadge{position:absolute;left:10px;bottom:134px;background:rgba(10,16,36,.85);color:#cfe3ff;border:1px solid var(--border);padding:6px 8px;border-radius:10px;font-size:12px}
 
     /* Skeleton shimmer while the map is loading */
     .skeleton::before{
@@ -79,7 +83,7 @@
     .result.near{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25);color:#fcd34d}
     .result.lose{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.25);color:#fecaca}
     .feedbackChips{display:flex;gap:6px;flex-wrap:wrap}
-    .chip{border:1px solid var(--border);background:var(--card2);padding:6px 10px;border-radius:999px;font-size:12px;color:var(--muted)}
+    .chip{border:1px solid var(--border);background:var(--card2);padding:6px 10px;border-radius:999px;font-size:12px;color:#muted}
     .shareBox{display:grid;gap:10px}
     .shareCard{white-space:pre;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;background:#0b1328;color:#d1d5db;border:1px dashed #2b3b66;border-radius:12px;padding:10px;overflow:auto;max-height:160px}
     .leaderboards{display:grid;grid-template-columns:1fr 1fr;gap:12px}
@@ -99,7 +103,8 @@
     @media (max-width:980px){
       .hero{grid-template-columns:1fr}
       .grid{grid-template-columns:1fr}
-      #mapWrap{height:360px}
+      #mapWrap{height:380px}
+      #overviewWrap{width:150px;height:110px}
     }
   </style>
 </head>
@@ -130,11 +135,15 @@
         <div id="mapWrap" class="skeleton">
           <div id="map"></div>
 
-          <!-- Overlay controls -->
-          <div class="mapControls">
+          <!-- Controls -->
+          <div class="mapControls" aria-label="Map controls">
             <div class="ctrl legend" aria-hidden="true">
               <div class="legendSwatch"></div>
               Route
+            </div>
+            <div class="viewBtns">
+              <button class="btn" id="btnFit">Fit route</button>
+              <button class="btn" id="btnContext">City context</button>
             </div>
             <label class="ctrl chk">
               <input type="checkbox" id="contrastToggle" checked />
@@ -142,7 +151,15 @@
             </label>
           </div>
 
-          <!-- Map diagnostics & loader -->
+          <!-- Distance badge -->
+          <div class="overviewBadge" id="distanceBadge">—</div>
+
+          <!-- Overview mini‑map -->
+          <div id="overviewWrap" aria-hidden="true">
+            <div id="overview"></div>
+          </div>
+
+          <!-- Map diagnostics -->
           <div id="mapDiag" class="hidden" role="alert">
             <div class="box">
               <strong>Map didn’t load</strong>
@@ -217,7 +234,7 @@
   <!-- Confetti -->
   <canvas id="confetti" class="hidden" style="position:fixed;inset:0;pointer-events:none"></canvas>
 
-  <!-- GA4 (optional; replace or leave as-is) -->
+  <!-- GA4 (optional) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
   <script>
     window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}
@@ -225,420 +242,234 @@
     const gaEvent=(name,params={})=>{try{gtag('event',name,params)}catch(e){}}
   </script>
 
-  <!-- App logic + dynamic Google Maps loader -->
   <script>
   /*************** ROUTE DATA (50 U.S. cities) ***************/
-  const ROUTES = [
-    { city:"New York, NY", origin:{lat:40.758, lng:-73.9855, label:"Times Sq"}, dest:{lat:40.7061, lng:-74.0087, label:"Wall St"}, baselineMinutes:22 },
-    { city:"Los Angeles, CA", origin:{lat:34.1381, lng:-118.3534, label:"Universal Studios"}, dest:{lat:34.011, lng:-118.495, label:"Santa Monica Pier"}, baselineMinutes:38 },
-    { city:"Chicago, IL", origin:{lat:41.8827, lng:-87.6233, label:"Millennium Park"}, dest:{lat:41.8796, lng:-87.6237, label:"Willis Tower"}, baselineMinutes:8 },
-    { city:"Houston, TX", origin:{lat:29.7602, lng:-95.3694, label:"Downtown"}, dest:{lat:29.721, lng:-95.391, label:"NRG Stadium"}, baselineMinutes:17 },
-    { city:"Phoenix, AZ", origin:{lat:33.4484, lng:-112.074, label:"City Center"}, dest:{lat:33.422, lng:-111.937, label:"ASU Stadium"}, baselineMinutes:22 },
-    { city:"Philadelphia, PA", origin:{lat:39.9526, lng:-75.1652, label:"City Hall"}, dest:{lat:39.9496, lng:-75.1503, label:"Liberty Bell"}, baselineMinutes:7 },
-    { city:"San Antonio, TX", origin:{lat:29.4252, lng:-98.4946, label:"The Alamo"}, dest:{lat:29.4260, lng:-98.4861, label:"River Walk"}, baselineMinutes:9 },
-    { city:"San Diego, CA", origin:{lat:32.7341, lng:-117.1446, label:"Balboa Park"}, dest:{lat:32.7137, lng:-117.1611, label:"Seaport Village"}, baselineMinutes:16 },
-    { city:"Dallas, TX", origin:{lat:32.7791, lng:-96.8089, label:"Arts District"}, dest:{lat:32.7757, lng:-96.7967, label:"Deep Ellum"}, baselineMinutes:12 },
-    { city:"San Jose, CA", origin:{lat:37.3337, lng:-121.8907, label:"Downtown"}, dest:{lat:37.3317, lng:-121.882, label:"SJSU"}, baselineMinutes:8 },
-    { city:"Austin, TX", origin:{lat:30.2653, lng:-97.7431, label:"6th Street"}, dest:{lat:30.285, lng:-97.739, label:"UT Tower"}, baselineMinutes:10 },
-    { city:"Jacksonville, FL", origin:{lat:30.328, lng:-81.656, label:"Downtown"}, dest:{lat:30.323, lng:-81.659, label:"TIAA Bank Field"}, baselineMinutes:9 },
-    { city:"San Francisco, CA", origin:{lat:37.8087, lng:-122.4098, label:"Fisherman’s Wharf"}, dest:{lat:37.8199, lng:-122.4783, label:"Golden Gate"}, baselineMinutes:24 },
-    { city:"Columbus, OH", origin:{lat:39.9623, lng:-83.0007, label:"Statehouse"}, dest:{lat:39.969, lng:-83.006, label:"Ohio Stadium"}, baselineMinutes:11 },
-    { city:"Fort Worth, TX", origin:{lat:32.7532, lng:-97.3294, label:"Sundance Sq"}, dest:{lat:32.7356, lng:-97.1081, label:"AT&T Stadium"}, baselineMinutes:26 },
-    { city:"Indianapolis, IN", origin:{lat:39.7684, lng:-86.1581, label:"Monument Cir"}, dest:{lat:39.7601, lng:-86.1639, label:"Lucas Oil"}, baselineMinutes:10 },
-    { city:"Charlotte, NC", origin:{lat:35.2271, lng:-80.8431, label:"Uptown"}, dest:{lat:35.225, lng:-80.84, label:"Spectrum Ctr"}, baselineMinutes:7 },
-    { city:"Seattle, WA", origin:{lat:47.6205, lng:-122.3493, label:"Space Needle"}, dest:{lat:47.6097, lng:-122.3425, label:"Pike Place"}, baselineMinutes:13 },
-    { city:"Denver, CO", origin:{lat:39.7392, lng:-104.9903, label:"Civic Ctr"}, dest:{lat:39.7487, lng:-104.995, label:"Coors Field"}, baselineMinutes:10 },
-    { city:"Washington, DC", origin:{lat:38.8895, lng:-77.0353, label:"Washington Monument"}, dest:{lat:38.8893, lng:-77.0502, label:"Lincoln Memorial"}, baselineMinutes:9 },
-    { city:"Boston, MA", origin:{lat:42.3601, lng:-71.0589, label:"Faneuil Hall"}, dest:{lat:42.3467, lng:-71.0972, label:"Fenway Park"}, baselineMinutes:20 },
-    { city:"El Paso, TX", origin:{lat:31.7619, lng:-106.485, label:"Downtown"}, dest:{lat:31.7725, lng:-106.5044, label:"UTEP"}, baselineMinutes:12 },
-    { city:"Nashville, TN", origin:{lat:36.1627, lng:-86.7816, label:"Broadway"}, dest:{lat:36.1665, lng:-86.7775, label:"Ryman"}, baselineMinutes:7 },
-    { city:"Detroit, MI", origin:{lat:42.3314, lng:-83.0458, label:"Campus Martius"}, dest:{lat:42.339, lng:-83.048, label:"Little Caesars"}, baselineMinutes:10 },
-    { city:"Oklahoma City, OK", origin:{lat:35.4676, lng:-97.5164, label:"Bricktown"}, dest:{lat:35.4634, lng:-97.5151, label:"Paycom Ctr"}, baselineMinutes:9 },
-    { city:"Portland, OR", origin:{lat:45.5231, lng:-122.6765, label:"Pioneer Sq"}, dest:{lat:45.5316, lng:-122.6668, label:"Moda Center"}, baselineMinutes:14 },
-    { city:"Las Vegas, NV", origin:{lat:36.1147, lng:-115.1728, label:"The Strip"}, dest:{lat:36.102, lng:-115.174, label:"T‑Mobile Arena"}, baselineMinutes:13 },
-    { city:"Memphis, TN", origin:{lat:35.1382, lng:-90.0506, label:"Beale St"}, dest:{lat:35.1358, lng:-90.057, label:"FedExForum"}, baselineMinutes:8 },
-    { city:"Louisville, KY", origin:{lat:38.257, lng:-85.758, label:"Churchill Downs"}, dest:{lat:38.256, lng:-85.751, label:"UofL"}, baselineMinutes:10 },
-    { city:"Baltimore, MD", origin:{lat:39.285, lng:-76.61, label:"Inner Harbor"}, dest:{lat:39.284, lng:-76.622, label:"Camden Yards"}, baselineMinutes:10 },
-    { city:"Milwaukee, WI", origin:{lat:43.0389, lng:-87.9065, label:"City Hall"}, dest:{lat:43.0437, lng:-87.9166, label:"Fiserv"}, baselineMinutes:9 },
-    { city:"Albuquerque, NM", origin:{lat:35.0844, lng:-106.6504, label:"Old Town"}, dest:{lat:35.087, lng:-106.651, label:"BioPark"}, baselineMinutes:9 },
-    { city:"Tucson, AZ", origin:{lat:32.2226, lng:-110.9747, label:"Downtown"}, dest:{lat:32.228, lng:-110.948, label:"Arizona Stadium"}, baselineMinutes:15 },
-    { city:"Fresno, CA", origin:{lat:36.7378, lng:-119.7871, label:"Downtown"}, dest:{lat:36.807, lng:-119.746, label:"River Park"}, baselineMinutes:21 },
-    { city:"Sacramento, CA", origin:{lat:38.5816, lng:-121.4944, label:"Capitol"}, dest:{lat:38.5802, lng:-121.4997, label:"Golden 1 Ctr"}, baselineMinutes:9 },
-    { city:"Kansas City, MO", origin:{lat:39.0997, lng:-94.5786, label:"Power & Light"}, dest:{lat:39.0489, lng:-94.4839, label:"GEHA Field"}, baselineMinutes:24 },
-    { city:"Atlanta, GA", origin:{lat:33.7488, lng:-84.3877, label:"Centennial Park"}, dest:{lat:33.7573, lng:-84.3963, label:"Mercedes‑Benz"}, baselineMinutes:11 },
-    { city:"Miami, FL", origin:{lat:25.7617, lng:-80.1918, label:"Bayfront"}, dest:{lat:25.7906, lng:-80.1300, label:"South Beach"}, baselineMinutes:25 },
-    { city:"Raleigh, NC", origin:{lat:35.7796, lng:-78.6382, label:"Capitol"}, dest:{lat:35.8033, lng:-78.7218, label:"PNC Arena"}, baselineMinutes:20 },
-    { city:"Cleveland, OH", origin:{lat:41.4993, lng:-81.6944, label:"Public Sq"}, dest:{lat:41.4966, lng:-81.6880, label:"Rocket Mortgage"}, baselineMinutes:9 },
-    { city:"Minneapolis, MN", origin:{lat:44.979, lng:-93.265, label:"Nicollet Mall"}, dest:{lat:44.974, lng:-93.258, label:"US Bank Stadium"}, baselineMinutes:10 },
-    { city:"New Orleans, LA", origin:{lat:29.9547, lng:-90.0751, label:"Jackson Sq"}, dest:{lat:29.949, lng:-90.081, label:"Caesars Superdome"}, baselineMinutes:11 },
-    { city:"Honolulu, HI", origin:{lat:21.3069, lng:-157.8583, label:"Iolani Palace"}, dest:{lat:21.2767, lng:-157.827, label:"Waikiki"}, baselineMinutes:22 },
-    { city:"Salt Lake City, UT", origin:{lat:40.7608, lng:-111.8910, label:"Temple Sq"}, dest:{lat:40.768, lng:-111.901, label:"Delta Center"}, baselineMinutes:10 },
-    { city:"Boise, ID", origin:{lat:43.615, lng:-116.202, label:"Capitol"}, dest:{lat:43.608, lng:-116.215, label:"Albertsons Stadium"}, baselineMinutes:11 },
-    { city:"Anchorage, AK", origin:{lat:61.2181, lng:-149.9003, label:"Town Sq"}, dest:{lat:61.187, lng:-149.887, label:"Airport vicinity"}, baselineMinutes:24 },
-    { city:"Birmingham, AL", origin:{lat:33.5207, lng:-86.8025, label:"Railroad Park"}, dest:{lat:33.511, lng:-86.843, label:"Protective Stadium"}, baselineMinutes:13 },
-    { city:"Omaha, NE", origin:{lat:41.2565, lng:-95.9345, label:"Old Market"}, dest:{lat:41.2647, lng:-95.9477, label:"Charles Schwab Field"}, baselineMinutes:12 },
-    { city:"Buffalo, NY", origin:{lat:42.8864, lng:-78.8784, label:"Canalside"}, dest:{lat:42.875, lng:-78.876, label:"KeyBank Ctr"}, baselineMinutes:12 },
-    { city:"Pittsburgh, PA", origin:{lat:40.4406, lng:-79.9959, label:"Point State Park"}, dest:{lat:40.4468, lng:-80.0158, label:"PNC Park"}, baselineMinutes:11 },
-    { city:"Richmond, VA", origin:{lat:37.5407, lng:-77.4360, label:"Capitol"}, dest:{lat:37.5538, lng:-77.4603, label:"The Diamond"}, baselineMinutes:12 },
-    { city:"Tampa, FL", origin:{lat:27.9506, lng:-82.4572, label:"Riverwalk"}, dest:{lat:27.9427, lng:-82.451, label:"Amalie Arena"}, baselineMinutes:10 }
-  ];
+  const ROUTES=[{city:"New York, NY",origin:{lat:40.758,lng:-73.9855,label:"Times Sq"},dest:{lat:40.7061,lng:-74.0087,label:"Wall St"},baselineMinutes:22},{city:"Los Angeles, CA",origin:{lat:34.1381,lng:-118.3534,label:"Universal Studios"},dest:{lat:34.011,lng:-118.495,label:"Santa Monica Pier"},baselineMinutes:38},{city:"Chicago, IL",origin:{lat:41.8827,lng:-87.6233,label:"Millennium Park"},dest:{lat:41.8796,lng:-87.6237,label:"Willis Tower"},baselineMinutes:8},{city:"Houston, TX",origin:{lat:29.7602,lng:-95.3694,label:"Downtown"},dest:{lat:29.721,lng:-95.391,label:"NRG Stadium"},baselineMinutes:17},{city:"Phoenix, AZ",origin:{lat:33.4484,lng:-112.074,label:"City Center"},dest:{lat:33.422,lng:-111.937,label:"ASU Stadium"},baselineMinutes:22},{city:"Philadelphia, PA",origin:{lat:39.9526,lng:-75.1652,label:"City Hall"},dest:{lat:39.9496,lng:-75.1503,label:"Liberty Bell"},baselineMinutes:7},{city:"San Antonio, TX",origin:{lat:29.4252,lng:-98.4946,label:"The Alamo"},dest:{lat:29.426,lng:-98.4861,label:"River Walk"},baselineMinutes:9},{city:"San Diego, CA",origin:{lat:32.7341,lng:-117.1446,label:"Balboa Park"},dest:{lat:32.7137,lng:-117.1611,label:"Seaport Village"},baselineMinutes:16},{city:"Dallas, TX",origin:{lat:32.7791,lng:-96.8089,label:"Arts District"},dest:{lat:32.7757,lng:-96.7967,label:"Deep Ellum"},baselineMinutes:12},{city:"San Jose, CA",origin:{lat:37.3337,lng:-121.8907,label:"Downtown"},dest:{lat:37.3317,lng:-121.882,label:"SJSU"},baselineMinutes:8},{city:"Austin, TX",origin:{lat:30.2653,lng:-97.7431,label:"6th Street"},dest:{lat:30.285,lng:-97.739,label:"UT Tower"},baselineMinutes:10},{city:"Jacksonville, FL",origin:{lat:30.328,lng:-81.656,label:"Downtown"},dest:{lat:30.323,lng:-81.659,label:"TIAA Bank Field"},baselineMinutes:9},{city:"San Francisco, CA",origin:{lat:37.8087,lng:-122.4098,label:"Fisherman’s Wharf"},dest:{lat:37.8199,lng:-122.4783,label:"Golden Gate"},baselineMinutes:24},{city:"Columbus, OH",origin:{lat:39.9623,lng:-83.0007,label:"Statehouse"},dest:{lat:39.969,lng:-83.006,label:"Ohio Stadium"},baselineMinutes:11},{city:"Fort Worth, TX",origin:{lat:32.7532,lng:-97.3294,label:"Sundance Sq"},dest:{lat:32.7356,lng:-97.1081,label:"AT&T Stadium"},baselineMinutes:26},{city:"Indianapolis, IN",origin:{lat:39.7684,lng:-86.1581,label:"Monument Cir"},dest:{lat:39.7601,lng:-86.1639,label:"Lucas Oil"},baselineMinutes:10},{city:"Charlotte, NC",origin:{lat:35.2271,lng:-80.8431,label:"Uptown"},dest:{lat:35.225,lng:-80.84,label:"Spectrum Ctr"},baselineMinutes:7},{city:"Seattle, WA",origin:{lat:47.6205,lng:-122.3493,label:"Space Needle"},dest:{lat:47.6097,lng:-122.3425,label:"Pike Place"},baselineMinutes:13},{city:"Denver, CO",origin:{lat:39.7392,lng:-104.9903,label:"Civic Ctr"},dest:{lat:39.7487,lng:-104.995,label:"Coors Field"},baselineMinutes:10},{city:"Washington, DC",origin:{lat:38.8895,lng:-77.0353,label:"Washington Monument"},dest:{lat:38.8893,lng:-77.0502,label:"Lincoln Memorial"},baselineMinutes:9},{city:"Boston, MA",origin:{lat:42.3601,lng:-71.0589,label:"Faneuil Hall"},dest:{lat:42.3467,lng:-71.0972,label:"Fenway Park"},baselineMinutes:20},{city:"El Paso, TX",origin:{lat:31.7619,lng:-106.485,label:"Downtown"},dest:{lat:31.7725,lng:-106.5044,label:"UTEP"},baselineMinutes:12},{city:"Nashville, TN",origin:{lat:36.1627,lng:-86.7816,label:"Broadway"},dest:{lat:36.1665,lng:-86.7775,label:"Ryman"},baselineMinutes:7},{city:"Detroit, MI",origin:{lat:42.3314,lng:-83.0458,label:"Campus Martius"},dest:{lat:42.339,lng:-83.048,label:"Little Caesars"},baselineMinutes:10},{city:"Oklahoma City, OK",origin:{lat:35.4676,lng:-97.5164,label:"Bricktown"},dest:{lat:35.4634,lng:-97.5151,label:"Paycom Ctr"},baselineMinutes:9},{city:"Portland, OR",origin:{lat:45.5231,lng:-122.6765,label:"Pioneer Sq"},dest:{lat:45.5316,lng:-122.6668,label:"Moda Center"},baselineMinutes:14},{city:"Las Vegas, NV",origin:{lat:36.1147,lng:-115.1728,label:"The Strip"},dest:{lat:36.102,lng:-115.174,label:"T‑Mobile Arena"},baselineMinutes:13},{city:"Memphis, TN",origin:{lat:35.1382,lng:-90.0506,label:"Beale St"},dest:{lat:35.1358,lng:-90.057,label:"FedExForum"},baselineMinutes:8},{city:"Louisville, KY",origin:{lat:38.257,lng:-85.758,label:"Churchill Downs"},dest:{lat:38.256,lng:-85.751,label:"UofL"},baselineMinutes:10},{city:"Baltimore, MD",origin:{lat:39.285,lng:-76.61,label:"Inner Harbor"},dest:{lat:39.284,lng:-76.622,label:"Camden Yards"},baselineMinutes:10},{city:"Milwaukee, WI",origin:{lat:43.0389,lng:-87.9065,label:"City Hall"},dest:{lat:43.0437,lng:-87.9166,label:"Fiserv"},baselineMinutes:9},{city:"Albuquerque, NM",origin:{lat:35.0844,lng:-106.6504,label:"Old Town"},dest:{lat:35.087,lng:-106.651,label:"BioPark"},baselineMinutes:9},{city:"Tucson, AZ",origin:{lat:32.2226,lng:-110.9747,label:"Downtown"},dest:{lat:32.228,lng:-110.948,label:"Arizona Stadium"},baselineMinutes:15},{city:"Fresno, CA",origin:{lat:36.7378,lng:-119.7871,label:"Downtown"},dest:{lat:36.807,lng:-119.746,label:"River Park"},baselineMinutes:21},{city:"Sacramento, CA",origin:{lat:38.5816,lng:-121.4944,label:"Capitol"},dest:{lat:38.5802,lng:-121.4997,label:"Golden 1 Ctr"},baselineMinutes:9},{city:"Kansas City, MO",origin:{lat:39.0997,lng:-94.5786,label:"Power & Light"},dest:{lat:39.0489,lng:-94.4839,label:"GEHA Field"},baselineMinutes:24},{city:"Atlanta, GA",origin:{lat:33.7488,lng:-84.3877,label:"Centennial Park"},dest:{lat:33.7573,lng:-84.3963,label:"Mercedes‑Benz"},baselineMinutes:11},{city:"Miami, FL",origin:{lat:25.7617,lng:-80.1918,label:"Bayfront"},dest:{lat:25.7906,lng:-80.13,label:"South Beach"},baselineMinutes:25},{city:"Raleigh, NC",origin:{lat:35.7796,lng:-78.6382,label:"Capitol"},dest:{lat:35.8033,lng:-78.7218,label:"PNC Arena"},baselineMinutes:20},{city:"Cleveland, OH",origin:{lat:41.4993,lng:-81.6944,label:"Public Sq"},dest:{lat:41.4966,lng:-81.688,label:"Rocket Mortgage"},baselineMinutes:9},{city:"Minneapolis, MN",origin:{lat:44.979,lng:-93.265,label:"Nicollet Mall"},dest:{lat:44.974,lng:-93.258,label:"US Bank Stadium"},baselineMinutes:10},{city:"New Orleans, LA",origin:{lat:29.9547,lng:-90.0751,label:"Jackson Sq"},dest:{lat:29.949,lng:-90.081,label:"Caesars Superdome"},baselineMinutes:11},{city:"Honolulu, HI",origin:{lat:21.3069,lng:-157.8583,label:"Iolani Palace"},dest:{lat:21.2767,lng:-157.827,label:"Waikiki"},baselineMinutes:22},{city:"Salt Lake City, UT",origin:{lat:40.7608,lng:-111.891,label:"Temple Sq"},dest:{lat:40.768,lng:-111.901,label:"Delta Center"},baselineMinutes:10},{city:"Boise, ID",origin:{lat:43.615,lng:-116.202,label:"Capitol"},dest:{lat:43.608,lng:-116.215,label:"Albertsons Stadium"},baselineMinutes:11},{city:"Anchorage, AK",origin:{lat:61.2181,lng:-149.9003,label:"Town Sq"},dest:{lat:61.187,lng:-149.887,label:"Airport vicinity"},baselineMinutes:24},{city:"Birmingham, AL",origin:{lat:33.5207,lng:-86.8025,label:"Railroad Park"},dest:{lat:33.511,lng:-86.843,label:"Protective Stadium"},baselineMinutes:13},{city:"Omaha, NE",origin:{lat:41.2565,lng:-95.9345,label:"Old Market"},dest:{lat:41.2647,lng:-95.9477,label:"Charles Schwab Field"},baselineMinutes:12},{city:"Buffalo, NY",origin:{lat:42.8864,lng:-78.8784,label:"Canalside"},dest:{lat:42.875,lng:-78.876,label:"KeyBank Ctr"},baselineMinutes:12},{city:"Pittsburgh, PA",origin:{lat:40.4406,lng:-79.9959,label:"Point State Park"},dest:{lat:40.4468,lng:-80.0158,label:"PNC Park"},baselineMinutes:11},{city:"Richmond, VA",origin:{lat:37.5407,lng:-77.436,label:"Capitol"},dest:{lat:37.5538,lng:-77.4603,label:"The Diamond"},baselineMinutes:12},{city:"Tampa, FL",origin:{lat:27.9506,lng:-82.4572,label:"Riverwalk"},dest:{lat:27.9427,lng:-82.451,label:"Amalie Arena"},baselineMinutes:10}];
 
   /*************** CONFIG ***************/
-  const MAX_GUESSES=6;
-  const NEAR_TOL_PCT=0.05; // 5%
-  const NEAR_TOL_MIN=2;    // minutes
-  const STORAGE_PREFIX="tripguessr_v8";
+  const MAX_GUESSES=6, NEAR_TOL_PCT=0.05, NEAR_TOL_MIN=2;
+  const STORAGE_PREFIX="tripguessr_v9";
   const todayISO=new Date().toISOString().slice(0,10);
-  const GOOGLE_MAPS_KEY = "AIzaSyDJhWz8jA_KfdQCZ1jE_z8RPGuvcQBVKFM"; // your key
+  const GOOGLE_MAPS_KEY="AIzaSyDJhWz8jA_KfdQCZ1jE_z8RPGuvcQBVKFM"; // your key
 
   /*************** STATE ***************/
-  let map, directions, renderer, routeOfDay=null, liveMinutes=null, fallbackMinutes=null;
+  let map, overviewMap, directions, renderer, routeOfDay=null, liveMinutes=null, fallbackMinutes=null;
   let guesses=[], won=false, nearHit=false, revealed=false;
   let confettiTimer;
-  // custom route layers
-  let routePolys = [];
-  let originMarker = null, destMarker = null;
+  let routePolys=[], originMarker=null, destMarker=null, overviewRect=null, currentBounds=null;
 
   /*************** UTIL ***************/
-  const seedIndex=(seed,mod)=>{let h=2166136261;for(let i=0;i<seed.length;i++){h^=seed.charCodeAt(i);h+=(h<<1)+(h<<4)+(h<<7)+(h<<8)+(h<<24);}return Math.abs(h)%mod}
+  const seedIndex=(s,m)=>{let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h+=(h<<1)+(h<<4)+(h<<7)+(h<<8)+(h<<24);}return Math.abs(h)%m}
   const $=(id)=>document.getElementById(id);
   const store=(k,v)=>localStorage.setItem(`${STORAGE_PREFIX}:${k}`,JSON.stringify(v));
-  const load=(k,def=null)=>{const v=localStorage.getItem(`${STORAGE_PREFIX}:${k}`);return v?JSON.parse(v):def}
+  const load=(k,d=null)=>{const v=localStorage.getItem(`${STORAGE_PREFIX}:${k}`);return v?JSON.parse(v):d}
   const answerMinutes=()=> (liveMinutes ?? fallbackMinutes);
   const keyDaily=()=>`daily:${todayISO}`, keyAllTime=()=>`alltime`, keyStreak=()=>`streak`, keyLastPlayed=()=>`lastPlayed`;
   const verdictEmoji=(v)=> v==='win'?'🟩':(v==='near'?'🟨':'🟥');
+  const miles=(m)=> (m/1609.344); const km=(m)=> (m/1000);
 
-  /*************** APP INIT ***************/
+  /*************** INIT ***************/
   function appBoot(){
-    $("year").textContent = new Date().getFullYear();
-    $("pillDate").textContent = todayISO;
+    $("year").textContent=new Date().getFullYear();
+    $("pillDate").textContent=todayISO;
 
-    // Pick today’s route
-    routeOfDay = ROUTES[seedIndex(todayISO + "-US50", ROUTES.length)];
-    fallbackMinutes = routeOfDay.baselineMinutes;
-    $("pillCity").textContent = routeOfDay.city;
-    $("originLabel").textContent = routeOfDay.origin.label;
-    $("destLabel").textContent = routeOfDay.dest.label;
+    routeOfDay=ROUTES[seedIndex(todayISO+"-US50",ROUTES.length)];
+    fallbackMinutes=routeOfDay.baselineMinutes;
+    $("pillCity").textContent=routeOfDay.city;
+    $("originLabel").textContent=routeOfDay.origin.label;
+    $("destLabel").textContent=routeOfDay.dest.label;
 
-    bindUI();
-    restoreDaily();
-
-    loadGoogleMaps()
-      .then(()=> initMapCore())
-      .catch((msg)=> showMapDiag(msg||"Maps script failed to load. Check the API key and network."));
+    bindUI(); restoreDaily(); loadGoogleMaps().then(initMapCore).catch(showMapDiag);
   }
 
   function bindUI(){
-    $("btnRules").onclick = ()=> $("howItWorks").classList.toggle("hidden");
-    $("ctaPlay").onclick = ()=> { location.hash="#game"; setTimeout(()=> $("guessMinutes").focus(),80); };
-    $("btnGuess").onclick = onGuess;
+    $("btnRules").onclick=()=>$("howItWorks").classList.toggle("hidden");
+    $("ctaPlay").onclick=()=>{location.hash="#game"; setTimeout(()=>$("guessMinutes").focus(),80);};
+    $("btnGuess").onclick=onGuess; $("btnGiveUp").onclick=giveUp; $("btnShare").onclick=copyShare;
     $("guessMinutes").addEventListener('keydown',(e)=>{
       if(e.key==='Enter') onGuess();
-      if(e.key==='ArrowUp'){e.preventDefault(); nudge(1);}
-      if(e.key==='ArrowDown'){e.preventDefault(); nudge(-1);}
+      if(e.key==='ArrowUp'){e.preventDefault();nudge(1);}
+      if(e.key==='ArrowDown'){e.preventDefault();nudge(-1);}
     });
-    $("btnGiveUp").onclick = giveUp;
-    $("btnShare").onclick = copyShare;
-    $("retryMapBtn").onclick = ()=> { $("mapDiag").classList.add("hidden"); loadGoogleMaps(true).then(()=> initMapCore()).catch(showMapDiag); };
-    $("showMarkersBtn").onclick = showMarkersOnly;
-    $("contrastToggle").onchange = ()=> applyRouteStyle();
-    $("darkToggle").onchange = (e)=>{document.body.style.background = e.target.checked
-      ? 'radial-gradient(1200px 800px at -10% -20%, rgba(96,165,250,.08), transparent 45%), radial-gradient(900px 700px at 110% -10%, rgba(34,197,94,.08), transparent 40%), linear-gradient(180deg, var(--bg), var(--bg) 30%, var(--bg2) 100%)'
-      : '#f6f8fb'}
+    $("retryMapBtn").onclick=()=>{$("mapDiag").classList.add("hidden");loadGoogleMaps(true).then(initMapCore).catch(showMapDiag);};
+    $("showMarkersBtn").onclick=showMarkersOnly;
+    $("contrastToggle").onchange=applyRouteStyle;
+    $("btnFit").onclick=()=>{ if(currentBounds){ map.fitBounds(currentBounds,{top:40,left:40,right:40,bottom:40}); } };
+    $("btnContext").onclick=()=>{ if(currentBounds){ 
+      // zoom out ~1.6x to give city context
+      map.fitBounds(currentBounds,{top:120,left:120,right:120,bottom:120}); 
+    }};
+    $("darkToggle").onchange=(e)=>{
+      document.body.style.background=e.target.checked
+        ? 'radial-gradient(1200px 800px at -10% -20%, rgba(96,165,250,.08), transparent 45%), radial-gradient(900px 700px at 110% -10%, rgba(34,197,94,.08), transparent 40%), linear-gradient(180deg, var(--bg), var(--bg) 30%, var(--bg2) 100%)'
+        : '#f6f8fb';
+    };
   }
-
-  function nudge(delta){
-    const el=$("guessMinutes");
-    const v = Math.max(1, (parseInt(el.value||'0',10)||0) + delta);
-    el.value = v;
-  }
+  function nudge(d){const el=$("guessMinutes"); const v=Math.max(1,(parseInt(el.value||'0',10)||0)+d); el.value=v;}
 
   /*************** GOOGLE MAPS LOADER ***************/
-  function loadGoogleMaps(forceReload=false){
+  function loadGoogleMaps(force=false){
     return new Promise((resolve,reject)=>{
-      if(!GOOGLE_MAPS_KEY || GOOGLE_MAPS_KEY.includes("YOUR_GOOGLE_MAPS_API_KEY")){
-        reject("Missing API key. Replace YOUR_GOOGLE_MAPS_API_KEY.");
-        return;
-      }
-      if(window.google && google.maps && !forceReload){ resolve(); return; }
-      const old = document.getElementById('gmaps-sdk'); if(old){ old.remove(); }
-      const s = document.createElement('script');
-      s.id = 'gmaps-sdk';
-      s.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(GOOGLE_MAPS_KEY)}&libraries=geometry`;
-      s.async = true; s.defer = true;
-      s.onload = ()=> (window.google && google.maps) ? resolve() : reject("Google Maps loaded but window.google is undefined.");
-      s.onerror = ()=> reject("Network or CSP blocked Google Maps. Check ad‑blockers, CSP, and referrers.");
+      if(!GOOGLE_MAPS_KEY){reject("Missing API key.");return;}
+      if(window.google&&google.maps&&!force){resolve();return;}
+      const old=document.getElementById('gmaps-sdk'); if(old) old.remove();
+      const s=document.createElement('script'); s.id='gmaps-sdk';
+      s.src=`https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(GOOGLE_MAPS_KEY)}&libraries=geometry`;
+      s.async=true; s.defer=true;
+      s.onload=()=> (window.google&&google.maps)?resolve():reject("Google loaded but window.google is undefined.");
+      s.onerror=()=>reject("Network/CSP blocked Google Maps.");
       document.head.appendChild(s);
-      setTimeout(()=>{ if(!(window.google && google.maps)) reject("Timed out loading Google Maps."); }, 8000);
+      setTimeout(()=>{if(!(window.google&&google.maps))reject("Timed out loading Google Maps.");},8000);
     });
   }
 
   /*************** MAP ***************/
   function initMapCore(){
-    const wrap=$("mapWrap");
-    wrap.classList.add("skeleton");
+    const wrap=$("mapWrap"); wrap.classList.add("skeleton");
+    const style=[
+      {elementType:'geometry',stylers:[{color:'#0c1430'}]},
+      {elementType:'labels.text.fill',stylers:[{color:'#c4d3f6'}]},
+      {featureType:'poi',stylers:[{visibility:'off'}]},
+      {featureType:'road',elementType:'geometry',stylers:[{color:'#1a264a'}]},
+      {featureType:'road.highway',elementType:'geometry',stylers:[{color:'#20315f'}]},
+      {featureType:'road',elementType:'labels.text.fill',stylers:[{color:'#b9c8eb'}]},
+      {featureType:'transit',stylers:[{visibility:'off'}]},
+      {featureType:'water',elementType:'geometry',stylers:[{color:'#0b1b3d'}]}
+    ];
     try{
-      const baseStyle = [
-        {elementType:'geometry',stylers:[{color:'#0b1328'}]},
-        {elementType:'labels.text.fill',stylers:[{color:'#a8b3c9'}]},
-        {featureType:'poi', stylers:[{visibility:'off'}]},
-        {featureType:'transit', stylers:[{visibility:'off'}]},
-        {featureType:'road', elementType:'labels.icon', stylers:[{visibility:'off'}]}
-      ];
-      map = new google.maps.Map($("map"),{
-        center: routeOfDay.origin, zoom: 12, disableDefaultUI: true, backgroundColor:'#0b1328',
-        styles: baseStyle
+      map=new google.maps.Map($("map"),{
+        center:routeOfDay.origin,zoom:12,disableDefaultUI:false,zoomControl:true,fullscreenControl:false,
+        mapTypeControl:false,streetViewControl:false,scaleControl:true,gestureHandling:'greedy',
+        backgroundColor:'#0b1328',styles:style
+      });
+      // Overview mini-map
+      overviewMap=new google.maps.Map($("overview"),{
+        center:routeOfDay.origin,zoom:12,disableDefaultUI:true,styles:style,draggable:false,gestureHandling:'none'
       });
 
-      directions = new google.maps.DirectionsService();
-      // We’ll draw our own polylines + markers for better visibility
-      renderer   = new google.maps.DirectionsRenderer({
-        map, suppressMarkers:true, suppressPolylines:true, preserveViewport:false
-      });
-
-      renderRoute(); // auto‑render on load
-    }catch(e){
-      showMapDiag("Map failed to initialize: " + (e?.message||e));
-    }finally{
-      wrap.classList.remove("skeleton");
-    }
+      directions=new google.maps.DirectionsService();
+      renderer=new google.maps.DirectionsRenderer({map,suppressMarkers:true,suppressPolylines:true,preserveViewport:false});
+      renderRoute();
+    }catch(e){showMapDiag("Map failed: "+(e?.message||e));}
+    finally{wrap.classList.remove("skeleton");}
   }
 
-  function showMapDiag(msg){
-    $("mapDiagMsg").textContent = msg;
-    $("mapDiag").classList.remove("hidden");
-    gaEvent && gaEvent('map_error',{msg});
-  }
+  function showMapDiag(msg){$("mapDiagMsg").textContent=msg;$("mapDiag").classList.remove("hidden");gaEvent&&gaEvent('map_error',{msg});}
 
   function clearRouteLayers(){
-    routePolys.forEach(p=>p.setMap(null));
-    routePolys = [];
-    if(originMarker){ originMarker.setMap(null); originMarker=null; }
-    if(destMarker){ destMarker.setMap(null); destMarker=null; }
+    routePolys.forEach(p=>p.setMap(null)); routePolys=[];
+    if(originMarker){originMarker.setMap(null); originMarker=null;}
+    if(destMarker){destMarker.setMap(null); destMarker=null;}
+    if(overviewRect){overviewRect.setMap(null); overviewRect=null;}
   }
 
-  function svgMarker(letter, fill){
-    const svg = `
-      <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40">
-        <g filter="url(#f)"><circle cx="20" cy="20" r="10" fill="${fill}" stroke="white" stroke-width="2"/></g>
-        <text x="20" y="24" text-anchor="middle" font-size="12" font-weight="700" fill="#0a1024" font-family="ui-sans-serif,system-ui">${letter}</text>
-        <defs>
-          <filter id="f"><feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="rgba(0,0,0,.5)"/></filter>
-        </defs>
-      </svg>`;
-    return { url: 'data:image/svg+xml;charset=UTF-8,'+encodeURIComponent(svg), scaledSize: new google.maps.Size(40,40) };
+  function svgMarker(letter,fill){
+    const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40"><g filter="url(#f)"><circle cx="20" cy="20" r="10" fill="${fill}" stroke="white" stroke-width="2"/></g><text x="20" y="24" text-anchor="middle" font-size="12" font-weight="700" fill="#0a1024" font-family="ui-sans-serif,system-ui">${letter}</text><defs><filter id="f"><feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="rgba(0,0,0,.5)"/></filter></defs></svg>`;
+    return {url:'data:image/svg+xml;charset=UTF-8,'+encodeURIComponent(svg),scaledSize:new google.maps.Size(40,40)};
   }
 
   function renderRoute(){
-    if(!(window.google && google.maps)){ showMarkersOnly(); return; }
-    const req={
-      origin: routeOfDay.origin, destination: routeOfDay.dest,
-      travelMode: google.maps.TravelMode.DRIVING, provideRouteAlternatives:false,
-      drivingOptions:{ departureTime: new Date(Date.now()+60*1000) }
-    };
+    if(!(window.google&&google.maps)){showMarkersOnly();return;}
+    const req={origin:routeOfDay.origin,destination:routeOfDay.dest,travelMode:google.maps.TravelMode.DRIVING,provideRouteAlternatives:false,drivingOptions:{departureTime:new Date(Date.now()+60*1000)}};
     directions.route(req,(res,status)=>{
       if(status==='OK' && res.routes?.[0]?.legs?.[0]){
-        renderer.setDirections(res); // for bounds/overview
-        const path = res.routes[0].overview_path;
-        const bounds = res.routes[0].bounds;
-        map.fitBounds(bounds);
+        renderer.setDirections(res);
+        const r=res.routes[0];
+        const path=r.overview_path;
+        currentBounds=r.bounds;
 
-        // custom markers (accessible)
+        // distance badge
+        const meters=google.maps.geometry.spherical.computeLength(path);
+        const mi=miles(meters).toFixed(1), kms=km(meters).toFixed(1);
+        $("distanceBadge").textContent=`≈ ${mi} mi / ${kms} km`;
+
+        map.fitBounds(currentBounds,{top:40,left:40,right:40,bottom:40});
+        overviewMap.fitBounds(currentBounds);
+
         clearRouteLayers();
-        originMarker = new google.maps.Marker({
-          position: routeOfDay.origin, map, title: `Origin: ${routeOfDay.origin.label}`, icon: svgMarker('A','#ff6b6b')
-        });
-        destMarker = new google.maps.Marker({
-          position: routeOfDay.dest, map, title: `Destination: ${routeOfDay.dest.label}`, icon: svgMarker('B','#5eead4')
+        originMarker=new google.maps.Marker({position:routeOfDay.origin,map,title:`Origin: ${routeOfDay.origin.label}`,icon:svgMarker('A','#ff6b6b')});
+        destMarker=new google.maps.Marker({position:routeOfDay.dest,map,title:`Destination: ${routeOfDay.dest.label}`,icon:svgMarker('B','#5eead4')});
+
+        // draw route (glow -> outline -> main)
+        const glow=new google.maps.Polyline({path,map,strokeColor:getVar('--route-glow'),strokeOpacity:.55,strokeWeight:18});
+        const outline=new google.maps.Polyline({path,map,strokeColor:getVar('--route-outline'),strokeOpacity:1,strokeWeight:12});
+        const main=new google.maps.Polyline({path,map,strokeColor:getVar('--route-main'),strokeOpacity:1,strokeWeight:8});
+        routePolys.push(glow,outline,main);
+
+        // overview rectangle
+        overviewRect=new google.maps.Rectangle({
+          map:overviewMap,
+          bounds:currentBounds,
+          strokeColor:'#60a5fa',strokeOpacity:.9,strokeWeight:2,fillOpacity:0
         });
 
-        // Draw multi-layered polyline: glow -> outline -> main
-        const glow = new google.maps.Polyline({ path, map, strokeColor:getComputedStyle(document.documentElement).getPropertyValue('--route-glow').trim(), strokeOpacity:0.5, strokeWeight:16 });
-        const outline = new google.maps.Polyline({ path, map, strokeColor:getComputedStyle(document.documentElement).getPropertyValue('--route-outline').trim(), strokeOpacity:1, strokeWeight:12 });
-        const main = new google.maps.Polyline({ path, map, strokeColor:getComputedStyle(document.documentElement).getPropertyValue('--route-main').trim(), strokeOpacity:1, strokeWeight:8 });
-        routePolys.push(glow, outline, main);
-
-        // live minutes
-        const leg=res.routes[0].legs[0];
-        const seconds=(leg.duration_in_traffic?.value || leg.duration.value);
+        // minutes (kept internal)
+        const leg=r.legs[0]; const seconds=(leg.duration_in_traffic?.value||leg.duration.value);
         liveMinutes=Math.round(seconds/60);
         gaEvent('route_shown',{city:routeOfDay.city});
-
-        applyRouteStyle(); // apply contrast/dash if needed
-      }else{
-        showMarkersOnly();
-      }
+        applyRouteStyle();
+      }else{showMarkersOnly();}
     });
   }
 
+  function getVar(name){return getComputedStyle(document.documentElement).getPropertyValue(name).trim();}
+
   function applyRouteStyle(){
-    // Toggle a dashed alt layer for additional accessibility (helps some color‑vision types)
-    const high = $("contrastToggle").checked;
+    const high=$("contrastToggle").checked;
     if(routePolys.length){
-      const [glow, outline, main] = routePolys;
-      glow.setOptions({ strokeOpacity: high?0.55:0.35, strokeWeight: high?18:14 });
-      outline.setOptions({ strokeWeight: high?12:10 });
-      main.setOptions({ strokeWeight: high?8:6 });
+      const [glow,outline,main]=routePolys;
+      glow.setOptions({strokeOpacity:high?.6:.4,strokeWeight:high?18:14});
+      outline.setOptions({strokeWeight:high?12:10});
+      main.setOptions({strokeWeight:high?8:6});
     }
-    // Optional: dashed overlay using alt color
     if(high && routePolys.length){
-      // add or update dashed overlay
       if(!routePolys._dash){
-        routePolys._dash = new google.maps.Polyline({
-          path: routePolys[routePolys.length-1].getPath(),
-          map,
-          strokeColor: getComputedStyle(document.documentElement).getPropertyValue('--route-alt').trim(),
-          strokeOpacity: 0.9,
-          strokeWeight: 3,
-          icons: [{ icon: { path: 'M 0,-1 0,1', strokeOpacity: 1, scale: 4 }, offset: '0', repeat: '16px' }]
+        routePolys._dash=new google.maps.Polyline({
+          path:routePolys[routePolys.length-1].getPath(), map,
+          strokeColor:getVar('--route-alt'), strokeOpacity:.95, strokeWeight:3,
+          icons:[{icon:{path:'M 0,-1 0,1',strokeOpacity:1,scale:4},offset:'0',repeat:'16px'}]
         });
-      } else {
-        routePolys._dash.setMap(map);
-      }
-    } else {
-      if(routePolys._dash){ routePolys._dash.setMap(null); }
-    }
+      }else{ routePolys._dash.setMap(map); }
+    }else if(routePolys._dash){ routePolys._dash.setMap(null); }
   }
 
   function showMarkersOnly(){
-    // Fallback visuals + baseline minutes
     if(window.google?.maps && !map){
-      map = new google.maps.Map($("map"),{center: routeOfDay.origin, zoom: 12, disableDefaultUI:true, backgroundColor:'#0b1328'});
+      map=new google.maps.Map($("map"),{center:routeOfDay.origin,zoom:12,disableDefaultUI:false,zoomControl:true,scaleControl:true,backgroundColor:'#0b1328'});
     }
     clearRouteLayers();
     if(window.google?.maps){
-      originMarker = new google.maps.Marker({position:routeOfDay.origin,map,title:`Origin: ${routeOfDay.origin.label}`,icon: svgMarker('A','#ff6b6b')});
-      destMarker = new google.maps.Marker({position:routeOfDay.dest,map,title:`Destination: ${routeOfDay.dest.label}`,icon: svgMarker('B','#5eead4')});
-      if(map && routeOfDay.origin && routeOfDay.dest){
-        const b=new google.maps.LatLngBounds(); b.extend(routeOfDay.origin); b.extend(routeOfDay.dest); map.fitBounds(b);
-      }
+      originMarker=new google.maps.Marker({position:routeOfDay.origin,map,title:`Origin: ${routeOfDay.origin.label}`,icon:svgMarker('A','#ff6b6b')});
+      destMarker=new google.maps.Marker({position:routeOfDay.dest,map,title:`Destination: ${routeOfDay.dest.label}`,icon:svgMarker('B','#5eead4')});
+      const b=new google.maps.LatLngBounds(); b.extend(routeOfDay.origin); b.extend(routeOfDay.dest);
+      currentBounds=b;
+      map.fitBounds(b,{top:40,left:40,right:40,bottom:40});
+      if(overviewMap){overviewMap.fitBounds(b);}
     }
-    liveMinutes=null;
+    liveMinutes=null; $("distanceBadge").textContent='—';
     gaEvent('route_fallback',{city:routeOfDay.city});
   }
 
   /*************** GAME ***************/
-  function verdictForGuess(guess, answer){
-    const diff=Math.abs(guess-answer);
-    if(guess===answer) return {verdict:'win'};
-    const tol=Math.max(NEAR_TOL_MIN, Math.round(answer*NEAR_TOL_PCT));
-    if(diff<=tol) return {verdict:'near', dir: guess>answer?'high':'low'};
-    return {verdict:'lose', dir: guess>answer?'high':'low'};
-  }
-
-  function pushFeedback(verdict, dir){
-    const chip=document.createElement('span');
-    chip.className='chip';
-    chip.textContent = verdict==='win' ? '🟩 Exact' :
-                       verdict==='near' ? '🟨 So close!' :
-                       dir==='high' ? '🡅 Too high' : '🡇 Too low';
-    $("lastFeedback").prepend(chip);
-    const chips=[...$("lastFeedback").children]; if(chips.length>6) chips.pop().remove();
-  }
-
-  function onGuess(){
-    if(won || revealed || guesses.length>=MAX_GUESSES) return;
-    const input=$("guessMinutes"); const val=Number(input.value);
-    if(!Number.isFinite(val) || val<=0){ showResult('Enter a positive number of minutes.', 'lose', true); return; }
-    const gmin=Math.round(val), answer=answerMinutes();
-    const result=verdictForGuess(gmin, answer);
-
-    guesses.push({min:gmin, verdict:result.verdict, dir:result.dir||null, ts:Date.now()});
-
-    if(result.verdict==='win'){ won=true; addStreak(true); celebrate('win'); showResult(`Exact! ${answer} min 🟩`, 'win'); }
-    else if(result.verdict==='near'){ nearHit=true; celebrate('near'); showResult('So close! 🟨','near'); }
-    else{
-      if(guesses.length>=MAX_GUESSES){ revealed=true; addStreak(false); showResult(`Out of guesses. Answer: ${answer} min.`, 'lose'); }
-      else showResult(result.dir==='high'?'Too high.':'Too low.','lose');
-    }
-
-    pushFeedback(result.verdict, result.dir);
-    gaEvent('guess_submitted',{city:routeOfDay.city, guess:gmin, verdict:result.verdict, guess_index:guesses.length});
-
-    persist(); renderTables(); renderShareCard();
-    input.value=''; input.focus();
-    if(navigator.vibrate){ try{ navigator.vibrate(result.verdict==='win'? [30,20,30] : 12); }catch(e){} }
-  }
-
-  function giveUp(){
-    if(won || revealed) return;
-    revealed=true; addStreak(false);
-    const ans=answerMinutes();
-    showResult(`You gave up. Answer: ${ans} min.`,'lose');
-    gaEvent('gave_up',{city:routeOfDay.city});
-    persist(); renderTables(); renderShareCard();
-  }
-
-  function showResult(text, type, transient=false){
-    const el=$("resultBox"); el.className=`result ${type}`; el.textContent=text; el.classList.remove('hidden');
-    if(transient) setTimeout(()=> el.classList.add('hidden'), 1600);
-  }
-
-  function celebrate(kind){
-    const canvas=$("confetti"); canvas.classList.remove('hidden');
-    canvas.width=innerWidth; canvas.height=innerHeight; const ctx=canvas.getContext('2d');
-    const parts=Array.from({length:kind==='win'?180:90},()=>({x:Math.random()*canvas.width,y:-10-Math.random()*50,s:2+Math.random()*4,vy:2+Math.random()*3,vx:(Math.random()-.5)*2,life:120+Math.random()*100}));
-    clearInterval(confettiTimer);
-    confettiTimer=setInterval(()=>{
-      ctx.clearRect(0,0,canvas.width,canvas.height);
-      for(const p of parts){ p.x+=p.vx; p.y+=p.vy; p.vy*=0.995; p.life-=2; ctx.globalAlpha=Math.max(0,p.life/200); ctx.fillStyle= kind==='win'?'#22c55e':'#f59e0b'; ctx.fillRect(p.x,p.y,p.s,p.s*2); }
-    },16);
-    setTimeout(()=>{ clearInterval(confettiTimer); canvas.classList.add('hidden'); }, 1600);
-  }
+  function verdictForGuess(guess,answer){const diff=Math.abs(guess-answer);if(guess===answer)return{verdict:'win'};const tol=Math.max(NEAR_TOL_MIN,Math.round(answer*NEAR_TOL_PCT));if(diff<=tol)return{verdict:'near',dir:guess>answer?'high':'low'};return{verdict:'lose',dir:guess>answer?'high':'low'};}
+  function pushFeedback(verdict,dir){const chip=document.createElement('span');chip.className='chip';chip.textContent=verdict==='win'?'🟩 Exact':verdict==='near'?'🟨 So close!':(dir==='high'?'🡅 Too high':'🡇 Too low');$("lastFeedback").prepend(chip);const c=[...$("lastFeedback").children];if(c.length>6)c.pop().remove();}
+  function onGuess(){if(won||revealed||guesses.length>=MAX_GUESSES)return;const input=$("guessMinutes");const val=Number(input.value);if(!Number.isFinite(val)||val<=0){showResult('Enter a positive number of minutes.','lose',true);return;}const gmin=Math.round(val),ans=answerMinutes();const r=verdictForGuess(gmin,ans);guesses.push({min:gmin,verdict:r.verdict,dir:r.dir||null,ts:Date.now()});if(r.verdict==='win'){won=true;addStreak(true);celebrate('win');showResult(`Exact! ${ans} min 🟩`,'win');}else if(r.verdict==='near'){nearHit=true;celebrate('near');showResult('So close! 🟨','near');}else{if(guesses.length>=MAX_GUESSES){revealed=true;addStreak(false);showResult(`Out of guesses. Answer: ${ans} min.`,'lose');}else showResult(r.dir==='high'?'Too high.':'Too low.','lose');}pushFeedback(r.verdict,r.dir);gaEvent('guess_submitted',{city:routeOfDay.city,guess:gmin,verdict:r.verdict,guess_index:guesses.length});persist();renderTables();renderShareCard();input.value='';input.focus();if(navigator.vibrate){try{navigator.vibrate(r.verdict==='win'?[30,20,30]:12);}catch(e){}}}
+  function giveUp(){if(won||revealed)return;revealed=true;addStreak(false);const ans=answerMinutes();showResult(`You gave up. Answer: ${ans} min.`,'lose');gaEvent('gave_up',{city:routeOfDay.city});persist();renderTables();renderShareCard();}
+  function showResult(text,type,transient=false){const el=$("resultBox");el.className=`result ${type}`;el.textContent=text;el.classList.remove('hidden');if(transient)setTimeout(()=>el.classList.add('hidden'),1600);}
+  function celebrate(kind){const canvas=$("confetti");canvas.classList.remove('hidden');canvas.width=innerWidth;canvas.height=innerHeight;const ctx=canvas.getContext('2d');const parts=Array.from({length:kind==='win'?180:90},()=>({x:Math.random()*canvas.width,y:-10-Math.random()*50,s:2+Math.random()*4,vy:2+Math.random()*3,vx:(Math.random()-.5)*2,life:120+Math.random()*100}));clearInterval(confettiTimer);confettiTimer=setInterval(()=>{ctx.clearRect(0,0,canvas.width,canvas.height);for(const p of parts){p.x+=p.vx;p.y+=p.vy;p.vy*=0.995;p.life-=2;ctx.globalAlpha=Math.max(0,p.life/200);ctx.fillStyle=kind==='win'?'#22c55e':'#f59e0b';ctx.fillRect(p.x,p.y,p.s,p.s*2);} },16);setTimeout(()=>{clearInterval(confettiTimer);canvas.classList.add('hidden');},1600);}
 
   /*************** PERSIST / TABLES ***************/
-  function persist(){
-    store(keyDaily(),{city:routeOfDay.city, answer:answerMinutes(), guesses, won, nearHit, revealed});
-    if(won||revealed){
-      const all=load(keyAllTime(),[]);
-      all.push({date:todayISO, city:routeOfDay.city, result: won?'win':(nearHit?'near':'gave up')});
-      store(keyAllTime(), all.slice(-100));
-    }
-  }
-  function restoreDaily(){
-    $("streakVal").textContent = load(keyStreak(),0);
-    const data=load(keyDaily(), null);
-    if(data && data.city===routeOfDay.city){
-      guesses=data.guesses||[]; won=!!data.won; nearHit=!!data.nearHit; revealed=!!data.revealed;
-      renderTables(); renderShareCard();
-      if(won) showResult(`Carried over: You already won today! ${data.answer} min 🟩`,'win');
-      else if(revealed) showResult(`Carried over: Answer was ${data.answer} min.`,'lose');
-    }
-    store(keyLastPlayed(), todayISO);
-  }
-  function addStreak(ok){
-    let s=load(keyStreak(),0); s = ok ? s+1 : 0; store(keyStreak(),s); $("streakVal").textContent=s;
-  }
-  function renderTables(){
-    const tb1=$("tblDaily").querySelector('tbody'); tb1.innerHTML='';
-    guesses.forEach((g,i)=>{
-      const tr=document.createElement('tr');
-      tr.innerHTML=`<td>${i+1}</td><td>${g.min} min</td><td>${verdictEmoji(g.verdict)} ${g.verdict==='lose'?(g.dir==='high'?'(high)':'(low)'):''}</td><td>${new Date(g.ts).toLocaleTimeString()}</td>`;
-      tb1.appendChild(tr);
-    });
-    const tb2=$("tblAllTime").querySelector('tbody'); tb2.innerHTML='';
-    (load(keyAllTime(),[])).slice(-10).forEach((r,i)=>{
-      const tr=document.createElement('tr');
-      tr.innerHTML=`<td>${i+1}</td><td>${r.city}</td><td>${verdictEmoji(r.result)}</td><td>${r.date}</td>`;
-      tb2.appendChild(tr);
-    });
-  }
+  function persist(){store(keyDaily(),{city:routeOfDay.city,answer:answerMinutes(),guesses,won,nearHit,revealed});if(won||revealed){const all=load(keyAllTime(),[]);all.push({date:todayISO,city:routeOfDay.city,result:won?'win':(nearHit?'near':'gave up')});store(keyAllTime(),all.slice(-100));}}
+  function restoreDaily(){ $("streakVal").textContent=load(keyStreak(),0);const data=load(keyDaily(),null);if(data && data.city===routeOfDay.city){guesses=data.guesses||[];won=!!data.won;nearHit=!!data.nearHit;revealed=!!data.revealed;renderTables();renderShareCard();if(won)showResult(`Carried over: You already won today! ${data.answer} min 🟩`,'win');else if(revealed)showResult(`Carried over: Answer was ${data.answer} min.`,'lose');} store(keyLastPlayed(),todayISO);}
+  function addStreak(ok){let s=load(keyStreak(),0);s=ok?s+1:0;store(keyStreak(),s);$("streakVal").textContent=s;}
+  function renderTables(){const tb1=$("tblDaily").querySelector('tbody');tb1.innerHTML='';guesses.forEach((g,i)=>{const tr=document.createElement('tr');tr.innerHTML=`<td>${i+1}</td><td>${g.min} min</td><td>${verdictEmoji(g.verdict)} ${g.verdict==='lose'?(g.dir==='high'?'(high)':'(low)'):''}</td><td>${new Date(g.ts).toLocaleTimeString()}</td>`;tb1.appendChild(tr);});const tb2=$("tblAllTime").querySelector('tbody');tb2.innerHTML='';(load(keyAllTime(),[])).slice(-10).forEach((r,i)=>{const tr=document.createElement('tr');tr.innerHTML=`<td>${i+1}</td><td>${r.city}</td><td>${verdictEmoji(r.result)}</td><td>${r.date}</td>`;tb2.appendChild(tr);});}
 
   /*************** SHARE ***************/
-  function buildShareCard(){
-    let grid=''; for(const g of guesses){ grid += (g.verdict==='win'?'🟩':g.verdict==='near'?'🟨':'🟥'); }
-    grid += '⬜'.repeat(Math.max(0, MAX_GUESSES - guesses.length));
-    const status = won ? 'Solved' : revealed ? 'Gave up' : `${guesses.length}/${MAX_GUESSES}`;
-    return `TripGuessr ${todayISO}\n${routeOfDay.city}\n${grid}\n${status}\ntripguessr.com`;
-  }
-  function renderShareCard(){ $("shareCard").textContent = buildShareCard(); }
-  async function copyShare(){
-    try{ await navigator.clipboard.writeText(buildShareCard()); $("shareNote").textContent='Copied!'; gaEvent('share_copied',{city:routeOfDay.city}); setTimeout(()=>$("shareNote").textContent='Wordle‑style text copied to clipboard',1200); }
-    catch(e){ $("shareNote").textContent='Copy failed — select text below'; }
-  }
+  function buildShareCard(){let grid='';for(const g of guesses){grid+=g.verdict==='win'?'🟩':g.verdict==='near'?'🟨':'🟥';}grid+='⬜'.repeat(Math.max(0,MAX_GUESSES-guesses.length));const status=won?'Solved':(revealed?'Gave up':`${guesses.length}/${MAX_GUESSES}`);return `TripGuessr ${todayISO}\n${routeOfDay.city}\n${grid}\n${status}\ntripguessr.com`;}
+  function renderShareCard(){$("shareCard").textContent=buildShareCard();}
+  async function copyShare(){try{await navigator.clipboard.writeText(buildShareCard());$("shareNote").textContent='Copied!';gaEvent('share_copied',{city:routeOfDay.city});setTimeout(()=>$("shareNote").textContent='Wordle‑style text copied to clipboard',1200);}catch(e){$("shareNote").textContent='Copy failed — select text below';}}
 
-  // Boot the app as soon as DOM is ready
-  document.addEventListener('DOMContentLoaded', appBoot);
+  document.addEventListener('DOMContentLoaded',appBoot);
   </script>
 </body>
 </html>
