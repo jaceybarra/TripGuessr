@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <title>TripGuessr – Daily Driving Challenge</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
   <!-- =========================
        Styles
   ========================== -->
@@ -36,7 +37,7 @@
     html, body { height: 100%; }
     body {
       margin: 0;
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
       background: var(--bg);
       color: var(--text);
       transition: background .25s ease, color .25s ease;
@@ -50,235 +51,59 @@
       background: var(--card);
       border-bottom: 1px solid rgba(0,0,0,0.05);
       box-shadow: var(--shadow);
+      padding: 10px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
     }
-    .container { max-width: 1100px; margin: 0 auto; padding: 16px 20px; }
-    .row { display: flex; align-items: center; gap: 16px; justify-content: space-between; flex-wrap: wrap; }
     .brand { display: flex; align-items: center; gap: 12px; text-decoration: none; color: inherit; }
-    .logo { width: 48px; height: 48px; flex: 0 0 48px; }
-    .title-wrap h1 { font-size: 1.25rem; margin: 0; line-height: 1.2; letter-spacing: 0.2px; }
+    .logo { width: 48px; height: 48px; }
+    .title-wrap h1 { font-size: 1.25rem; margin: 0; }
     .title-wrap p { margin: 2px 0 0 0; color: var(--muted); font-size: .9rem; }
 
     /* Controls */
     .controls { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
     .btn {
-      appearance: none;
-      border: none;
-      background: var(--primary);
-      color: var(--primary-contrast);
-      padding: 10px 14px;
-      border-radius: 10px;
-      font-weight: 600;
-      letter-spacing: .2px;
-      cursor: pointer;
-      box-shadow: 0 2px 0 rgba(0,0,0,.1);
-      transition: transform .04s ease, filter .2s ease, box-shadow .2s ease;
+      border: none; background: var(--primary); color: var(--primary-contrast);
+      padding: 10px 14px; border-radius: 10px; font-weight: 600; cursor: pointer;
     }
-    .btn.secondary {
-      background: transparent;
-      color: var(--text);
-      border: 1px solid rgba(0,0,0,.1);
-    }
-    .btn:active { transform: translateY(1px); }
-    .btn:focus-visible { outline: none; box-shadow: var(--ring); }
-    .btn.small { padding: 8px 12px; font-size: .9rem; }
+    .btn.secondary { background: transparent; color: var(--text); border: 1px solid rgba(0,0,0,.1); }
 
-    /* Main layout */
-    .grid {
-      display: grid;
-      grid-template-columns: 1.45fr 1fr;
-      gap: 18px;
-      align-items: start;
-    }
-    @media (max-width: 980px){
-      .grid { grid-template-columns: 1fr; }
-    }
+    /* Layout */
+    .container { max-width: 1100px; margin: 0 auto; padding: 18px; }
+    .grid { display: grid; grid-template-columns: 1.45fr 1fr; gap: 18px; }
+    @media (max-width: 980px){ .grid { grid-template-columns: 1fr; } }
 
     /* Map */
-    #map {
-      width: 100%;
-      height: 520px;
-      border-radius: 16px;
-      background: #dfe7f3;
-      box-shadow: var(--shadow);
-      border: 1px solid rgba(0,0,0,.06);
-      overflow: hidden;
-    }
+    #map { width: 100%; height: 520px; border-radius: 16px; background: #dfe7f3; box-shadow: var(--shadow); }
 
     /* Cards */
-    .card {
-      background: var(--card);
-      border: 1px solid rgba(0,0,0,.06);
-      border-radius: 16px;
-      box-shadow: var(--shadow);
-      padding: 16px;
-    }
-    .card h2 { margin: 4px 0 8px; font-size: 1.1rem; }
-    .muted { color: var(--muted); }
+    .card { background: var(--card); border-radius: 16px; box-shadow: var(--shadow); padding: 16px; margin-top: 12px; }
+    .guess-panel { border: 2px dashed rgba(37,99,235, .35); border-radius: 16px; padding: 18px; }
 
-    /* Guess panel */
-    .guess-panel {
-      position: relative;
-      padding: 18px;
-      border: 2px dashed rgba(37,99,235, .35);
-      border-radius: 16px;
-      background:
-        radial-gradient(1200px 1200px at 105% -10%, rgba(37, 99, 235, .08), transparent 40%),
-        radial-gradient(1200px 1200px at -5% 110%, rgba(16, 185, 129, .08), transparent 40%),
-        var(--card);
-    }
-    .guess-panel .label {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: .5px;
-      font-size: .78rem;
-      color: var(--muted);
-      margin-bottom: 10px;
-    }
-    .input-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-    .input {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      background: var(--bg);
-      border: 1px solid rgba(0,0,0,.08);
-      padding: 12px 14px;
-      border-radius: 12px;
-      font-size: 1.05rem;
-      min-width: 220px;
-      box-shadow: inset 0 -2px 0 rgba(0,0,0,.04);
-    }
-    .input input {
-      border: none;
-      outline: none;
-      background: transparent;
-      color: var(--text);
-      width: 120px;
-      font-size: 1.1rem;
-    }
-    .input .suffix { color: var(--muted); font-weight: 600; }
-    .hint { margin-top: 8px; font-size: .9rem; color: var(--muted); }
+    /* Input row */
+    .input-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .input { display: inline-flex; align-items: center; background: var(--bg); border: 1px solid rgba(0,0,0,.08); padding: 12px 14px; border-radius: 12px; }
+    .input input { border: none; background: transparent; color: var(--text); width: 120px; font-size: 1.1rem; }
     .result { margin-top: 12px; font-weight: 700; }
     .result.ok { color: var(--accent); }
     .result.no { color: var(--danger); }
     .result.near { color: #f59e0b; }
 
-    /* Email + Report */
+    /* Email & report */
     .email-row { display: grid; grid-template-columns: 1fr auto; gap: 10px; }
-    .email-row input[type=email]{
-      width: 100%;
-      background: var(--bg);
-      color: var(--text);
-      border: 1px solid rgba(0,0,0,.08);
-      padding: 11px 12px;
-      border-radius: 12px;
-      font-size: 1rem;
-    }
-    .report-block pre {
-      background: var(--bg);
-      border: 1px dashed rgba(0,0,0,.08);
-      padding: 12px;
-      border-radius: 12px;
-      white-space: pre-wrap;
-      word-break: break-word;
-      max-height: 240px;
-      overflow: auto;
-      font-family: ui-monospace, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-      font-size: .9rem;
-      margin: 0;
-    }
-    .stat-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 10px;
-      margin-top: 8px;
-    }
-    .stat {
-      background: var(--bg);
-      border: 1px solid rgba(0,0,0,.06);
-      border-radius: 12px;
-      padding: 10px 12px;
-    }
-    .stat .k { font-size: 1.15rem; font-weight: 800; }
-    .stat .l { font-size: .8rem; color: var(--muted); }
+    .report-block pre { background: var(--bg); padding: 12px; border-radius: 12px; white-space: pre-wrap; }
 
-    /* Recent table */
+    /* Table */
     .table { width: 100%; border-collapse: collapse; font-size: .95rem; }
-    .table th, .table td { padding: 8px 10px; border-bottom: 1px solid rgba(0,0,0,.06); text-align: left; }
+    .table th, .table td { padding: 8px 10px; border-bottom: 1px solid rgba(0,0,0,.06); }
     .table th { color: var(--muted); font-weight: 700; font-size: .85rem; }
-    .tag {
-      display: inline-block;
-      padding: 2px 8px;
-      border-radius: 999px;
-      background: rgba(16,185,129,.12);
-      color: #059669;
-      font-size: .75rem;
-      font-weight: 700;
-      letter-spacing: .3px;
-    }
-    .tag.lose { background: rgba(239,68,68,.12); color: #b91c1c; }
-    .tag.near { background: rgba(245,158,11,.12); color: #b45309; }
-
-    .small { font-size: .85rem; color: var(--muted); }
-    .spacer { height: 14px; }
-    .sr-only {
-      position: absolute;
-      width: 1px; height: 1px;
-      padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0;
-    }
+    .tag { padding: 2px 6px; border-radius: 6px; font-size: .8rem; }
+    .tag.lose { background: #fdd; color: #900; }
+    .tag.near { background: #ffd; color: #990; }
+    .tag.win { background: #dfd; color: #090; }
   </style>
 </head>
-<body>
-  <!-- Default to LIGHT mode -->
-  <script>
-    (function(){
-      try {
-        const pref = localStorage.getItem('tg_theme');
-        if (pref === 'dark') document.documentElement.classList.add('dark');
-        else document.documentElement.classList.remove('dark'); // default light
-      } catch(e){}
-    })();
-  </script>
-
-  <!-- =========================
-       Header
-  ========================== -->
-  <header>
-    <div class="container">
-      <div class="row">
-        <a class="brand" href="#">
-          <!-- Inline SVG logo (always works) -->
-          <svg class="logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" aria-hidden="true">
-            <defs>
-              <linearGradient id="g" x1="0" x2="1" y1="0" y2="1">
-                <stop offset="0" stop-color="#2563eb"/>
-                <stop offset="1" stop-color="#10b981"/>
-              </linearGradient>
-            </defs>
-            <circle cx="32" cy="32" r="30" fill="url(#g)"/>
-            <path d="M20 38c2-7 7-13 12-18 6-6 10-4 10 2 0 6-8 10-12 12-3 1-6 2-10 4z" fill="#ffffff" opacity=".5"/>
-            <text x="32" y="39" text-anchor="middle" font-weight="800" font-family="ui-sans-serif, system-ui" font-size="16" fill="#fff">TG</text>
-          </svg>
-          <div class="title-wrap">
-            <h1>TripGuessr</h1>
-            <p class="small">Guess today’s drive time. Within <strong>10%</strong> counts as a win.</p>
-          </div>
-        </a>
-        <div class="controls">
-          <button id="themeBtn" class="btn secondary small" type="button" aria-pressed="false">Dark</button>
-          <button id="reportBtn" class="btn secondary small" type="button">Download CSV</button>
-          <button id="slackBtn" class="btn secondary small" type="button" aria-pressed="false" title="Toggle Slack notifications (set webhook in code)">Slack Off</button>
-        </div>
-      </div>
-    </div>
-  </header>
   <!-- =========================
        Main
   ========================== -->
@@ -291,7 +116,7 @@
         <div class="card">
           <h2>Today’s Challenge</h2>
           <p class="small">
-            The route changes every day (based on your local date). The map shows the start and end markers—no city names to keep it fair.
+            The route changes every day (based on your local date). Below shows the start and end landmarks.
           </p>
           <div id="todayMeta" class="small muted"></div>
         </div>
@@ -302,6 +127,9 @@
         <div class="card guess-panel" id="guessCard" aria-live="polite">
           <div class="label">Enter Your Guess</div>
           <h2 style="margin:0 0 6px 0;">How long will the drive take?</h2>
+          <div id="playedBanner" class="small" style="display:none; margin:6px 0 10px; font-weight:700;">
+            You’ve already played today. Come back tomorrow!
+          </div>
           <div class="input-row" style="margin-top:8px;">
             <label class="sr-only" for="guessInput">Minutes</label>
             <div class="input" style="flex:1 1 260px;">
@@ -309,6 +137,7 @@
               <span class="suffix">minutes</span>
             </div>
             <button id="submitBtn" class="btn" type="button">Submit Guess</button>
+            <button id="copyBtn" class="btn secondary" type="button" title="Copy today’s result">Copy Result</button>
           </div>
           <div class="hint">Pro tip: ±10% counts as a win. We round to the nearest minute.</div>
           <div id="result" class="result" aria-live="polite"></div>
@@ -362,20 +191,21 @@
     // Config / Constants
     // ---------------------------
     const TOLERANCE_PERCENT = 10;        // within 10% => WIN
-    const NEAR_MISS_PERCENT = 15;        // optional "So close!" within 15%
     const MAX_RECENT_ROWS = 12;
-    const USE_SLACK = false;             // toggle run-time via button
-    let SLACK_WEBHOOK_URL = "";          // <-- put your webhook here if you want Slack pings
+    const USE_SLACK = false;             // toggle via button
+    let SLACK_WEBHOOK_URL = "";          // optional
     const DEVICE_KEY = "tg_device_id_v2";
     const DEVICE_RESULTS_KEY = "tg_device_results_v2";
     const EMAIL_KEY = "tg_email_v2";
     const THEME_KEY = "tg_theme";
+    const PLAY_KEY = "tg_played_date_v1"; // one play per day
+    const MAX_MINUTES = 60;              // cap route length
+    const MIN_KM = 5;                    // ~3+ miles to avoid trivial walks
+    const MAX_KM = 80;                   // ~<= 50 miles, likely ≤ 60 mins with traffic
 
     // ---------------------------
     // Utilities
     // ---------------------------
-    function fmtPct(n){ return (n*100).toFixed(1) + "%"; }
-    function clamp(n, a, b){ return Math.min(Math.max(n,a), b); }
     function toMinutes(seconds){ return Math.round(seconds/60); }
     function percentError(guess, actual){
       if (actual <= 0) return 1;
@@ -388,14 +218,10 @@
       const day = String(d.getDate()).padStart(2,"0");
       return `${y}-${m}-${day}`;
     }
-    function saveJSON(key, obj){
-      try { localStorage.setItem(key, JSON.stringify(obj)); } catch(e){}
-    }
+    function saveJSON(key, obj){ try { localStorage.setItem(key, JSON.stringify(obj)); } catch(e){} }
     function loadJSON(key, fallback){
-      try {
-        const s = localStorage.getItem(key);
-        return s ? JSON.parse(s) : fallback;
-      } catch(e){ return fallback; }
+      try { const s = localStorage.getItem(key); return s ? JSON.parse(s) : fallback; }
+      catch(e){ return fallback; }
     }
     function getDeviceId(){
       let id = localStorage.getItem(DEVICE_KEY);
@@ -404,12 +230,6 @@
         localStorage.setItem(DEVICE_KEY, id);
       }
       return id;
-    }
-    function csvEscape(s){
-      if (s == null) return "";
-      const str = String(s);
-      if (/[",\n]/.test(str)) return `"${str.replace(/"/g,'""')}"`;
-      return str;
     }
     function download(filename, text){
       const blob = new Blob([text], {type:"text/csv;charset=utf-8;"});
@@ -420,7 +240,7 @@
       URL.revokeObjectURL(url);
     }
 
-    // Seeded RNG from date so route changes daily but is consistent for that day
+    // Seeded RNG (daily)
     function xmur3(str){
       let h = 1779033703 ^ str.length;
       for (let i=0; i<str.length; i++){
@@ -451,71 +271,98 @@
       return sfc32(seed(), seed(), seed(), seed());
     }
 
+    // Haversine helpers
+    function kmBetween(a,b){
+      const R=6371;
+      const toRad = d => d*Math.PI/180;
+      const dLat = toRad(b.lat-a.lat);
+      const dLng = toRad(b.lng-a.lng);
+      const s1 = Math.sin(dLat/2)**2 + Math.cos(toRad(a.lat))*Math.cos(toRad(b.lat))*Math.sin(dLng/2)**2;
+      return 2*R*Math.asin(Math.sqrt(s1));
+    }
+
     // ---------------------------
-    // City list (approx coords)
+    // Curated metros with well-known landmarks
     // ---------------------------
-    const CITIES = [
-      {name:"Seattle, WA", lat:47.6062, lng:-122.3321},
-      {name:"Portland, OR", lat:45.5152, lng:-122.6784},
-      {name:"San Francisco, CA", lat:37.7749, lng:-122.4194},
-      {name:"San Jose, CA", lat:37.3382, lng:-121.8863},
-      {name:"Los Angeles, CA", lat:34.0522, lng:-118.2437},
-      {name:"San Diego, CA", lat:32.7157, lng:-117.1611},
-      {name:"Phoenix, AZ", lat:33.4484, lng:-112.0740},
-      {name:"Tucson, AZ", lat:32.2226, lng:-110.9747},
-      {name:"Las Vegas, NV", lat:36.1699, lng:-115.1398},
-      {name:"Salt Lake City, UT", lat:40.7608, lng:-111.8910},
-      {name:"Boise, ID", lat:43.6150, lng:-116.2023},
-      {name:"Denver, CO", lat:39.7392, lng:-104.9903},
-      {name:"Albuquerque, NM", lat:35.0844, lng:-106.6504},
-      {name:"Santa Fe, NM", lat:35.6870, lng:-105.9378},
-      {name:"Dallas, TX", lat:32.7767, lng:-96.7970},
-      {name:"Austin, TX", lat:30.2672, lng:-97.7431},
-      {name:"San Antonio, TX", lat:29.4241, lng:-98.4936},
-      {name:"Houston, TX", lat:29.7604, lng:-95.3698},
-      {name:"Oklahoma City, OK", lat:35.4676, lng:-97.5164},
-      {name:"Tulsa, OK", lat:36.1540, lng:-95.9928},
-      {name:"Kansas City, MO", lat:39.0997, lng:-94.5786},
-      {name:"St. Louis, MO", lat:38.6270, lng:-90.1994},
-      {name:"Minneapolis, MN", lat:44.9778, lng:-93.2650},
-      {name:"Omaha, NE", lat:41.2565, lng:-95.9345},
-      {name:"Des Moines, IA", lat:41.5868, lng:-93.6250},
-      {name:"Chicago, IL", lat:41.8781, lng:-87.6298},
-      {name:"Milwaukee, WI", lat:43.0389, lng:-87.9065},
-      {name:"Madison, WI", lat:43.0731, lng:-89.4012},
-      {name:"Detroit, MI", lat:42.3314, lng:-83.0458},
-      {name:"Cleveland, OH", lat:41.4993, lng:-81.6944},
-      {name:"Columbus, OH", lat:39.9612, lng:-82.9988},
-      {name:"Cincinnati, OH", lat:39.1031, lng:-84.5120},
-      {name:"Indianapolis, IN", lat:39.7684, lng:-86.1581},
-      {name:"Louisville, KY", lat:38.2527, lng:-85.7585},
-      {name:"Nashville, TN", lat:36.1627, lng:-86.7816},
-      {name:"Memphis, TN", lat:35.1495, lng:-90.0490},
-      {name:"Birmingham, AL", lat:33.5186, lng:-86.8104},
-      {name:"Atlanta, GA", lat:33.7490, lng:-84.3880},
-      {name:"Charlotte, NC", lat:35.2271, lng:-80.8431},
-      {name:"Raleigh, NC", lat:35.7796, lng:-78.6382},
-      {name:"Charleston, SC", lat:32.7765, lng:-79.9311},
-      {name:"Savannah, GA", lat:32.0809, lng:-81.0912},
-      {name:"Jacksonville, FL", lat:30.3322, lng:-81.6557},
-      {name:"Orlando, FL", lat:28.5383, lng:-81.3792},
-      {name:"Tampa, FL", lat:27.9506, lng:-82.4572},
-      {name:"Miami, FL", lat:25.7617, lng:-80.1918},
-      {name:"Ft. Lauderdale, FL", lat:26.1224, lng:-80.1373},
-      {name:"Richmond, VA", lat:37.5407, lng:-77.4360},
-      {name:"Washington, DC", lat:38.9072, lng:-77.0369},
-      {name:"Baltimore, MD", lat:39.2904, lng:-76.6122},
-      {name:"Philadelphia, PA", lat:39.9526, lng:-75.1652},
-      {name:"Pittsburgh, PA", lat:40.4406, lng:-79.9959},
-      {name:"Newark, NJ", lat:40.7357, lng:-74.1724},
-      {name:"New York, NY", lat:40.7128, lng:-74.0060},
-      {name:"Stamford, CT", lat:41.0534, lng:-73.5387},
-      {name:"Hartford, CT", lat:41.7658, lng:-72.6734},
-      {name:"Providence, RI", lat:41.8240, lng:-71.4128},
-      {name:"Boston, MA", lat:42.3601, lng:-71.0589},
-      {name:"Portland, ME", lat:43.6591, lng:-70.2568},
-      {name:"Buffalo, NY", lat:42.8864, lng:-78.8784},
-      {name:"Rochester, NY", lat:43.1566, lng:-77.6088}
+    const METROS = [
+      { name:"Boston, MA", landmarks:[
+        {n:"Fenway Park", c:"Boston, MA", lat:42.346676, lng:-71.097218},
+        {n:"Harvard Yard", c:"Cambridge, MA", lat:42.374541, lng:-71.118021},
+        {n:"Boston Common", c:"Boston, MA", lat:42.355010, lng:-71.065620},
+        {n:"TD Garden", c:"Boston, MA", lat:42.366303, lng:-71.062228}
+      ]},
+      { name:"New York City, NY", landmarks:[
+        {n:"Central Park (Bethesda Terrace)", c:"NYC, NY", lat:40.774036, lng:-73.970872},
+        {n:"Times Square", c:"NYC, NY", lat:40.758001, lng:-73.985500},
+        {n:"Yankee Stadium", c:"Bronx, NY", lat:40.829643, lng:-73.926175},
+        {n:"Citi Field", c:"Queens, NY", lat:40.757088, lng:-73.845821}
+      ]},
+      { name:"Los Angeles, CA", landmarks:[
+        {n:"Griffith Observatory", c:"Los Angeles, CA", lat:34.118434, lng:-118.300393},
+        {n:"Dodger Stadium", c:"Los Angeles, CA", lat:34.073851, lng:-118.239958},
+        {n:"Santa Monica Pier", c:"Santa Monica, CA", lat:34.009242, lng:-118.497604},
+        {n:"Crypto.com Arena", c:"Los Angeles, CA", lat:34.043017, lng:-118.267254}
+      ]},
+      { name:"San Francisco Bay Area, CA", landmarks:[
+        {n:"Golden Gate Park (Music Concourse)", c:"San Francisco, CA", lat:37.769421, lng:-122.486214},
+        {n:"Oracle Park", c:"San Francisco, CA", lat:37.778595, lng:-122.389270},
+        {n:"Stanford Stadium", c:"Palo Alto, CA", lat:37.434839, lng:-122.161122},
+        {n:"SFO Terminal 2", c:"San Francisco, CA", lat:37.621312, lng:-122.378955}
+      ]},
+      { name:"Chicago, IL", landmarks:[
+        {n:"Navy Pier", c:"Chicago, IL", lat:41.891551, lng:-87.607375},
+        {n:"Wrigley Field", c:"Chicago, IL", lat:41.948438, lng:-87.655333},
+        {n:"United Center", c:"Chicago, IL", lat:41.880690, lng:-87.674190},
+        {n:"Millennium Park", c:"Chicago, IL", lat:41.882702, lng:-87.619392}
+      ]},
+      { name:"Washington, DC", landmarks:[
+        {n:"Lincoln Memorial", c:"Washington, DC", lat:38.889269, lng:-77.050176},
+        {n:"Smithsonian National Zoo", c:"Washington, DC", lat:38.929640, lng:-77.049766},
+        {n:"Nationals Park", c:"Washington, DC", lat:38.872865, lng:-77.007369},
+        {n:"Union Station", c:"Washington, DC", lat:38.897699, lng:-77.006639}
+      ]},
+      { name:"Seattle, WA", landmarks:[
+        {n:"Space Needle", c:"Seattle, WA", lat:47.620506, lng:-122.349277},
+        {n:"T-Mobile Park", c:"Seattle, WA", lat:47.591390, lng:-122.332500},
+        {n:"University of Washington Quad", c:"Seattle, WA", lat:47.656051, lng:-122.309331},
+        {n:"Lumen Field", c:"Seattle, WA", lat:47.595151, lng:-122.331639}
+      ]},
+      { name:"Miami, FL", landmarks:[
+        {n:"Lummus Park (South Beach)", c:"Miami Beach, FL", lat:25.782612, lng:-80.131004},
+        {n:"LoanDepot Park", c:"Miami, FL", lat:25.778135, lng:-80.219760},
+        {n:"Wynwood Walls", c:"Miami, FL", lat:25.801121, lng:-80.199356},
+        {n:"Miami Intl Airport (MIA)", c:"Miami, FL", lat:25.795865, lng:-80.287046}
+      ]},
+      { name:"Dallas–Fort Worth, TX", landmarks:[
+        {n:"AT&T Stadium", c:"Arlington, TX", lat:32.747289, lng:-97.094504},
+        {n:"American Airlines Center", c:"Dallas, TX", lat:32.790523, lng:-96.810136},
+        {n:"Klyde Warren Park", c:"Dallas, TX", lat:32.789304, lng:-96.801742},
+        {n:"Fort Worth Stockyards", c:"Fort Worth, TX", lat:32.790146, lng:-97.347388}
+      ]},
+      { name:"Denver, CO", landmarks:[
+        {n:"Coors Field", c:"Denver, CO", lat:39.755942, lng:-104.994169},
+        {n:"Red Rocks Amphitheatre", c:"Morrison, CO", lat:39.665387, lng:-105.205705},
+        {n:"Union Station", c:"Denver, CO", lat:39.752659, lng:-105.000618},
+        {n:"Empower Field at Mile High", c:"Denver, CO", lat:39.743936, lng:-105.020097}
+      ]},
+      { name:"Phoenix, AZ", landmarks:[
+        {n:"Phoenix Zoo", c:"Phoenix, AZ", lat:33.451041, lng:-111.948397},
+        {n:"ASU Sun Devil Stadium", c:"Tempe, AZ", lat:33.426322, lng:-111.932174},
+        {n:"State Farm Stadium", c:"Glendale, AZ", lat:33.527635, lng:-112.262551},
+        {n:"Chase Field", c:"Phoenix, AZ", lat:33.445524, lng:-112.066721}
+      ]},
+      { name:"Salt Lake City, UT", landmarks:[
+        {n:"Temple Square", c:"Salt Lake City, UT", lat:40.770618, lng:-111.891037},
+        {n:"Sugar House Park", c:"Salt Lake City, UT", lat:40.717756, lng:-111.856138},
+        {n:"Rice-Eccles Stadium", c:"Salt Lake City, UT", lat:40.760692, lng:-111.848683},
+        {n:"Hogle Zoo", c:"Salt Lake City, UT", lat:40.750288, lng:-111.819693}
+      ]},
+      { name:"Orlando, FL", landmarks:[
+        {n:"Magic Kingdom TTC", c:"Bay Lake, FL", lat:28.410882, lng:-81.581220},
+        {n:"Universal Studios Florida", c:"Orlando, FL", lat:28.473470, lng:-81.467855},
+        {n:"Amway Center", c:"Orlando, FL", lat:28.539199, lng:-81.383729},
+        {n:"Orlando Intl Airport (MCO)", c:"Orlando, FL", lat:28.431157, lng:-81.308083}
+      ]}
     ];
 
     // ---------------------------
@@ -571,30 +418,6 @@
     (function(){ emailInput.value = localStorage.getItem(EMAIL_KEY) || ""; })();
 
     // ---------------------------
-    // Daily Route Generation
-    // ---------------------------
-    function pickDailyPair(){
-      const seed = todayKey();
-      const rnd = seededRandom(seed);
-      // pick two distinct cities, ensure they’re not too close
-      let i = Math.floor(rnd() * CITIES.length);
-      let j = Math.floor(rnd() * CITIES.length);
-      let tries = 0;
-      const dist = (a,b) => {
-        const R=6371;
-        const toRad = d => d*Math.PI/180;
-        const dLat = toRad(b.lat-a.lat);
-        const dLng = toRad(b.lng-a.lng);
-        const s1 = Math.sin(dLat/2)**2 + Math.cos(toRad(a.lat))*Math.cos(toRad(b.lat))*Math.sin(dLng/2)**2;
-        return 2*R*Math.asin(Math.sqrt(s1));
-      };
-      while ((j===i || dist(CITIES[i], CITIES[j]) < 150) && tries++ < 50){
-        j = Math.floor(rnd() * CITIES.length);
-      }
-      return { origin: CITIES[i], destination: CITIES[j] };
-    }
-
-    // ---------------------------
     // Google Maps styles (light/dark)
     // ---------------------------
     const MAP_STYLES_LIGHT = [
@@ -622,6 +445,34 @@
     ];
 
     // ---------------------------
+    // Build candidate landmark pairs (distance band)
+    // ---------------------------
+    function buildCandidates(metro){
+      const out = [];
+      for (let i=0;i<metro.landmarks.length;i++){
+        for (let j=i+1;j<metro.landmarks.length;j++){
+          const a = metro.landmarks[i], b = metro.landmarks[j];
+          const km = kmBetween(a,b);
+          if (km >= MIN_KM && km <= MAX_KM) out.push([a,b]);
+        }
+      }
+      return out;
+    }
+
+    function pickDailyMetroAndPairs(){
+      const seed = todayKey();
+      const rnd = seededRandom(seed);
+      const metro = METROS[Math.floor(rnd()*METROS.length)];
+      const pairs = buildCandidates(metro);
+      // deterministic shuffle by seeded RNG
+      for (let i=pairs.length-1;i>0;i--){
+        const j = Math.floor(rnd()*(i+1));
+        [pairs[i], pairs[j]] = [pairs[j], pairs[i]];
+      }
+      return { metro, pairs };
+    }
+
+    // ---------------------------
     // Google Maps init
     // ---------------------------
     let map, directionsService, directionsRenderer, trafficLayer;
@@ -632,7 +483,7 @@
     window.initMap = function initMap(){
       const dark = document.documentElement.classList.contains("dark");
       map = new google.maps.Map(document.getElementById("map"), {
-        center: {lat: 39.8283, lng: -98.5795}, // USA center
+        center: {lat: 39.8283, lng: -98.5795},
         zoom: 4,
         disableDefaultUI: true,
         gestureHandling: 'greedy',
@@ -649,64 +500,71 @@
       trafficLayer = new google.maps.TrafficLayer();
       trafficLayer.setMap(map);
 
-      // Pick route for today and render
-      TODAY_PAIR = pickDailyPair();
-      renderTodayMeta();
-      plotRoute(TODAY_PAIR.origin, TODAY_PAIR.destination);
+      const { metro, pairs } = pickDailyMetroAndPairs();
+      tryCandidates(metro, pairs, 0);
+      enforceOnePlayPerDayUI();
     };
 
-    function renderTodayMeta(){
-      const el = document.getElementById("todayMeta");
-      const d = todayKey();
-      el.textContent = `Date: ${d} — New route every day.`;
+    function tryCandidates(metro, pairs, idx){
+      if (!pairs.length){
+        const a = metro.landmarks[0], b = metro.landmarks[1];
+        plotRoute(metro, a, b, ()=>{});
+        return;
+      }
+      if (idx >= pairs.length){
+        const [a,b] = pairs[0];
+        plotRoute(metro, a, b, ()=>{});
+        return;
+      }
+      const [a,b] = pairs[idx];
+      plotRoute(metro, a, b, (ok, minutes) => {
+        if (ok && minutes <= MAX_MINUTES){
+          // done
+        } else {
+          tryCandidates(metro, pairs, idx+1);
+        }
+      });
     }
 
-    function placeMarkers(origin, destination){
+    function setMarkers(a,b){
       if (startMarker) startMarker.setMap(null);
       if (endMarker) endMarker.setMap(null);
 
       startMarker = new google.maps.Marker({
-        position: {lat: origin.lat, lng: origin.lng},
-        map,
-        title: "Start",
+        position: {lat: a.lat, lng: a.lng},
+        map, title: `${a.n} (${a.c})`,
         label: {text: "A", color: "#ffffff", fontWeight: "700"},
         icon: {
-          path: google.maps.SymbolPath.CIRCLE,
-          scale: 10,
-          fillColor: "#10b981",
-          fillOpacity: 1,
-          strokeColor: "#065f46",
-          strokeWeight: 2
+          path: google.maps.SymbolPath.CIRCLE, scale: 10,
+          fillColor: "#10b981", fillOpacity: 1, strokeColor: "#065f46", strokeWeight: 2
         }
       });
 
       endMarker = new google.maps.Marker({
-        position: {lat: destination.lat, lng: destination.lng},
-        map,
-        title: "End",
+        position: {lat: b.lat, lng: b.lng},
+        map, title: `${b.n} (${b.c})`,
         label: {text: "B", color: "#ffffff", fontWeight: "700"},
         icon: {
-          path: google.maps.SymbolPath.CIRCLE,
-          scale: 10,
-          fillColor: "#2563eb",
-          fillOpacity: 1,
-          strokeColor: "#1e40af",
-          strokeWeight: 2
+          path: google.maps.SymbolPath.CIRCLE, scale: 10,
+          fillColor: "#2563eb", fillOpacity: 1, strokeColor: "#1e40af", strokeWeight: 2
         }
       });
     }
 
-    function plotRoute(origin, destination){
-      placeMarkers(origin, destination);
+    function renderTodayMetaNames(metro, a, b){
+      const el = document.getElementById("todayMeta");
+      el.textContent = `Start: ${a.n} (${a.c}) → End: ${b.n} (${b.c}) — Metro: ${metro.name}`;
+    }
+
+    function plotRoute(metro, a, b, cb){
+      setMarkers(a,b);
+      renderTodayMetaNames(metro, a, b);
 
       const request = {
-        origin: {lat: origin.lat, lng: origin.lng},
-        destination: {lat: destination.lat, lng: destination.lng},
+        origin: {lat: a.lat, lng: a.lng},
+        destination: {lat: b.lat, lng: b.lng},
         travelMode: google.maps.TravelMode.DRIVING,
-        drivingOptions: {
-          // Departure time slightly in the future to avoid "past" error and get live traffic
-          departureTime: new Date(Date.now() + 2*60*1000)
-        },
+        drivingOptions: { departureTime: new Date(Date.now() + 2*60*1000) },
         provideRouteAlternatives: false,
         unitSystem: google.maps.UnitSystem.IMPERIAL
       };
@@ -714,7 +572,6 @@
       directionsService.route(request, (result, status) => {
         if (status === "OK" && result && result.routes && result.routes[0]){
           directionsRenderer.setDirections(result);
-          // Compute duration (prefer duration_in_traffic if available)
           const legs = result.routes[0].legs || [];
           let seconds = 0;
           for (const leg of legs){
@@ -725,36 +582,30 @@
             }
           }
           ACTUAL_MINUTES = toMinutes(seconds);
-          fitBoundsForRoute(result);
+          if (ACTUAL_MINUTES < 5) ACTUAL_MINUTES = 5;
+
+          // Fit bounds to route
+          const bounds = new google.maps.LatLngBounds();
+          for (const leg of legs){ bounds.extend(leg.start_location); bounds.extend(leg.end_location); }
+          map.fitBounds(bounds, { top: 50, left: 20, bottom: 50, right: 20 });
+
+          TODAY_PAIR = { metro, a, b };
           enableGuessUI();
+          cb(true, ACTUAL_MINUTES);
         } else {
-          // Fallback: approximate based on haversine @ 60 mph
-          console.warn("Directions failed:", status, result);
-          ACTUAL_MINUTES = estimateByAir(origin, destination);
+          // Fallback to reasonable city estimate
+          ACTUAL_MINUTES = estimateByAir(a,b);
+          TODAY_PAIR = { metro, a, b };
           enableGuessUI(true);
+          cb(true, ACTUAL_MINUTES);
         }
       });
     }
 
-    function fitBoundsForRoute(directionResult){
-      const bounds = new google.maps.LatLngBounds();
-      const route = directionResult.routes[0];
-      for (const leg of route.legs){
-        bounds.extend(leg.start_location);
-        bounds.extend(leg.end_location);
-      }
-      map.fitBounds(bounds, { top: 50, left: 20, bottom: 50, right: 20 });
-    }
-
     function estimateByAir(a,b){
-      const R=6371;
-      const toRad = d => d*Math.PI/180;
-      const dLat = toRad(b.lat-a.lat);
-      const dLng = toRad(b.lng-a.lng);
-      const s1 = Math.sin(dLat/2)**2 + Math.cos(toRad(a.lat))*Math.cos(toRad(b.lat))*Math.sin(dLng/2)**2;
-      const km = 2*R*Math.asin(Math.sqrt(s1));
+      const km = kmBetween(a,b);
+      const mph = 35; // conservative urban-ish average
       const miles = km * 0.621371;
-      const mph = 60; // crude
       return Math.max(5, Math.round((miles / mph) * 60));
     }
 
@@ -763,13 +614,33 @@
       const guessInput = document.getElementById("guessInput");
       submitBtn.disabled = false;
       guessInput.disabled = false;
-      guessInput.focus();
       if (fallback){
         document.getElementById("result").innerHTML =
-          `<span class="small">Live traffic route lookup failed; using a reasonable estimate for today’s challenge.</span>`;
+          `<span class="small">Route lookup had issues; using a reasonable estimate for today’s challenge.</span>`;
       } else {
         document.getElementById("result").textContent = "";
       }
+      guessInput.focus();
+      enforceOnePlayPerDayUI(); // in case route took time
+    }
+
+    // ---------------------------
+    // One play per day
+    // ---------------------------
+    function hasPlayedToday(){
+      return localStorage.getItem(PLAY_KEY) === todayKey();
+    }
+    function markPlayedToday(){
+      localStorage.setItem(PLAY_KEY, todayKey());
+    }
+    function enforceOnePlayPerDayUI(){
+      const already = hasPlayedToday();
+      const banner = document.getElementById("playedBanner");
+      const submitBtn = document.getElementById("submitBtn");
+      const guessInput = document.getElementById("guessInput");
+      banner.style.display = already ? "block" : "none";
+      submitBtn.disabled = already;
+      guessInput.disabled = already;
     }
 
     // ---------------------------
@@ -782,6 +653,12 @@
 
     function onSubmit(){
       const resEl = document.getElementById("result");
+      if (hasPlayedToday()){
+        resEl.textContent = "You’ve already played today. Come back tomorrow!";
+        resEl.className = "result no";
+        return;
+      }
+
       const guessVal = parseInt(guessInput.value, 10);
       if (!ACTUAL_MINUTES){
         resEl.textContent = "Route still loading—try again in a moment.";
@@ -793,37 +670,28 @@
         return;
       }
 
-      const pct = percentError(guessVal, ACTUAL_MINUTES);
-      const within = pct <= (TOLERANCE_PERCENT/100);
-      const near   = !within && pct <= (NEAR_MISS_PERCENT/100);
-      const diff   = Math.abs(guessVal - ACTUAL_MINUTES);
+      const within = percentError(guessVal, ACTUAL_MINUTES) <= (TOLERANCE_PERCENT/100);
 
       if (within){
-        resEl.textContent = `🎉 Correct! Within ${TOLERANCE_PERCENT}%. You guessed ${guessVal} min.`;
+        resEl.textContent = `🎉 Correct! Within ${TOLERANCE_PERCENT}%.`;
         resEl.className = "result ok";
-      } else if (near){
-        resEl.textContent = `🟡 So close! You were ${diff} min off (≈ ${fmtPct(pct)}). Try again tomorrow.`;
-        resEl.className = "result near";
       } else {
-        resEl.textContent = `❌ Not quite. You were ${diff} min off (≈ ${fmtPct(pct)}).`;
+        // Direction only — no minutes/percent leak
+        resEl.textContent = guessVal > ACTUAL_MINUTES ? "Too high." : "Too low.";
         resEl.className = "result no";
       }
 
-      // Save results (device + optional email)
-      saveResult({ guess: guessVal, actual: ACTUAL_MINUTES, pct, within, diff });
-
-      // Optional Slack (does NOT reveal the actual time)
+      markPlayedToday();          // lock for today
+      enforceOnePlayPerDayUI();   // disable UI
+      saveResult({ guess: guessVal, actual: ACTUAL_MINUTES, within });
       postToSlack({
         text: "TripGuessr result",
         blocks: [
           { type:"section", text:{ type:"mrkdwn", text:`*TripGuessr – ${todayKey()}*`}},
-          { type:"section", text:{ type:"mrkdwn", text:`Result: ${within ? "WIN ✅" : near ? "NEAR 🟡" : "MISS ❌"}`}},
-          { type:"section", text:{ type:"mrkdwn", text:`Guess: *${guessVal} min* • Error: *${(pct*100).toFixed(1)}%*`}},
-          { type:"context", elements:[{ type:"mrkdwn", text:"(We don’t reveal the actual time in Slack)"}]}
+          { type:"section", text:{ type:"mrkdwn", text:`Route: ${TODAY_PAIR.a.n} → ${TODAY_PAIR.b.n} (${TODAY_PAIR.metro.name})`}},
+          { type:"section", text:{ type:"mrkdwn", text:`Result: ${within ? "WIN ✅" : "TRY AGAIN ❌"}`}}
         ]
       });
-
-      // Update recent table
       renderRecent();
     }
 
@@ -834,17 +702,15 @@
       // Device-local history
       const dev = loadJSON(DEVICE_RESULTS_KEY, []);
       dev.push({
-        date: dkey,
-        deviceId,
+        date: dkey, deviceId,
         guess: entry.guess,
+        // we store actual for stats if you ever want server-side later; not revealed in UI
         actual: entry.actual,
-        pct: entry.pct,
-        within: entry.within,
-        diff: entry.diff
+        within: entry.within
       });
       saveJSON(DEVICE_RESULTS_KEY, dev);
 
-      // Email history (still local, but keyed per-email)
+      // Email history (local per-email)
       const email = (localStorage.getItem(EMAIL_KEY) || "").trim();
       if (email){
         const key = "tg_email_history_v2::" + email.toLowerCase();
@@ -853,9 +719,7 @@
           date: dkey,
           guess: entry.guess,
           actual: entry.actual,
-          pct: entry.pct,
-          within: entry.within,
-          diff: entry.diff
+          within: entry.within
         });
         saveJSON(key, arr);
       }
@@ -874,11 +738,10 @@
         const date = document.createElement("td"); date.textContent = row.date;
         const guess = document.createElement("td"); guess.textContent = `${row.guess} min`;
         const outcome = document.createElement("td");
-        const diff = document.createElement("td"); diff.textContent = `${row.diff} min`;
+        const diff = document.createElement("td"); diff.textContent = "–"; // no leak
 
         const span = document.createElement("span");
         if (row.within){ span.textContent = "Win"; span.className = "tag"; }
-        else if (row.pct <= (NEAR_MISS_PERCENT/100)){ span.textContent = "Near"; span.className = "tag near"; }
         else { span.textContent = "Miss"; span.className = "tag lose"; }
         outcome.appendChild(span);
 
@@ -886,8 +749,6 @@
         tbody.appendChild(tr);
       }
     }
-
-    // Initial render for recent
     renderRecent();
 
     // ---------------------------
@@ -899,45 +760,11 @@
     const reportBtn = document.getElementById("reportBtn");
     const clearEmailDataBtn = document.getElementById("clearEmailDataBtn");
 
-    function computeStats(arr){
-      const total = arr.length;
-      const wins = arr.filter(x => x.within).length;
-      const avgAbs = total ? (arr.reduce((s,x)=> s + Math.abs(x.diff), 0) / total) : 0;
-      const avgPct = total ? (arr.reduce((s,x)=> s + x.pct, 0) / total) : 0;
-      // streak
-      let streak=0, maxStreak=0;
-      for (const x of arr){
-        if (x.within){ streak++; maxStreak = Math.max(maxStreak, streak); }
-        else streak = 0;
-      }
-      const best = total ? Math.min(...arr.map(x => Math.abs(x.diff))) : null;
-      return { total, wins, avgAbs, avgPct, maxStreak, best };
-    }
-
-    function renderStats(stats){
-      document.getElementById("statGames").textContent = stats.total;
-      document.getElementById("statWins").textContent = stats.wins;
-      document.getElementById("statAvgErr").textContent = stats.total ? stats.avgAbs.toFixed(1) : "–";
-      document.getElementById("statAvgPct").textContent = stats.total ? (stats.avgPct*100).toFixed(1) + "%" : "–";
-      document.getElementById("statStreak").textContent = stats.maxStreak;
-      document.getElementById("statBest").textContent = (stats.best==null) ? "–" : `${stats.best} min`;
-    }
-
-    function buildReportText(arr){
-      // show most recent first
+    function buildReportCSV(arr){
       const sorted = [...arr].reverse();
-      const lines = [
-        "date,guess_minutes,actual_minutes,abs_diff_minutes,percent_error,within_10pct",
-      ];
+      const lines = ["date,guess_minutes,within_10pct"];
       for (const x of sorted){
-        lines.push([
-          csvEscape(x.date),
-          csvEscape(x.guess),
-          csvEscape(x.actual),
-          csvEscape(x.diff),
-          csvEscape((x.pct*100).toFixed(2)),
-          csvEscape(x.within ? "yes":"no")
-        ].join(","));
+        lines.push([x.date, x.guess, x.within ? "yes":"no"].join(","));
       }
       return lines.join("\n");
     }
@@ -948,9 +775,14 @@
       const key = "tg_email_history_v2::" + email;
       const arr = loadJSON(key, []);
       reportBlock.style.display = "block";
-      const stats = computeStats(arr);
-      renderStats(stats);
-      reportText.textContent = arr.length ? buildReportText(arr) : "No games recorded for this email yet.";
+      // Update visible tiles (keep placeholders for design consistency)
+      document.getElementById("statGames").textContent = arr.length;
+      document.getElementById("statWins").textContent = arr.filter(x=>x.within).length;
+      document.getElementById("statAvgErr").textContent = "–";
+      document.getElementById("statAvgPct").textContent = "–";
+      document.getElementById("statStreak").textContent = "–";
+      document.getElementById("statBest").textContent = "–";
+      reportText.textContent = arr.length ? buildReportCSV(arr) : "No games recorded for this email yet.";
     });
 
     reportBtn.addEventListener("click", () => {
@@ -962,12 +794,11 @@
         arr = loadJSON(key, []);
         filename = `tripguessr_report_${email.replace(/[^a-z0-9_.-]+/g,'_')}.csv`;
       } else {
-        // fall back to device history
         arr = loadJSON(DEVICE_RESULTS_KEY, []);
         filename = "tripguessr_report_device.csv";
       }
       if (!arr.length){ alert("No data to export yet."); return; }
-      download(filename, buildReportText(arr));
+      download(filename, buildReportCSV(arr));
     });
 
     clearEmailDataBtn.addEventListener("click", () => {
@@ -982,18 +813,42 @@
           document.getElementById("statWins").textContent = "0";
           document.getElementById("statAvgErr").textContent = "–";
           document.getElementById("statAvgPct").textContent = "–";
-          document.getElementById("statStreak").textContent = "0";
+          document.getElementById("statStreak").textContent = "–";
           document.getElementById("statBest").textContent = "–";
           reportText.textContent = "No games recorded for this email yet.";
         }
       }
     });
+
+    // ---------------------------
+    // Copy to clipboard (no spoilers)
+    // ---------------------------
+    const copyBtn = document.getElementById("copyBtn");
+    copyBtn.addEventListener("click", async () => {
+      const d = todayKey();
+      const res = document.getElementById("result").textContent || "Played";
+      const route = (TODAY_PAIR && TODAY_PAIR.a)
+        ? `${TODAY_PAIR.a.n} → ${TODAY_PAIR.b.n} (${TODAY_PAIR.metro.name})`
+        : "Today’s route";
+      const text = `TripGuessr (${d}): ${res} — Route: ${route}`;
+      try {
+        await navigator.clipboard.writeText(text);
+        copyBtn.textContent = "Copied!";
+        setTimeout(()=>copyBtn.textContent="Copy Result", 1200);
+      } catch(e){
+        // Fallback
+        const ta = document.createElement("textarea");
+        ta.value = text; document.body.appendChild(ta);
+        ta.select(); document.execCommand("copy"); document.body.removeChild(ta);
+        copyBtn.textContent = "Copied!";
+        setTimeout(()=>copyBtn.textContent="Copy Result", 1200);
+      }
+    });
   </script>
 
   <!-- =========================
-       Google Maps JS (YOUR KEY INSERTED)
+       Google Maps JS (YOUR KEY)
   ========================== -->
   <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDJhWz8jA_KfdQCZ1jE_z8RPGuvcQBVKFM&callback=initMap"></script>
 </body>
 </html>
-
