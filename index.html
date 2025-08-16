@@ -3,610 +3,988 @@
 <head>
   <meta charset="UTF-8" />
   <title>TripGuessr – Daily Driving Challenge</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="theme-color" content="#0b1020" />
-  <meta name="description" content="Guess today’s real driving time between two places in a new U.S. city every day." />
-  <!-- Update this if your logo is not in the same folder -->
-  <link id="faviconSvg" rel="icon" href="logo.svg" type="image/svg+xml">
-  <link id="appleIcon" rel="apple-touch-icon" href="logo.svg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- =========================
+       Styles
+  ========================== -->
   <style>
-    :root{
-      --bg:#0b1020;--bg2:#0e162b;--card:#111b33;--card2:#0c142a;--text:#e7e9ee;--muted:#a6b0c2;
-      --accent:#2563eb;--border:#223153;--shadow:0 20px 60px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.04);
-      --route-main:#00e5ff;--route-outline:#0a1024;--route-glow:#5be7ff;--route-alt:#ffd400;
+    :root {
+      --bg: #f9fafb;
+      --text: #111827;
+      --muted: #6b7280;
+      --card: #ffffff;
+      --primary: #2563eb;
+      --primary-contrast: #ffffff;
+      --accent: #10b981;
+      --danger: #ef4444;
+      --shadow: 0 8px 30px rgba(0,0,0,0.08);
+      --ring: 0 0 0 3px rgba(37, 99, 235, 0.2);
     }
-    :root[data-theme="light"]{
-      --bg:#f6f8fb;--bg2:#ffffff;--card:#ffffff;--card2:#f3f6fb;--text:#0f172a;--muted:#445065;
-      --accent:#1d4ed8;--border:#d7dfef;--shadow:0 18px 50px rgba(15,23,42,.08), inset 0 1px 0 rgba(255,255,255,.7);
-      --route-main:#0ea5e9;--route-outline:#ffffff;--route-glow:#7dd3fc;--route-alt:#f59e0b;
+    .dark {
+      --bg: #0d0f13;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --card: #12161c;
+      --primary: #60a5fa;
+      --primary-contrast: #0b1220;
+      --accent: #34d399;
+      --danger: #f87171;
+      --shadow: 0 8px 30px rgba(0,0,0,0.35);
+      --ring: 0 0 0 3px rgba(96, 165, 250, 0.25);
     }
-    *{box-sizing:border-box}
-    html,body{height:100%;margin:0}
-    body{
-      color:var(--text);
+
+    html, body {
+      height: 100%;
+    }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      background: var(--bg);
+      color: var(--text);
+      transition: background .25s ease, color .25s ease;
+    }
+
+    /* Header */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: var(--card);
+      border-bottom: 1px solid rgba(0,0,0,0.05);
+      box-shadow: var(--shadow);
+    }
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 16px 20px;
+    }
+    .row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      justify-content: space-between;
+      flex-wrap: wrap;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: inherit;
+    }
+    .logo {
+      width: 48px; height: 48px;
+      flex: 0 0 48px;
+    }
+    .title-wrap h1 {
+      font-size: 1.25rem;
+      margin: 0;
+      line-height: 1.2;
+      letter-spacing: 0.2px;
+    }
+    .title-wrap p {
+      margin: 2px 0 0 0;
+      color: var(--muted);
+      font-size: .9rem;
+    }
+
+    /* Controls */
+    .controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .btn {
+      appearance: none;
+      border: none;
+      background: var(--primary);
+      color: var(--primary-contrast);
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-weight: 600;
+      letter-spacing: .2px;
+      cursor: pointer;
+      box-shadow: 0 2px 0 rgba(0,0,0,.1);
+      transition: transform .04s ease, filter .2s ease, box-shadow .2s ease;
+    }
+    .btn.secondary {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid rgba(0,0,0,.1);
+    }
+    .btn:active { transform: translateY(1px); }
+    .btn:focus-visible { outline: none; box-shadow: var(--ring); }
+    .btn.small { padding: 8px 12px; font-size: .9rem; }
+
+    /* Main layout */
+    .grid {
+      display: grid;
+      grid-template-columns: 1.45fr 1fr;
+      gap: 18px;
+      align-items: start;
+    }
+    @media (max-width: 980px){
+      .grid { grid-template-columns: 1fr; }
+    }
+
+    /* Map */
+    #map {
+      width: 100%;
+      height: 520px;
+      border-radius: 16px;
+      background: #dfe7f3;
+      box-shadow: var(--shadow);
+      border: 1px solid rgba(0,0,0,.06);
+      overflow: hidden;
+    }
+
+    /* Cards */
+    .card {
+      background: var(--card);
+      border: 1px solid rgba(0,0,0,.06);
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+      padding: 16px;
+    }
+    .card h2 { margin: 4px 0 8px; font-size: 1.1rem; }
+    .muted { color: var(--muted); }
+
+    /* Guess panel – make it impossible to miss */
+    .guess-panel {
+      position: relative;
+      padding: 18px;
+      border: 2px dashed rgba(37,99,235, .35);
+      border-radius: 16px;
       background:
-        radial-gradient(1200px 800px at -10% -20%, rgba(96,165,250,.08), transparent 45%),
-        radial-gradient(900px 700px at 110% -10%, rgba(34,197,94,.08), transparent 40%),
-        linear-gradient(180deg, var(--bg), var(--bg) 30%, var(--bg2) 100%);
-      font-family: ui-sans-serif,-apple-system,Segoe UI,Roboto,Helvetica,Arial,system-ui;
-      -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
+        radial-gradient(1200px 1200px at 105% -10%, rgba(37, 99, 235, .08), transparent 40%),
+        radial-gradient(1200px 1200px at -5% 110%, rgba(16, 185, 129, .08), transparent 40%),
+        var(--card);
     }
-    a{color:var(--accent);text-decoration:none}
-    .container{max-width:1140px;margin:0 auto;padding:24px}
-    .hero{display:grid;grid-template-columns:1.1fr 0.9fr;gap:24px;align-items:stretch;margin-bottom:18px}
-    .card{background:var(--card);border:1px solid var(--border);border-radius:20px;box-shadow:var(--shadow);padding:24px}
-    .brandRow{display:flex;align-items:center;gap:14px;margin-bottom:6px}
-    .brandRow img{height:44px;width:auto;display:block}
-    .title{margin:0;font-weight:900;letter-spacing:.2px;line-height:1.05;font-size:clamp(28px,4vw,44px)}
-    .subtitle{color:var(--muted);margin:8px 0 14px;font-size:clamp(14px,2.2vw,18px)}
-    .ctaRow{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-    .btn{
-      appearance:none;border-radius:14px;border:1px solid var(--border);
-      background:linear-gradient(180deg,#1f2937,#0f172a);color:#e7eefc;
-      padding:10px 14px;font-weight:800;cursor:pointer;
-      box-shadow:0 10px 30px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.06);
-      transition:transform .08s ease, box-shadow .12s ease, border-color .12s ease, filter .12s ease;
-      user-select:none;font-size:14px
+    .guess-panel .label {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      font-size: .78rem;
+      color: var(--muted);
+      margin-bottom: 10px;
     }
-    :root[data-theme="light"] .btn{background:linear-gradient(180deg,#e7efff,#d8e4ff); color:#0f172a; box-shadow:0 8px 24px rgba(2,6,23,.08), inset 0 1px 0 rgba(255,255,255,.8)}
-    .btn:hover{transform:translateY(-1px);filter:brightness(1.03)}
-    .btn:active{transform:translateY(0)}
-    .btn.primary{background:linear-gradient(180deg,#2563eb,#1d4ed8);border-color:#1b3a86;color:#fff}
-    :root[data-theme="light"] .btn.primary{background:linear-gradient(180deg,#3b82f6,#1d4ed8)}
-    .btn.ghost{background:transparent;border:1px dashed var(--border);color:var(--text)}
-    .toggleRow{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
-    .toggle{display:inline-flex;gap:8px;align-items:center;border:1px solid var(--border);background:var(--card2);padding:8px 10px;border-radius:12px;font-size:13px;color:var(--muted)}
-    .grid{display:grid;grid-template-columns:1.35fr 1fr;gap:16px}
+    .input-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .input {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--bg);
+      border: 1px solid rgba(0,0,0,.08);
+      padding: 12px 14px;
+      border-radius: 12px;
+      font-size: 1.05rem;
+      min-width: 220px;
+      box-shadow: inset 0 -2px 0 rgba(0,0,0,.04);
+    }
+    .input input {
+      border: none;
+      outline: none;
+      background: transparent;
+      color: var(--text);
+      width: 120px;
+      font-size: 1.1rem;
+    }
+    .input .suffix {
+      color: var(--muted);
+      font-weight: 600;
+    }
+    .hint {
+      margin-top: 8px;
+      font-size: .9rem;
+      color: var(--muted);
+    }
+    .result {
+      margin-top: 12px;
+      font-weight: 700;
+    }
+    .result.ok { color: var(--accent); }
+    .result.no { color: var(--danger); }
+    .result.near { color: #f59e0b; }
 
-    /* Map card */
-    #mapWrap{position:relative;height:440px;border-radius:16px;border:1px solid var(--border);overflow:hidden;background:#0b1328}
-    :root[data-theme="light"] #mapWrap{background:#e7efff}
-    #map{width:100%;height:100%}
+    /* Email + Report */
+    .email-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+    }
+    .email-row input[type=email]{
+      width: 100%;
+      background: var(--bg);
+      color: var(--text);
+      border: 1px solid rgba(0,0,0,.08);
+      padding: 11px 12px;
+      border-radius: 12px;
+      font-size: 1rem;
+    }
+    .report-block pre {
+      background: var(--bg);
+      border: 1px dashed rgba(0,0,0,.08);
+      padding: 12px;
+      border-radius: 12px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      max-height: 240px;
+      overflow: auto;
+      font-family: ui-monospace, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: .9rem;
+      margin: 0;
+    }
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-top: 8px;
+    }
+    .stat {
+      background: var(--bg);
+      border: 1px solid rgba(0,0,0,.06);
+      border-radius: 12px;
+      padding: 10px 12px;
+    }
+    .stat .k { font-size: 1.15rem; font-weight: 800; }
+    .stat .l { font-size: .8rem; color: var(--muted); }
 
-    /* Map controls overlay */
-    .mapControls{position:absolute;top:10px;right:10px;display:flex;gap:6px;z-index:2;flex-wrap:wrap}
-    .ctrl{background:rgba(10,16,36,.85);border:1px solid var(--border);color:#cfe3ff;border-radius:10px;padding:6px 8px;font-size:12px}
-    :root[data-theme="light"] .ctrl{background:rgba(255,255,255,.92);color:#0f172a}
-    .legend{display:flex;align-items:center;gap:8px}
-    .legendSwatch{width:30px;height:6px;border-radius:999px;background:linear-gradient(90deg,var(--route-glow),var(--route-main));box-shadow:0 0 8px rgba(91,231,255,.7)}
-    .chk{display:inline-flex;gap:6px;align-items:center}
-    .viewBtns{display:flex;gap:6px}
-    .viewBtns .btn{padding:6px 10px;font-size:12px}
+    /* Leaderboard-ish (local) */
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .95rem;
+    }
+    .table th, .table td {
+      padding: 8px 10px;
+      border-bottom: 1px solid rgba(0,0,0,.06);
+      text-align: left;
+    }
+    .table th { color: var(--muted); font-weight: 700; font-size: .85rem; }
+    .tag {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: rgba(16,185,129,.12);
+      color: #059669;
+      font-size: .75rem;
+      font-weight: 700;
+      letter-spacing: .3px;
+    }
+    .tag.lose { background: rgba(239,68,68,.12); color: #b91c1c; }
+    .tag.near { background: rgba(245,158,11,.12); color: #b45309; }
+    .small {
+      font-size: .85rem;
+      color: var(--muted);
+    }
 
-    /* Overview mini‑map */
-    #overviewWrap{position:absolute;left:10px;bottom:10px;width:170px;height:120px;border-radius:10px;border:1px solid var(--border);overflow:hidden;background:#081022;z-index:2}
-    :root[data-theme="light"] #overviewWrap{background:#eef4ff}
-    #overview{width:100%;height:100%}
-    .overviewBadge{position:absolute;left:10px;bottom:134px;background:rgba(10,16,36,.85);color:#cfe3ff;border:1px solid var(--border);padding:6px 8px;border-radius:10px;font-size:12px}
-    :root[data-theme="light"] .overviewBadge{background:rgba(255,255,255,.95);color:#0f172a}
-
-    /* Skeleton shimmer while the map is loading */
-    .skeleton::before{content:"";position:absolute;inset:0;background:
-      linear-gradient(100deg, rgba(255,255,255,0) 40%, rgba(255,255,255,.06) 50%, rgba(255,255,255,0) 60%),
-      linear-gradient(180deg,#0b1328,#0b1328);background-size:200% 100%, 100% 100%;animation:shimmer 1.2s infinite}
-    :root[data-theme="light"] .skeleton::before{background:
-      linear-gradient(100deg, rgba(255,255,255,0) 40%, rgba(0,0,0,.04) 50%, rgba(255,255,255,0) 60%),
-      linear-gradient(180deg,#e7efff,#e7efff)}
-    @keyframes shimmer{0%{background-position:-120% 0, 0 0}100%{background-position:220% 0, 0 0}}
-
-    .pill{display:inline-flex;gap:6px;align-items:center;border:1px solid var(--border);background:var(--card2);padding:7px 12px;border-radius:999px;color:var(--muted);font-size:13px}
-    .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
-    .game-card{display:grid;gap:12px}
-    .guessRow{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-    input[type=number]{width:160px;padding:12px;background:#0b1328;color:#e8f0ff;border:1px solid var(--border);border-radius:12px;font-size:16px;outline:none}
-    :root[data-theme="light"] input[type=number]{background:#fff;color:#0f172a}
-    .result{font-weight:900;padding:10px 12px;border-radius:12px}
-    .result.win{background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.25);color:#16a34a}
-    .result.near{background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.25);color:#b45309}
-    .result.lose{background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.25);color:#b91c1c}
-    .feedbackChips{display:flex;gap:6px;flex-wrap:wrap}
-    .chip{border:1px solid var(--border);background:var(--card2);padding:6px 10px;border-radius:999px;font-size:12px}
-    .shareBox{display:grid;gap:10px}
-    .shareCard{white-space:pre;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;background:#0b1328;color:#d1d5db;border:1px dashed #2b3b66;border-radius:12px;padding:10px;overflow:auto;max-height:160px}
-    :root[data-theme="light"] .shareCard{background:#ffffff;color:#0f172a;border-color:#d7dfef}
-    .leaderboards{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-    table{width:100%;border-collapse:collapse;font-size:14px}
-    th,td{padding:10px;border-bottom:1px solid var(--border);text-align:left}
-    th{color:#9fb6ec;font-weight:900}
-    :root[data-theme="light"] th{color:#1d4ed8}
-    .muted{color:var(--muted);font-size:13px}
-    footer{color:var(--muted);font-size:12px;text-align:center;padding:24px 8px 56px}
-    .streak{font-weight:900;color:#93c5fd}
-    .hidden{display:none!important}
-
-    /* Modal */
-    .modal{position:fixed;inset:0;background:rgba(5,10,22,.6);backdrop-filter:blur(3px);display:none;align-items:center;justify-content:center;z-index:40}
-    .modal.open{display:flex}
-    .dialog{background:var(--card);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow);max-width:640px;width:92%;padding:18px}
-    .dialog h3{margin:0 0 6px}
-    .dialog p{margin:8px 0;color:var(--muted)}
-    .dialog .actions{display:flex;justify-content:flex-end;gap:8px;margin-top:12px}
-
-    /* Map diagnostics overlay */
-    #mapDiag{position:absolute;inset:0;display:grid;place-items:center;background:rgba(7,12,26,.72);backdrop-filter:saturate(120%) blur(2px);color:#c8d2e5;padding:18px;text-align:center}
-    #mapDiag .box{background:var(--card);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow);padding:14px}
-    #mapDiag p{margin:8px 0 0;font-size:13px;color:#9fb0d0}
-
-    @media (max-width:980px){
-      .hero{grid-template-columns:1fr}
-      .grid{grid-template-columns:1fr}
-      #mapWrap{height:380px}
-      #overviewWrap{width:150px;height:110px}
-      .brandRow img{height:38px}
+    .spacer { height: 14px; }
+    .sr-only {
+      position: absolute;
+      width: 1px; height: 1px;
+      padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0;
     }
   </style>
 </head>
 <body>
-  <noscript style="display:block; padding:12px; text-align:center; background:#fee2e2; color:#7f1d1d;">
-    TripGuessr needs JavaScript enabled to load the map and game.
-  </noscript>
+  <!-- We default to LIGHT mode -->
+  <script>
+    // Ensure default light on first visit; store preference thereafter.
+    (function(){
+      try {
+        const pref = localStorage.getItem('tg_theme');
+        if (pref === 'dark') document.documentElement.classList.add('dark');
+        else document.documentElement.classList.remove('dark'); // default light
+      } catch(e){}
+    })();
+  </script>
 
-  <div class="container">
-    <!-- HERO -->
-    <section class="hero">
-      <div class="card">
-        <div class="brandRow">
-          <img id="logoImg" src="logo.svg" alt="TripGuessr logo" onerror="this.style.display='none'">
-          <h1 class="title">TripGuessr</h1>
-        </div>
-        <p class="subtitle">Guess today’s real driving time between two places somewhere in the U.S. A new city every day.</p>
-        <div class="ctaRow">
-          <a href="#game" class="btn primary" id="ctaPlay">Play today’s route</a>
-          <button class="btn ghost" id="btnRules" aria-haspopup="dialog">How it works</button>
-        </div>
-        <div class="toggleRow">
-          <label class="toggle"><input type="checkbox" id="darkToggle" checked /> Dark mode</label>
-          <span class="muted">No % hints — you’ll only see “Too high”, “Too low”, or “So close!”.</span>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="row">
-          <span class="pill" id="pillDate">Today</span>
-          <span class="pill" id="pillCity">City</span>
-          <span class="pill">Streak: <span class="streak" id="streakVal">0</span></span>
-        </div>
-
-        <div id="mapWrap" class="skeleton">
-          <div id="map"></div>
-
-          <!-- Controls -->
-          <div class="mapControls" aria-label="Map controls">
-            <div class="ctrl legend" aria-hidden="true"><div class="legendSwatch"></div>Route</div>
-            <div class="viewBtns">
-              <button class="btn" id="btnFit">Fit route</button>
-              <button class="btn" id="btnContext">City context</button>
-            </div>
-            <label class="ctrl chk"><input type="checkbox" id="contrastToggle" checked /> High‑contrast route</label>
+  <!-- =========================
+       Header
+  ========================== -->
+  <header>
+    <div class="container">
+      <div class="row">
+        <a class="brand" href="#">
+          <!-- Inline SVG logo so it always loads -->
+          <svg class="logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" aria-hidden="true">
+            <defs>
+              <linearGradient id="g" x1="0" x2="1" y1="0" y2="1">
+                <stop offset="0" stop-color="#2563eb"/>
+                <stop offset="1" stop-color="#10b981"/>
+              </linearGradient>
+            </defs>
+            <circle cx="32" cy="32" r="30" fill="url(#g)"/>
+            <path d="M20 38c2-7 7-13 12-18 6-6 10-4 10 2 0 6-8 10-12 12-3 1-6 2-10 4z" fill="#ffffff" opacity=".5"/>
+            <text x="32" y="39" text-anchor="middle" font-weight="800" font-family="ui-sans-serif, system-ui" font-size="16" fill="#fff">TG</text>
+          </svg>
+          <div class="title-wrap">
+            <h1>TripGuessr</h1>
+            <p class="small">Guess today’s drive time. Within <strong>10%</strong> counts as a win.</p>
           </div>
-
-          <!-- Distance badge -->
-          <div class="overviewBadge" id="distanceBadge">—</div>
-
-          <!-- Overview mini‑map -->
-          <div id="overviewWrap" aria-hidden="true"><div id="overview"></div></div>
-
-          <!-- Map diagnostics -->
-          <div id="mapDiag" class="hidden" role="alert">
-            <div class="box">
-              <strong>Map didn’t load</strong>
-              <p id="mapDiagMsg">Check API key, billing, and HTTP referrers. Then press Retry.</p>
-              <div style="margin-top:10px;display:flex;gap:8px;justify-content:center">
-                <button class="btn" id="retryMapBtn">Retry</button>
-                <button class="btn ghost" id="showMarkersBtn">Show markers only</button>
-              </div>
-            </div>
-          </div>
+        </a>
+        <div class="controls">
+          <button id="themeBtn" class="btn secondary small" type="button" aria-pressed="false">Dark</button>
+          <button id="reportBtn" class="btn secondary small" type="button">Download CSV</button>
+          <!-- Optional Slack toggle (no webhook by default) -->
+          <button id="slackBtn" class="btn secondary small" type="button" aria-pressed="false" title="Toggle Slack notifications (configure webhook in code)">Slack Off</button>
         </div>
-      </div>
-    </section>
-
-    <!-- GAME -->
-    <section id="game" class="grid">
-      <div class="card game-card">
-        <div class="row">
-          <span class="pill">Origin: <strong id="originLabel">—</strong></span>
-          <span class="pill">Destination: <strong id="destLabel">—</strong></span>
-        </div>
-
-        <div class="guessRow">
-          <input id="guessMinutes" type="number" inputmode="numeric" min="1" step="1" placeholder="Your guess (minutes)" aria-label="Your guess in minutes" />
-          <button class="btn" id="btnGuess" aria-label="Submit guess">Submit Guess</button>
-          <button class="btn ghost" id="btnGiveUp" aria-label="Give up">Give up</button>
-        </div>
-
-        <div class="feedbackChips" id="lastFeedback"></div>
-        <div id="resultBox" class="result hidden" role="status" aria-live="polite"></div>
-        <div class="muted">6 guesses max. Use ↑/↓ to nudge by 1 min. Enter submits.</div>
-
-        <div class="shareBox">
-          <div class="row">
-            <button class="btn" id="btnShare">Copy Share Card</button>
-            <span class="muted" id="shareNote">Wordle‑style text copied to clipboard</span>
-          </div>
-          <div class="shareCard" id="shareCard"></div>
-        </div>
-      </div>
-
-      <div class="card">
-        <h3 style="margin:6px 0 2px;">Leaderboards</h3>
-        <div class="leaderboards">
-          <div>
-            <h4 style="margin:8px 0;">Daily (this device)</h4>
-            <table id="tblDaily">
-              <thead><tr><th>#</th><th>Guess</th><th>Result</th><th>Time</th></tr></thead>
-              <tbody></tbody>
-            </table>
-          </div>
-          <div>
-            <h4 style="margin:8px 0;">All‑Time (this device)</h4>
-            <table id="tblAllTime">
-              <thead><tr><th>#</th><th>City</th><th>Result</th><th>Date</th></tr></thead>
-              <tbody></tbody>
-            </table>
-          </div>
-        </div>
-        <div class="muted" style="margin-top:6px;">Share your grid after you finish to challenge friends.</div>
-      </div>
-    </section>
-
-    <footer><p>© <span id="year"></span> TripGuessr</p></footer>
-  </div>
-
-  <!-- Modal: How it works -->
-  <div class="modal" id="howModal" role="dialog" aria-modal="true" aria-labelledby="howTitle">
-    <div class="dialog" role="document">
-      <h3 id="howTitle">How it works</h3>
-      <p>Each day we pick a new U.S. city and render a real driving route with Google Directions. Your job: guess the travel time in minutes. We’ll only say <strong>Too high</strong>, <strong>Too low</strong>, or <strong>So close!</strong>. You get 6 tries.</p>
-      <ul class="muted" style="margin:8px 0 0 18px">
-        <li>No % hints or distance to the answer.</li>
-        <li>Daily streaks! Share your score card with friends.</li>
-      </ul>
-      <div class="actions">
-        <button class="btn ghost" id="howClose">Close</button>
-        <a class="btn primary" href="#game" id="howPlay">Play today’s route</a>
       </div>
     </div>
-  </div>
+  </header>
 
-  <!-- Confetti -->
-  <canvas id="confetti" class="hidden" style="position:fixed;inset:0;pointer-events:none"></canvas>
+  <!-- =========================
+       Main
+  ========================== -->
+  <main class="container" style="padding-top:18px;">
+    <div class="grid">
+      <!-- Map + Today Meta -->
+      <section>
+        <div id="map" role="region" aria-label="Map showing today’s hidden route"></div>
+        <div class="spacer"></div>
+        <div class="card">
+          <h2>Today’s Challenge</h2>
+          <p class="small">
+            The route changes every day (based on your local date). The map shows the start and end markers—no city names to keep it fair.
+          </p>
+          <div id="todayMeta" class="small muted"></div>
+        </div>
+      </section>
 
-  <!-- GA4 (optional) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+      <!-- Guess + Stats -->
+      <aside>
+        <div class="card guess-panel" id="guessCard" aria-live="polite">
+          <div class="label">Enter Your Guess</div>
+          <h2 style="margin:0 0 6px 0;">How long will the drive take?</h2>
+          <div class="input-row" style="margin-top:8px;">
+            <label class="sr-only" for="guessInput">Minutes</label>
+            <div class="input" style="flex:1 1 260px;">
+              <input id="guessInput" inputmode="numeric" pattern="[0-9]*" type="number" min="1" placeholder="e.g., 42" autocomplete="off" />
+              <span class="suffix">minutes</span>
+            </div>
+            <button id="submitBtn" class="btn" type="button">Submit Guess</button>
+          </div>
+          <div class="hint">Pro tip: ±10% counts as a win. We round to the nearest minute.</div>
+          <div id="result" class="result" aria-live="polite"></div>
+        </div>
+
+        <div class="spacer"></div>
+
+        <div class="card">
+          <h2>Track Your Progress</h2>
+          <p class="small">We already track this device locally. Add your email to keep a longer history across sessions on this device (no server required here).</p>
+          <div class="email-row" style="margin-top:8px;">
+            <input id="emailInput" type="email" placeholder="you@example.com" />
+            <button id="saveEmailBtn" class="btn secondary" type="button">Save Email</button>
+          </div>
+          <div style="margin-top:10px; display:flex; gap:10px; flex-wrap: wrap;">
+            <button id="viewReportBtn" class="btn secondary" type="button">View Report</button>
+            <button id="clearEmailDataBtn" class="btn secondary" type="button">Clear Email Data</button>
+          </div>
+          <div class="report-block" id="reportBlock" style="margin-top:12px; display:none;">
+            <div class="stat-grid">
+              <div class="stat"><div class="k" id="statGames">0</div><div class="l">Games Played</div></div>
+              <div class="stat"><div class="k" id="statWins">0</div><div class="l">Wins (≤10%)</div></div>
+              <div class="stat"><div class="k" id="statAvgErr">–</div><div class="l">Avg Abs Error (min)</div></div>
+              <div class="stat"><div class="k" id="statAvgPct">–</div><div class="l">Avg % Error</div></div>
+              <div class="stat"><div class="k" id="statStreak">0</div><div class="l">Longest Win Streak</div></div>
+              <div class="stat"><div class="k" id="statBest">–</div><div class="l">Best Guess (min diff)</div></div>
+            </div>
+            <div style="margin-top:10px;">
+              <pre id="reportText"></pre>
+            </div>
+          </div>
+        </div>
+
+        <div class="spacer"></div>
+
+        <div class="card">
+          <h2>Your Recent Results (This Device)</h2>
+          <table class="table" id="recentTable">
+            <thead><tr><th>Date</th><th>Guess</th><th>Outcome</th><th>Diff</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <!-- =========================
+       Scripts
+  ========================== -->
   <script>
-    window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}
-    gtag('js',new Date()); gtag('config','G-XXXXXXXXXX');
-    const gaEvent=(name,params={})=>{try{gtag('event',name,params)}catch(e){}}
-  </script>
+    // ---------------------------
+    // Config / Constants
+    // ---------------------------
+    const TOLERANCE_PERCENT = 10;        // within 10% => WIN
+    const NEAR_MISS_PERCENT = 15;        // optional "So close!" message if within 15% but not ≤10%
+    const MAX_RECENT_ROWS = 12;
+    const USE_SLACK = false;             // toggle run-time via button
+    let SLACK_WEBHOOK_URL = "";          // <-- put your webhook here if you want Slack pings
+    const DEVICE_KEY = "tg_device_id_v2";
+    const DEVICE_RESULTS_KEY = "tg_device_results_v2";
+    const EMAIL_KEY = "tg_email_v2";
+    const THEME_KEY = "tg_theme";
 
-  <script>
-  /*************** BASIC CONFIG ***************/
-  const GOOGLE_MAPS_KEY = "AIzaSyDJhWz8jA_KfdQCZ1jE_z8RPGuvcQBVKFM"; // your key
-  // If your logo file is in /assets/logo.svg, change this to "assets/logo.svg"
-  const LOGO_PATH = "logo.svg";
-
-  const STORAGE_PREFIX = "tripguessr_v14";
-  const MAX_GUESSES = 6, NEAR_TOL_PCT = 0.05, NEAR_TOL_MIN = 2;
-  const todayISO = new Date().toISOString().slice(0,10);
-
-  let map, overviewMap, directions, renderer, routeDash=null, currentBounds=null;
-  let routePolys=[], originMarker=null, destMarker=null, overviewRect=null;
-  let routeOfDay=null, liveMinutes=null, fallbackMinutes=null;
-  let guesses=[], won=false, nearHit=false, revealed=false, confettiTimer;
-
-  // Ensure favicon & apple icon use the same path as the inline logo
-  (function syncLogoPaths(){
-    const img=document.getElementById('logoImg'); if(img) img.src=LOGO_PATH;
-    const fav=document.getElementById('faviconSvg'); if(fav) fav.href=LOGO_PATH;
-    const app=document.getElementById('appleIcon'); if(app) app.href=LOGO_PATH;
-  })();
-
-  /*************** ROUTE DATA (50 U.S. cities) ***************/
-  const ROUTES=[{city:"New York, NY",origin:{lat:40.758,lng:-73.9855,label:"Times Sq"},dest:{lat:40.7061,lng:-74.0087,label:"Wall St"},baselineMinutes:22},{city:"Los Angeles, CA",origin:{lat:34.1381,lng:-118.3534,label:"Universal Studios"},dest:{lat:34.011,lng:-118.495,label:"Santa Monica Pier"},baselineMinutes:38},{city:"Chicago, IL",origin:{lat:41.8827,lng:-87.6233,label:"Millennium Park"},dest:{lat:41.8796,lng:-87.6237,label:"Willis Tower"},baselineMinutes:8},{city:"Houston, TX",origin:{lat:29.7602,lng:-95.3694,label:"Downtown"},dest:{lat:29.721,lng:-95.391,label:"NRG Stadium"},baselineMinutes:17},{city:"Phoenix, AZ",origin:{lat:33.4484,lng:-112.074,label:"City Center"},dest:{lat:33.422,lng:-111.937,label:"ASU Stadium"},baselineMinutes:22},{city:"Philadelphia, PA",origin:{lat:39.9526,lng:-75.1652,label:"City Hall"},dest:{lat:39.9496,lng:-75.1503,label:"Liberty Bell"},baselineMinutes:7},{city:"San Antonio, TX",origin:{lat:29.4252,lng:-98.4946,label:"The Alamo"},dest:{lat:29.426,lng:-98.4861,label:"River Walk"},baselineMinutes:9},{city:"San Diego, CA",origin:{lat:32.7341,lng:-117.1446,label:"Balboa Park"},dest:{lat:32.7137,lng:-117.1611,label:"Seaport Village"},baselineMinutes:16},{city:"Dallas, TX",origin:{lat:32.7791,lng:-96.8089,label:"Arts District"},dest:{lat:32.7757,lng:-96.7967,label:"Deep Ellum"},baselineMinutes:12},{city:"San Jose, CA",origin:{lat:37.3337,lng:-121.8907,label:"Downtown"},dest:{lat:37.3317,lng:-121.882,label:"SJSU"},baselineMinutes:8},{city:"Austin, TX",origin:{lat:30.2653,lng:-97.7431,label:"6th Street"},dest:{lat:30.285,lng:-97.739,label:"UT Tower"},baselineMinutes:10},{city:"Jacksonville, FL",origin:{lat:30.328,lng:-81.656,label:"Downtown"},dest:{lat:30.323,lng:-81.659,label:"TIAA Bank Field"},baselineMinutes:9},{city:"San Francisco, CA",origin:{lat:37.8087,lng:-122.4098,label:"Fisherman’s Wharf"},dest:{lat:37.8199,lng:-122.4783,label:"Golden Gate"},baselineMinutes:24},{city:"Columbus, OH",origin:{lat:39.9623,lng:-83.0007,label:"Statehouse"},dest:{lat:39.969,lng:-83.006,label:"Ohio Stadium"},baselineMinutes:11},{city:"Fort Worth, TX",origin:{lat:32.7532,lng:-97.3294,label:"Sundance Sq"},dest:{lat:32.7356,lng:-97.1081,label:"AT&T Stadium"},baselineMinutes:26},{city:"Indianapolis, IN",origin:{lat:39.7684,lng:-86.1581,label:"Monument Cir"},dest:{lat:39.7601,lng:-86.1639,label:"Lucas Oil"},baselineMinutes:10},{city:"Charlotte, NC",origin:{lat:35.2271,lng:-80.8431,label:"Uptown"},dest:{lat:35.225,lng:-80.84,label:"Spectrum Ctr"},baselineMinutes:7},{city:"Seattle, WA",origin:{lat:47.6205,lng:-122.3493,label:"Space Needle"},dest:{lat:47.6097,lng:-122.3425,label:"Pike Place"},baselineMinutes:13},{city:"Denver, CO",origin:{lat:39.7392,lng:-104.9903,label:"Civic Ctr"},dest:{lat:39.7487,lng:-104.995,label:"Coors Field"},baselineMinutes:10},{city:"Washington, DC",origin:{lat:38.8895,lng:-77.0353,label:"Washington Monument"},dest:{lat:38.8893,lng:-77.0502,label:"Lincoln Memorial"},baselineMinutes:9},{city:"Boston, MA",origin:{lat:42.3601,lng:-71.0589,label:"Faneuil Hall"},dest:{lat:42.3467,lng:-71.0972,label:"Fenway Park"},baselineMinutes:20},{city:"El Paso, TX",origin:{lat:31.7619,lng:-106.485,label:"Downtown"},dest:{lat:31.7725,lng:-106.5044,label:"UTEP"},baselineMinutes:12},{city:"Nashville, TN",origin:{lat:36.1627,lng:-86.7816,label:"Broadway"},dest:{lat:36.1665,lng:-86.7775,label:"Ryman"},baselineMinutes:7},{city:"Detroit, MI",origin:{lat:42.3314,lng:-83.0458,label:"Campus Martius"},dest:{lat:42.339,lng:-83.048,label:"Little Caesars"},baselineMinutes:10},{city:"Oklahoma City, OK",origin:{lat:35.4676,lng:-97.5164,label:"Bricktown"},dest:{lat:35.4634,lng:-97.5151,label:"Paycom Ctr"},baselineMinutes:9},{city:"Portland, OR",origin:{lat:45.5231,lng:-122.6765,label:"Pioneer Sq"},dest:{lat:45.5316,lng:-122.6668,label:"Moda Center"},baselineMinutes:14},{city:"Las Vegas, NV",origin:{lat:36.1147,lng:-115.1728,label:"The Strip"},dest:{lat:36.102,lng:-115.174,label:"T‑Mobile Arena"},baselineMinutes:13},{city:"Memphis, TN",origin:{lat:35.1382,lng:-90.0506,label:"Beale St"},dest:{lat:35.1358,lng:-90.057,label:"FedExForum"},baselineMinutes:8},{city:"Louisville, KY",origin:{lat:38.257,lng:-85.758,label:"Churchill Downs"},dest:{lat:38.256,lng:-85.751,label:"UofL"},baselineMinutes:10},{city:"Baltimore, MD",origin:{lat:39.285,lng:-76.61,label:"Inner Harbor"},dest:{lat:39.284,lng:-76.622,label:"Camden Yards"},baselineMinutes:10},{city:"Milwaukee, WI",origin:{lat:43.0389,lng:-87.9065,label:"City Hall"},dest:{lat:43.0437,lng:-87.9166,label:"Fiserv"},baselineMinutes:9},{city:"Albuquerque, NM",origin:{lat:35.0844,lng:-106.6504,label:"Old Town"},dest:{lat:35.087,lng:-106.651,label:"BioPark"},baselineMinutes:9},{city:"Tucson, AZ",origin:{lat:32.2226,lng:-110.9747,label:"Downtown"},dest:{lat:32.228,lng:-110.948,label:"Arizona Stadium"},baselineMinutes:15},{city:"Fresno, CA",origin:{lat:36.7378,lng:-119.7871,label:"Downtown"},dest:{lat:36.807,lng:-119.746,label:"River Park"},baselineMinutes:21},{city:"Sacramento, CA",origin:{lat:38.5816,lng:-121.4944,label:"Capitol"},dest:{lat:38.5802,lng:-121.4997,label:"Golden 1 Ctr"},baselineMinutes:9},{city:"Kansas City, MO",origin:{lat:39.0997,lng:-94.5786,label:"Power & Light"},dest:{lat:39.0489,lng:-94.4839,label:"GEHA Field"},baselineMinutes:24},{city:"Atlanta, GA",origin:{lat:33.7488,lng:-84.3877,label:"Centennial Park"},dest:{lat:33.7573,lng:-84.3963,label:"Mercedes‑Benz"},baselineMinutes:11},{city:"Miami, FL",origin:{lat:25.7617,lng:-80.1918,label:"Bayfront"},dest:{lat:25.7906,lng:-80.13,label:"South Beach"},baselineMinutes:25},{city:"Raleigh, NC",origin:{lat:35.7796,lng:-78.6382,label:"Capitol"},dest:{lat:35.8033,lng:-78.7218,label:"PNC Arena"},baselineMinutes:20},{city:"Cleveland, OH",origin:{lat:41.4993,lng:-81.6944,label:"Public Sq"},dest:{lat:41.4966,lng:-81.688,label:"Rocket Mortgage"},baselineMinutes:9},{city:"Minneapolis, MN",origin:{lat:44.979,lng:-93.265,label:"Nicollet Mall"},dest:{lat:44.974,lng:-93.258,label:"US Bank Stadium"},baselineMinutes:10},{city:"New Orleans, LA",origin:{lat:29.9547,lng:-90.0751,label:"Jackson Sq"},dest:{lat:29.949,lng:-90.081,label:"Caesars Superdome"},baselineMinutes:11},{city:"Honolulu, HI",origin:{lat:21.3069,lng:-157.8583,label:"Iolani Palace"},dest:{lat:21.2767,lng:-157.827,label:"Waikiki"},baselineMinutes:22},{city:"Salt Lake City, UT",origin:{lat:40.7608,lng:-111.891,label:"Temple Sq"},dest:{lat:40.768,lng:-111.901,label:"Delta Center"},baselineMinutes:10},{city:"Boise, ID",origin:{lat:43.615,lng:-116.202,label:"Capitol"},dest:{lat:43.608,lng:-116.215,label:"Albertsons Stadium"},baselineMinutes:11},{city:"Anchorage, AK",origin:{lat:61.2181,lng:-149.9003,label:"Town Sq"},dest:{lat:61.187,lng:-149.887,label:"Airport vicinity"},baselineMinutes:24},{city:"Birmingham, AL",origin:{lat:33.5207,lng:-86.8025,label:"Railroad Park"},dest:{lat:33.511,lng:-86.843,label:"Protective Stadium"},baselineMinutes:13},{city:"Omaha, NE",origin:{lat:41.2565,lng:-95.9345,label:"Old Market"},dest:{lat:41.2647,lng:-95.9477,label:"Charles Schwab Field"},baselineMinutes:12},{city:"Buffalo, NY",origin:{lat:42.8864,lng:-78.8784,label:"Canalside"},dest:{lat:42.875,lng:-78.876,label:"KeyBank Ctr"},baselineMinutes:12},{city:"Pittsburgh, PA",origin:{lat:40.4406,lng:-79.9959,label:"Point State Park"},dest:{lat:40.4468,lng:-80.0158,label:"PNC Park"},baselineMinutes:11},{city:"Richmond, VA",origin:{lat:37.5407,lng:-77.436,label:"Capitol"},dest:{lat:37.5538,lng:-77.4603,label:"The Diamond"},baselineMinutes:12},{city:"Tampa, FL",origin:{lat:27.9506,lng:-82.4572,label:"Riverwalk"},dest:{lat:27.9427,lng:-82.451,label:"Amalie Arena"},baselineMinutes:10}];
-
-  /*************** HELPERS ***************/
-  const seedIndex=(s,m)=>{let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h+=(h<<1)+(h<<4)+(h<<7)+(h<<8)+(h<<24);}return Math.abs(h)%m}
-  const $=(id)=>document.getElementById(id);
-  const store=(k,v)=>localStorage.setItem(`${STORAGE_PREFIX}:${k}`,JSON.stringify(v));
-  const load=(k,d=null)=>{const v=localStorage.getItem(`${STORAGE_PREFIX}:${k}`);return v?JSON.parse(v):d}
-  const answerMinutes=()=> (liveMinutes ?? fallbackMinutes);
-  const verdictEmoji=(v)=> v==='win'?'🟩':(v==='near'?'🟨':'🟥');
-  const getVar=(name)=>getComputedStyle(document.documentElement).getPropertyValue(name).trim();
-
-  /*************** MAP STYLES (Dark & Light + zoom-aware) ***************/
-  const DARK_DETAIL=[
-    {elementType:'geometry',stylers:[{color:'#0c1430'}]},
-    {elementType:'labels.text.stroke',stylers:[{color:'#0c1430'}]},
-    {elementType:'labels.text.fill',stylers:[{color:'#cfe0ff'}]},
-    {featureType:'poi',elementType:'labels',stylers:[{visibility:'off'}]},
-    {featureType:'road',elementType:'geometry',stylers:[{color:'#1a264a'}]},
-    {featureType:'road.highway',elementType:'geometry',stylers:[{color:'#20315f'}]},
-    {featureType:'road',elementType:'labels.icon',stylers:[{visibility:'off'}]},
-    {featureType:'transit',stylers:[{visibility:'off'}]},
-    {featureType:'water',elementType:'geometry',stylers:[{color:'#0b1b3d'}]},
-  ];
-  const DARK_LOW=[
-    {elementType:'geometry',stylers:[{color:'#0c1430'}]},
-    {elementType:'labels.text.stroke',stylers:[{color:'#0c1430'}]},
-    {elementType:'labels.text.fill',stylers:[{color:'#9fb0d0'}]},
-    {featureType:'poi',stylers:[{visibility:'off'}]},
-    {featureType:'administrative',elementType:'labels',stylers:[{visibility:'off'}]},
-    {featureType:'road',elementType:'labels',stylers:[{visibility:'off'}]},
-    {featureType:'transit',stylers:[{visibility:'off'}]},
-    {featureType:'road',elementType:'geometry',stylers:[{color:'#18203e'}]},
-    {featureType:'water',elementType:'geometry',stylers:[{color:'#0b1b3d'}]},
-  ];
-  const LIGHT_DETAIL=[
-    {elementType:'labels.text.stroke',stylers:[{color:'#ffffff'}]},
-    {elementType:'labels.text.fill',stylers:[{color:'#1f2937'}]},
-    {featureType:'poi',elementType:'labels',stylers:[{visibility:'off'}]},
-    {featureType:'road',elementType:'labels.icon',stylers:[{visibility:'off'}]},
-  ];
-  const LIGHT_LOW=[
-    {elementType:'labels.text.stroke',stylers:[{color:'#ffffff'}]},
-    {elementType:'labels.text.fill',stylers:[{color:'#334155'}]},
-    {featureType:'administrative',elementType:'labels',stylers:[{visibility:'off'}]},
-    {featureType:'road',elementType:'labels',stylers:[{visibility:'off'}]},
-    {featureType:'poi',stylers:[{visibility:'off'}]},
-  ];
-  const isDarkMode=()=> $("darkToggle").checked;
-  const currentZoomStyle=()=> (map?.getZoom() ?? 12) < 12 ? (isDarkMode()?DARK_LOW:LIGHT_LOW) : (isDarkMode()?DARK_DETAIL:LIGHT_DETAIL);
-
-  /*************** BOOT ***************/
-  document.addEventListener('DOMContentLoaded', appBoot);
-
-  function appBoot(){
-    $("year").textContent=new Date().getFullYear();
-    $("pillDate").textContent=todayISO;
-
-    // Deterministic "city of the day"
-    routeOfDay=ROUTES[seedIndex(todayISO+"-US50",ROUTES.length)];
-    fallbackMinutes=routeOfDay.baselineMinutes;
-    $("pillCity").textContent=routeOfDay.city;
-    $("originLabel").textContent=routeOfDay.origin.label;
-    $("destLabel").textContent=routeOfDay.dest.label;
-
-    bindUI();
-    restoreDaily();
-
-    loadGoogleMaps().then(initMapCore).catch(showMapDiag);
-  }
-
-  function bindUI(){
-    // Modal
-    const modal=$("howModal"), closeBtn=$("howClose"), openBtn=$("btnRules");
-    const openModal=()=>{ modal.classList.add("open"); closeBtn.focus(); document.body.style.overflow='hidden'; };
-    const closeModal=()=>{ modal.classList.remove("open"); document.body.style.overflow=''; openBtn.focus(); };
-    openBtn.onclick=openModal; closeBtn.onclick=closeModal;
-    modal.addEventListener('click',(e)=>{ if(e.target===modal) closeModal(); });
-    document.addEventListener('keydown',(e)=>{ if(e.key==='Escape' && modal.classList.contains('open')) closeModal(); });
-
-    $("ctaPlay").onclick=()=>{location.hash="#game"; setTimeout(()=>$("guessMinutes").focus(),80);};
-    $("btnGuess").onclick=onGuess; $("btnGiveUp").onclick=giveUp; $("btnShare").onclick=copyShare;
-    $("guessMinutes").addEventListener('keydown',(e)=>{
-      if(e.key==='Enter') onGuess();
-      if(e.key==='ArrowUp'){e.preventDefault();nudge(1);}
-      if(e.key==='ArrowDown'){e.preventDefault();nudge(-1);}
-    });
-    $("retryMapBtn")?.addEventListener('click',()=>{$("mapDiag").classList.add("hidden");loadGoogleMaps(true).then(initMapCore).catch(showMapDiag);});
-    $("showMarkersBtn")?.addEventListener('click',showMarkersOnly);
-    $("contrastToggle").onchange=applyRouteStyle;
-    $("btnFit").onclick=()=>{ if(currentBounds){ map.fitBounds(currentBounds,{top:40,left:40,right:40,bottom:40}); } };
-    $("btnContext").onclick=()=>{ if(currentBounds){ map.fitBounds(currentBounds,{top:120,left:120,right:120,bottom:120}); } };
-
-    // Theme toggle
-    $("darkToggle").addEventListener('change', ()=>{
-      const dark=$("darkToggle").checked;
-      if(dark) document.documentElement.removeAttribute('data-theme'); else document.documentElement.setAttribute('data-theme','light');
-      if(map){ setMapTheme(); applyRouteStyle(); }
-    });
-  }
-  function nudge(d){const el=$("guessMinutes"); const v=Math.max(1,(parseInt(el.value||'0',10)||0)+d); el.value=v;}
-
-  /*************** GOOGLE MAPS LOADER ***************/
-  function loadGoogleMaps(force=false){
-    return new Promise((resolve,reject)=>{
-      if(window.google && window.google.maps && !force){ resolve(); return; }
-      const old=document.getElementById('gmaps-sdk'); if(old) old.remove();
-      const s=document.createElement('script'); s.id='gmaps-sdk';
-      s.src=`https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(GOOGLE_MAPS_KEY)}&libraries=geometry`;
-      s.async=true; s.defer=true;
-      s.onload=()=> (window.google && window.google.maps) ? resolve() : reject("Google loaded but window.google is undefined.");
-      s.onerror=()=>reject("Network/CSP blocked Google Maps.");
-      document.head.appendChild(s);
-      setTimeout(()=>{ if(!(window.google && window.google.maps)) reject("Timed out loading Google Maps."); }, 9000);
-    });
-  }
-
-  /*************** MAP ***************/
-  function initMapCore(){
-    const wrap=$("mapWrap"); wrap.classList.add("skeleton");
-    try{
-      map=new google.maps.Map($("map"),{
-        center:routeOfDay.origin,zoom:12,disableDefaultUI:false,zoomControl:true,fullscreenControl:false,
-        mapTypeControl:false,streetViewControl:false,scaleControl:true,gestureHandling:'greedy',
-        backgroundColor:isDarkMode() ? '#0b1328' : '#e7efff',styles: currentZoomStyle()
-      });
-      map.addListener('zoom_changed', ()=> setMapTheme());
-
-      overviewMap=new google.maps.Map($("overview"),{
-        center:routeOfDay.origin,zoom:12,disableDefaultUI:true,styles: isDarkMode()?DARK_LOW:LIGHT_LOW,draggable:false,gestureHandling:'none'
-      });
-
-      directions=new google.maps.DirectionsService();
-      renderer=new google.maps.DirectionsRenderer({map,suppressMarkers:true,suppressPolylines:true,preserveViewport:false});
-      renderRoute();
-    }catch(e){
-      showMapDiag("Map failed: "+(e?.message||e));
-    }finally{
-      wrap.classList.remove("skeleton");
+    // ---------------------------
+    // Utilities
+    // ---------------------------
+    function fmtPct(n){ return (n*100).toFixed(1) + "%"; }
+    function clamp(n, a, b){ return Math.min(Math.max(n,a), b); }
+    function toMinutes(seconds){ return Math.round(seconds/60); }
+    function percentError(guess, actual){
+      if (actual <= 0) return 1;
+      return Math.abs(guess - actual) / actual;
     }
-  }
+    function todayKey(){
+      const d = new Date();
+      const y = d.getFullYear();
+      const m = String(d.getMonth()+1).padStart(2,"0");
+      const day = String(d.getDate()).padStart(2,"0");
+      return `${y}-${m}-${day}`;
+    }
+    function saveJSON(key, obj){
+      try { localStorage.setItem(key, JSON.stringify(obj)); } catch(e){}
+    }
+    function loadJSON(key, fallback){
+      try {
+        const s = localStorage.getItem(key);
+        return s ? JSON.parse(s) : fallback;
+      } catch(e){ return fallback; }
+    }
+    function getDeviceId(){
+      let id = localStorage.getItem(DEVICE_KEY);
+      if (!id){
+        id = "dev_" + Math.random().toString(36).slice(2) + "_" + Date.now().toString(36);
+        localStorage.setItem(DEVICE_KEY, id);
+      }
+      return id;
+    }
+    function csvEscape(s){
+      if (s == null) return "";
+      const str = String(s);
+      if (/[",\n]/.test(str)) return `"${str.replace(/"/g,'""')}"`;
+      return str;
+    }
+    function download(filename, text){
+      const blob = new Blob([text], {type:"text/csv;charset=utf-8;"});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = filename;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
 
-  function setMapTheme(){
-    if(!map) return;
-    map.setOptions({backgroundColor: isDarkMode() ? '#0b1328' : '#e7efff', styles: currentZoomStyle()});
-    if(overviewMap){ overviewMap.setOptions({styles: isDarkMode()?DARK_LOW:LIGHT_LOW}); }
-  }
+    // Seeded RNG from date so route changes daily but is consistent for that day
+    function xmur3(str){
+      let h = 1779033703 ^ str.length;
+      for (let i=0; i<str.length; i++){
+        h = Math.imul(h ^ str.charCodeAt(i), 3432918353);
+        h = h << 13 | h >>> 19;
+      }
+      return function() {
+        h = Math.imul(h ^ (h >>> 16), 2246822507);
+        h = Math.imul(h ^ (h >>> 13), 3266489909);
+        return (h ^= h >>> 16) >>> 0;
+      }
+    }
+    function sfc32(a,b,c,d){
+      return function(){
+        a >>>= 0; b >>>= 0; c >>>= 0; d >>>= 0;
+        let t = (a + b) | 0;
+        a = b ^ b >>> 9;
+        b = c + (c << 3) | 0;
+        c = (c << 21 | c >>> 11);
+        d = d + 1 | 0;
+        t = t + d | 0;
+        c = c + t | 0;
+        return (t >>> 0) / 4294967296;
+      }
+    }
+    function seededRandom(seedStr){
+      const seed = xmur3(seedStr);
+      return sfc32(seed(), seed(), seed(), seed());
+    }
 
-  function showMapDiag(msg){$("mapDiagMsg").textContent=msg;$("mapDiag").classList.remove("hidden");}
+    // ---------------------------
+    // City list (approx coords)
+    // (A healthy list to ensure varied routes)
+    // ---------------------------
+    const CITIES = [
+      {name:"Seattle, WA", lat:47.6062, lng:-122.3321},
+      {name:"Portland, OR", lat:45.5152, lng:-122.6784},
+      {name:"San Francisco, CA", lat:37.7749, lng:-122.4194},
+      {name:"San Jose, CA", lat:37.3382, lng:-121.8863},
+      {name:"Los Angeles, CA", lat:34.0522, lng:-118.2437},
+      {name:"San Diego, CA", lat:32.7157, lng:-117.1611},
+      {name:"Phoenix, AZ", lat:33.4484, lng:-112.0740},
+      {name:"Tucson, AZ", lat:32.2226, lng:-110.9747},
+      {name:"Las Vegas, NV", lat:36.1699, lng:-115.1398},
+      {name:"Salt Lake City, UT", lat:40.7608, lng:-111.8910},
+      {name:"Boise, ID", lat:43.6150, lng:-116.2023},
+      {name:"Denver, CO", lat:39.7392, lng:-104.9903},
+      {name:"Albuquerque, NM", lat:35.0844, lng:-106.6504},
+      {name:"Santa Fe, NM", lat:35.6870, lng:-105.9378},
+      {name:"Dallas, TX", lat:32.7767, lng:-96.7970},
+      {name:"Austin, TX", lat:30.2672, lng:-97.7431},
+      {name:"San Antonio, TX", lat:29.4241, lng:-98.4936},
+      {name:"Houston, TX", lat:29.7604, lng:-95.3698},
+      {name:"Oklahoma City, OK", lat:35.4676, lng:-97.5164},
+      {name:"Tulsa, OK", lat:36.1540, lng:-95.9928},
+      {name:"Kansas City, MO", lat:39.0997, lng:-94.5786},
+      {name:"St. Louis, MO", lat:38.6270, lng:-90.1994},
+      {name:"Minneapolis, MN", lat:44.9778, lng:-93.2650},
+      {name:"Omaha, NE", lat:41.2565, lng:-95.9345},
+      {name:"Des Moines, IA", lat:41.5868, lng:-93.6250},
+      {name:"Chicago, IL", lat:41.8781, lng:-87.6298},
+      {name:"Milwaukee, WI", lat:43.0389, lng:-87.9065},
+      {name:"Madison, WI", lat:43.0731, lng:-89.4012},
+      {name:"Detroit, MI", lat:42.3314, lng:-83.0458},
+      {name:"Cleveland, OH", lat:41.4993, lng:-81.6944},
+      {name:"Columbus, OH", lat:39.9612, lng:-82.9988},
+      {name:"Cincinnati, OH", lat:39.1031, lng:-84.5120},
+      {name:"Indianapolis, IN", lat:39.7684, lng:-86.1581},
+      {name:"Louisville, KY", lat:38.2527, lng:-85.7585},
+      {name:"Nashville, TN", lat:36.1627, lng:-86.7816},
+      {name:"Memphis, TN", lat:35.1495, lng:-90.0490},
+      {name:"Birmingham, AL", lat:33.5186, lng:-86.8104},
+      {name:"Atlanta, GA", lat:33.7490, lng:-84.3880},
+      {name:"Charlotte, NC", lat:35.2271, lng:-80.8431},
+      {name:"Raleigh, NC", lat:35.7796, lng:-78.6382},
+      {name:"Charleston, SC", lat:32.7765, lng:-79.9311},
+      {name:"Savannah, GA", lat:32.0809, lng:-81.0912},
+      {name:"Jacksonville, FL", lat:30.3322, lng:-81.6557},
+      {name:"Orlando, FL", lat:28.5383, lng:-81.3792},
+      {name:"Tampa, FL", lat:27.9506, lng:-82.4572},
+      {name:"Miami, FL", lat:25.7617, lng:-80.1918},
+      {name:"Ft. Lauderdale, FL", lat:26.1224, lng:-80.1373},
+      {name:"Richmond, VA", lat:37.5407, lng:-77.4360},
+      {name:"Washington, DC", lat:38.9072, lng:-77.0369},
+      {name:"Baltimore, MD", lat:39.2904, lng:-76.6122},
+      {name:"Philadelphia, PA", lat:39.9526, lng:-75.1652},
+      {name:"Pittsburgh, PA", lat:40.4406, lng:-79.9959},
+      {name:"Newark, NJ", lat:40.7357, lng:-74.1724},
+      {name:"New York, NY", lat:40.7128, lng:-74.0060},
+      {name:"Stamford, CT", lat:41.0534, lng:-73.5387},
+      {name:"Hartford, CT", lat:41.7658, lng:-72.6734},
+      {name:"Providence, RI", lat:41.8240, lng:-71.4128},
+      {name:"Boston, MA", lat:42.3601, lng:-71.0589},
+      {name:"Portland, ME", lat:43.6591, lng:-70.2568},
+      {name:"Buffalo, NY", lat:42.8864, lng:-78.8784},
+      {name:"Rochester, NY", lat:43.1566, lng:-77.6088}
+    ];
 
-  function clearRouteLayers(){
-    routePolys.forEach(p=>p.setMap(null)); routePolys=[];
-    if(routeDash){routeDash.setMap(null); routeDash=null;}
-    if(originMarker){originMarker.setMap(null); originMarker=null;}
-    if(destMarker){destMarker.setMap(null); destMarker=null;}
-    if(overviewRect){overviewRect.setMap(null); overviewRect=null;}
-  }
-
-  function svgMarker(letter,fill){
-    const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40"><g filter="url(#f)"><circle cx="20" cy="20" r="10" fill="${fill}" stroke="white" stroke-width="2"/></g><text x="20" y="24" text-anchor="middle" font-size="12" font-weight="700" fill="#0a1024" font-family="ui-sans-serif,system-ui">${letter}</text><defs><filter id="f"><feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="rgba(0,0,0,.5)"/></filter></defs></svg>`;
-    return {url:'data:image/svg+xml;charset=UTF-8,'+encodeURIComponent(svg),scaledSize:new google.maps.Size(40,40)};
-  }
-
-  function renderRoute(){
-    const req={origin:routeOfDay.origin,destination:routeOfDay.dest,travelMode:google.maps.TravelMode.DRIVING,provideRouteAlternatives:false,drivingOptions:{departureTime:new Date(Date.now()+60*1000)}};
-    directions.route(req,(res,status)=>{
-      if(status==='OK' && res.routes?.[0]?.legs?.[0]){
-        renderer.setDirections(res);
-        const r=res.routes[0]; const path=r.overview_path; currentBounds=r.bounds;
-
-        // Distance badge
-        const meters=google.maps.geometry.spherical.computeLength(path);
-        $("distanceBadge").textContent=`≈ ${(meters/1609.344).toFixed(1)} mi / ${(meters/1000).toFixed(1)} km`;
-
-        map.fitBounds(currentBounds,{top:40,left:40,right:40,bottom:40});
-        overviewMap.fitBounds(currentBounds);
-
-        clearRouteLayers();
-        originMarker=new google.maps.Marker({position:routeOfDay.origin,map,title:`Origin: ${routeOfDay.origin.label}`,icon: svgMarker('A','#ff6b6b')});
-        destMarker=new google.maps.Marker({position:routeOfDay.dest,map,title:`Destination: ${routeOfDay.dest.label}`,icon: svgMarker('B','#5eead4')});
-
-        // Route polylines: glow/outline/main (high contrast)
-        const glow=new google.maps.Polyline({path,map,strokeColor:getVar('--route-glow'),strokeOpacity:.55,strokeWeight:18});
-        const outline=new google.maps.Polyline({path,map,strokeColor:getVar('--route-outline'),strokeOpacity:1,strokeWeight:12});
-        const main=new google.maps.Polyline({path,map,strokeColor:getVar('--route-main'),strokeOpacity:1,strokeWeight:8});
-        routePolys.push(glow,outline,main);
-
-        overviewRect=new google.maps.Rectangle({map:overviewMap,bounds:currentBounds,strokeColor:'#60a5fa',strokeOpacity:.9,strokeWeight:2,fillOpacity:0});
-
-        const leg=r.legs[0]; const seconds=(leg.duration_in_traffic?.value||leg.duration.value);
-        liveMinutes=Math.round(seconds/60);
-
-        applyRouteStyle();
-      }else{
-        showMarkersOnly();
+    // ---------------------------
+    // Theming (button toggles)
+    // ---------------------------
+    const themeBtn = document.getElementById("themeBtn");
+    themeBtn.addEventListener("click", () => {
+      const dark = document.documentElement.classList.toggle("dark");
+      localStorage.setItem(THEME_KEY, dark ? "dark":"light");
+      themeBtn.textContent = dark ? "Light" : "Dark";
+      if (map){
+        map.setOptions({ styles: dark ? MAP_STYLES_DARK : MAP_STYLES_LIGHT });
       }
     });
-  }
+    // Set initial button text
+    (function(){
+      const dark = document.documentElement.classList.contains("dark");
+      themeBtn.textContent = dark ? "Light" : "Dark";
+    })();
 
-  function applyRouteStyle(){
-    const high=$("contrastToggle").checked;
-    if(routePolys.length){
-      const [glow,outline,main]=routePolys;
-      glow.setOptions({strokeColor:getVar('--route-glow'),strokeOpacity:high?.6:.4,strokeWeight:high?18:14});
-      outline.setOptions({strokeColor:getVar('--route-outline'),strokeWeight:high?12:10});
-      main.setOptions({strokeColor:getVar('--route-main'),strokeWeight:high?8:6});
-    }
-    if(high && routePolys.length){
-      if(!routeDash){
-        routeDash=new google.maps.Polyline({
-          path:routePolys[routePolys.length-1].getPath(), map,
-          strokeColor:getVar('--route-alt'), strokeOpacity:.95, strokeWeight:3,
-          icons:[{icon:{path:'M 0,-1 0,1',strokeOpacity:1,scale:4},offset:'0',repeat:'16px'}]
+    // ---------------------------
+    // Slack toggle
+    // ---------------------------
+    const slackBtn = document.getElementById("slackBtn");
+    let slackOn = USE_SLACK;
+    slackBtn.addEventListener("click", () => {
+      slackOn = !slackOn;
+      slackBtn.textContent = slackOn ? "Slack On" : "Slack Off";
+      slackBtn.setAttribute("aria-pressed", String(slackOn));
+    });
+
+    async function postToSlack(payload){
+      try {
+        if (!slackOn || !SLACK_WEBHOOK_URL) return;
+        await fetch(SLACK_WEBHOOK_URL, {
+          method: "POST",
+          headers: {"Content-Type":"application/json"},
+          body: JSON.stringify(payload)
         });
-      }else{ routeDash.setMap(map); }
-    }else if(routeDash){ routeDash.setMap(null); }
-  }
-
-  function showMarkersOnly(){
-    if(window.google?.maps && !map){
-      map=new google.maps.Map($("map"),{center:routeOfDay.origin,zoom:12,disableDefaultUI:false,zoomControl:true,scaleControl:true,backgroundColor:isDarkMode() ? '#0b1328' : '#e7efff',styles: currentZoomStyle()});
+      } catch(e){ /* silent */ }
     }
-    clearRouteLayers();
-    if(window.google?.maps){
-      originMarker=new google.maps.Marker({position:routeOfDay.origin,map,title:`Origin: ${routeOfDay.origin.label}`,icon: svgMarker('A','#ff6b6b')});
-      destMarker=new google.maps.Marker({position:routeOfDay.dest,map,title:`Destination: ${routeOfDay.dest.label}`,icon: svgMarker('B','#5eead4')});
-      const b=new google.maps.LatLngBounds(); b.extend(routeOfDay.origin); b.extend(routeOfDay.dest);
-      currentBounds=b; map.fitBounds(b,{top:40,left:40,right:40,bottom:40}); if(overviewMap){overviewMap.fitBounds(b);}
-    }
-    liveMinutes=null; $("distanceBadge").textContent='—';
-  }
 
-  /*************** GAME ***************/
-  function verdictForGuess(guess,answer){
-    const diff=Math.abs(guess-answer);
-    if(guess===answer) return {verdict:'win'};
-    const tol=Math.max(NEAR_TOL_MIN,Math.round(answer*NEAR_TOL_PCT));
-    if(diff<=tol) return {verdict:'near',dir:guess>answer?'high':'low'};
-    return {verdict:'lose',dir:guess>answer?'high':'low'};
-  }
-  function pushFeedback(verdict,dir){
-    const chip=document.createElement('span');chip.className='chip';
-    chip.textContent=verdict==='win'?'🟩 Exact':verdict==='near'?'🟨 So close!':(dir==='high'?'🡅 Too high':'🡇 Too low');
-    $("lastFeedback").prepend(chip);const c=[...$("lastFeedback").children];if(c.length>6)c.pop().remove();
-  }
-  function onGuess(){
-    if(won||revealed||guesses.length>=MAX_GUESSES)return;
-    const input=$("guessMinutes");const val=Number(input.value);
-    if(!Number.isFinite(val)||val<=0){showResult('Enter a positive number of minutes.','lose',true);return;}
-    const gmin=Math.round(val),ans=answerMinutes();const r=verdictForGuess(gmin,ans);
-    guesses.push({min:gmin,verdict:r.verdict,dir:r.dir||null,ts:Date.now()});
-    if(r.verdict==='win'){won=true;addStreak(true);celebrate('win');showResult(`Exact! ${ans} min 🟩`,'win');}
-    else if(r.verdict==='near'){nearHit=true;celebrate('near');showResult('So close! 🟨','near');}
-    else{if(guesses.length>=MAX_GUESSES){revealed=true;addStreak(false);showResult(`Out of guesses. Answer: ${ans} min.`,'lose');}else showResult(r.dir==='high'?'Too high.':'Too low.','lose');}
-    pushFeedback(r.verdict,r.dir);persist();renderTables();renderShareCard();input.value='';input.focus();
-    if(navigator.vibrate){try{navigator.vibrate(r.verdict==='win'?[30,20,30]:12);}catch(e){}}
-  }
-  function giveUp(){if(won||revealed)return;revealed=true;addStreak(false);const ans=answerMinutes();showResult(`You gave up. Answer: ${ans} min.`,'lose');persist();renderTables();renderShareCard();}
-  function showResult(text,type,transient=false){const el=$("resultBox");el.className=`result ${type}`;el.textContent=text;el.classList.remove('hidden');if(transient)setTimeout(()=>el.classList.add('hidden'),1600);}
-  function celebrate(kind){
-    const canvas=$("confetti");canvas.classList.remove('hidden');canvas.width=innerWidth;canvas.height=innerHeight;const ctx=canvas.getContext('2d');
-    const parts=Array.from({length:kind==='win'?180:90},()=>({x:Math.random()*canvas.width,y:-10-Math.random()*50,s:2+Math.random()*4,vy:2+Math.random()*3,vx:(Math.random()-.5)*2,life:120+Math.random()*100}));
-    clearInterval(confettiTimer);
-    confettiTimer=setInterval(()=>{ctx.clearRect(0,0,canvas.width,canvas.height);for(const p of parts){p.x+=p.vx;p.y+=p.vy;p.vy*=0.995;p.life-=2;ctx.globalAlpha=Math.max(0,p.life/200);ctx.fillStyle=kind==='win'?'#22c55e':'#f59e0b';ctx.fillRect(p.x,p.y,p.s,p.s*2);} },16);
-    setTimeout(()=>{clearInterval(confettiTimer);canvas.classList.add('hidden');},1600);
-  }
+    // ---------------------------
+    // Email persistence
+    // ---------------------------
+    const emailInput = document.getElementById("emailInput");
+    const saveEmailBtn = document.getElementById("saveEmailBtn");
+    saveEmailBtn.addEventListener("click", () => {
+      const v = (emailInput.value || "").trim();
+      if (!v || !/^\S+@\S+\.\S+$/.test(v)) { alert("Please enter a valid email."); return; }
+      localStorage.setItem(EMAIL_KEY, v);
+      alert("Email saved for local tracking on this device.");
+    });
+    // load saved
+    (function(){ emailInput.value = localStorage.getItem(EMAIL_KEY) || ""; })();
 
-  /*************** PERSIST / TABLES ***************/
-  function persist(){
-    store(`daily:${todayISO}`,{city:routeOfDay.city,answer:answerMinutes(),guesses,won,nearHit,revealed});
-    if(won||revealed){
-      const all=load('alltime',[]);all.push({date:todayISO,city:routeOfDay.city,result:won?'win':(nearHit?'near':'gave up')});
-      store('alltime',all.slice(-100));
+    // ---------------------------
+    // Daily Route Generation
+    // ---------------------------
+    function pickDailyPair(){
+      const seed = todayKey();
+      const rnd = seededRandom(seed);
+      // pick two distinct cities, ensure they’re not too close
+      let i = Math.floor(rnd() * CITIES.length);
+      let j = Math.floor(rnd() * CITIES.length);
+      let tries = 0;
+      const dist = (a,b) => {
+        const R=6371;
+        const toRad = d => d*Math.PI/180;
+        const dLat = toRad(b.lat-a.lat);
+        const dLng = toRad(b.lng-a.lng);
+        const s1 = Math.sin(dLat/2)**2 + Math.cos(toRad(a.lat))*Math.cos(toRad(b.lat))*Math.sin(dLng/2)**2;
+        return 2*R*Math.asin(Math.sqrt(s1));
+      };
+      while ((j===i || dist(CITIES[i], CITIES[j]) < 150) && tries++ < 50){
+        j = Math.floor(rnd() * CITIES.length);
+      }
+      return { origin: CITIES[i], destination: CITIES[j] };
     }
-  }
-  function restoreDaily(){
-    $("streakVal").textContent=load('streak',0);
-    const data=load(`daily:${todayISO}`,null);
-    if(data && data.city===routeOfDay.city){
-      guesses=data.guesses||[];won=!!data.won;nearHit=!!data.nearHit;revealed=!!data.revealed;
-      renderTables();renderShareCard();
-      if(won)showResult(`Carried over: You already won today! ${data.answer} min 🟩`,'win');
-      else if(revealed)showResult(`Carried over: Answer was ${data.answer} min.`,'lose');
-    }
-  }
-  function addStreak(ok){let s=load('streak',0);s=ok?s+1:0;store('streak',s);$("streakVal").textContent=s;}
-  function renderTables(){
-    const tb1=$("tblDaily").querySelector('tbody');tb1.innerHTML='';
-    guesses.forEach((g,i)=>{const tr=document.createElement('tr');tr.innerHTML=`<td>${i+1}</td><td>${g.min} min</td><td>${verdictEmoji(g.verdict)} ${g.verdict==='lose'?(g.dir==='high'?'(high)':'(low)'):''}</td><td>${new Date(g.ts).toLocaleTimeString()}</td>`;tb1.appendChild(tr);});
-    const tb2=$("tblAllTime").querySelector('tbody');tb2.innerHTML='';
-    (load('alltime',[])).slice(-10).forEach((r,i)=>{const tr=document.createElement('tr');tr.innerHTML=`<td>${i+1}</td><td>${r.city}</td><td>${verdictEmoji(r.result)}</td><td>${r.date}</td>`;tb2.appendChild(tr);});
-  }
 
-  /*************** SHARE ***************/
-  function buildShareCard(){
-    let grid=''; for(const g of guesses){ grid += (g.verdict==='win'?'🟩':g.verdict==='near'?'🟨':'🟥'); }
-    grid += '⬜'.repeat(Math.max(0, MAX_GUESSES - guesses.length));
-    const status = won ? 'Solved' : revealed ? 'Gave up' : `${guesses.length}/${MAX_GUESSES}`;
-    return `TripGuessr ${todayISO}\n${routeOfDay.city}\n${grid}\n${status}\nhttps://jaceybarra.github.io/TripGuessr/`;
-  }
-  function renderShareCard(){ $("shareCard").textContent = buildShareCard(); }
-  async function copyShare(){
-    try{ await navigator.clipboard.writeText(buildShareCard()); $("shareNote").textContent='Copied!'; setTimeout(()=>$("shareNote").textContent='Wordle‑style text copied to clipboard',1200); }
-    catch(e){ $("shareNote").textContent='Copy failed — select text below'; }
-  }
-  </script>
-</body>
-</html>
+    // ---------------------------
+    // Google Maps styles (light/dark)
+    // ---------------------------
+    const MAP_STYLES_LIGHT = [
+      {"elementType":"geometry","stylers":[{"color":"#ebe3cd"}]},
+      {"elementType":"labels.text.fill","stylers":[{"color":"#523735"}]},
+      {"elementType":"labels.text.stroke","stylers":[{"color":"#f5f1e6"}]},
+      {"featureType":"administrative","elementType":"geometry.stroke","stylers":[{"color":"#c9b2a6"}]},
+      {"featureType":"poi","elementType":"geometry","stylers":[{"color":"#dfd2ae"}]},
+      {"featureType":"poi.park","elementType":"geometry.fill","stylers":[{"color":"#a5d6a7"}]},
+      {"featureType":"road","elementType":"geometry","stylers":[{"color":"#f5f1e6"}]},
+      {"featureType":"road.arterial","elementType":"geometry","stylers":[{"color":"#fdfcf8"}]},
+      {"featureType":"road.highway","elementType":"geometry","stylers":[{"color":"#f8c967"}]},
+      {"featureType":"water","elementType":"geometry.fill","stylers":[{"color":"#a1c4fd"}]}
+    ];
+    const MAP_STYLES_DARK = [
+      {"elementType":"geometry","stylers":[{"color":"#1f2937"}]},
+      {"elementType":"labels.text.fill","stylers":[{"color":"#e5e7eb"}]},
+      {"elementType":"labels.text.stroke","stylers":[{"color":"#111827"}]},
+      {"featureType":"administrative","elementType":"geometry.stroke","stylers":[{"color":"#374151"}]},
+      {"featureType":"poi","elementType":"geometry","stylers":[{"color":"#111827"}]},
+      {"featureType":"poi.park","elementType":"geometry.fill","stylers":[{"color":"#064e3b"}]},
+      {"featureType":"road","elementType":"geometry","stylers":[{"color":"#0b1220"}]},
+      {"featureType":"road.highway","elementType":"geometry","stylers":[{"color":"#1f2937"}]},
+      {"featureType":"water","elementType":"geometry.fill","stylers":[{"color":"#0ea5e9"}]}
+    ];
+
+    // ---------------------------
+    // Google Maps init
+    // ---------------------------
+    let map, directionsService, directionsRenderer, trafficLayer;
+    let startMarker, endMarker;
+    let ACTUAL_MINUTES = null;
+    let TODAY_PAIR = null;
+
+    window.initMap = function initMap(){
+      const dark = document.documentElement.classList.contains("dark");
+      map = new google.maps.Map(document.getElementById("map"), {
+        center: {lat: 39.8283, lng: -98.5795}, // USA center
+        zoom: 4,
+        disableDefaultUI: true,
+        gestureHandling: 'greedy',
+        styles: dark ? MAP_STYLES_DARK : MAP_STYLES_LIGHT
+      });
+
+      directionsService = new google.maps.DirectionsService();
+      directionsRenderer = new google.maps.DirectionsRenderer({
+        map,
+        suppressMarkers: true,
+        preserveViewport: true,
+        polylineOptions: { strokeColor: "#2563eb", strokeWeight: 5, strokeOpacity: 0.9 }
+      });
+      trafficLayer = new google.maps.TrafficLayer();
+      trafficLayer.setMap(map);
+
+      // Pick route for today and render
+      TODAY_PAIR = pickDailyPair();
+      renderTodayMeta();
+      plotRoute(TODAY_PAIR.origin, TODAY_PAIR.destination);
+    };
+
+    function renderTodayMeta(){
+      const el = document.getElementById("todayMeta");
+      const d = todayKey();
+      // Do NOT reveal city names in text to keep fair
+      el.textContent = `Date: ${d} — New route every day.`;
+    }
+
+    function placeMarkers(origin, destination){
+      if (startMarker) startMarker.setMap(null);
+      if (endMarker) endMarker.setMap(null);
+
+      startMarker = new google.maps.Marker({
+        position: {lat: origin.lat, lng: origin.lng},
+        map,
+        title: "Start",
+        label: {text: "A", color: "#ffffff", fontWeight: "700"},
+        icon: {
+          path: google.maps.SymbolPath.CIRCLE,
+          scale: 10,
+          fillColor: "#10b981",
+          fillOpacity: 1,
+          strokeColor: "#065f46",
+          strokeWeight: 2
+        }
+      });
+
+      endMarker = new google.maps.Marker({
+        position: {lat: destination.lat, lng: destination.lng},
+        map,
+        title: "End",
+        label: {text: "B", color: "#ffffff", fontWeight: "700"},
+        icon: {
+          path: google.maps.SymbolPath.CIRCLE,
+          scale: 10,
+          fillColor: "#2563eb",
+          fillOpacity: 1,
+          strokeColor: "#1e40af",
+          strokeWeight: 2
+        }
+      });
+    }
+
+    function plotRoute(origin, destination){
+      placeMarkers(origin, destination);
+
+      const request = {
+        origin: {lat: origin.lat, lng: origin.lng},
+        destination: {lat: destination.lat, lng: destination.lng},
+        travelMode: google.maps.TravelMode.DRIVING,
+        drivingOptions: {
+          // Departure time slightly in the future to avoid "past" error and get live traffic
+          departureTime: new Date(Date.now() + 2*60*1000)
+        },
+        provideRouteAlternatives: false,
+        unitSystem: google.maps.UnitSystem.IMPERIAL
+      };
+
+      directionsService.route(request, (result, status) => {
+        if (status === "OK" && result && result.routes && result.routes[0]){
+          directionsRenderer.setDirections(result);
+          // Compute duration (prefer duration_in_traffic if available)
+          const legs = result.routes[0].legs || [];
+          let seconds = 0;
+          for (const leg of legs){
+            if (leg.duration_in_traffic && typeof leg.duration_in_traffic.value === "number"){
+              seconds += leg.duration_in_traffic.value;
+            } else if (leg.duration && typeof leg.duration.value === "number") {
+              seconds += leg.duration.value;
+            }
+          }
+          ACTUAL_MINUTES = toMinutes(seconds);
+          fitBoundsForRoute(result);
+          enableGuessUI();
+        } else {
+          // Fallback: approximate based on haversine @ 60 mph
+          console.warn("Directions failed:", status, result);
+          ACTUAL_MINUTES = estimateByAir(origin, destination);
+          enableGuessUI(true);
+        }
+      });
+    }
+
+    function fitBoundsForRoute(directionResult){
+      const bounds = new google.maps.LatLngBounds();
+      const route = directionResult.routes[0];
+      for (const leg of route.legs){
+        bounds.extend(leg.start_location);
+        bounds.extend(leg.end_location);
+      }
+      map.fitBounds(bounds, { top: 50, left: 20, bottom: 50, right: 20 });
+    }
+
+    function estimateByAir(a,b){
+      const R=6371;
+      const toRad = d => d*Math.PI/180;
+      const dLat = toRad(b.lat-a.lat);
+      const dLng = toRad(b.lng-a.lng);
+      const s1 = Math.sin(dLat/2)**2 + Math.cos(toRad(a.lat))*Math.cos(toRad(b.lat))*Math.sin(dLng/2)**2;
+      const km = 2*R*Math.asin(Math.sqrt(s1));
+      const miles = km * 0.621371;
+      const mph = 60; // crude
+      return Math.max(5, Math.round((miles / mph) * 60));
+    }
+
+    function enableGuessUI(fallback=false){
+      const submitBtn = document.getElementById("submitBtn");
+      const guessInput = document.getElementById("guessInput");
+      submitBtn.disabled = false;
+      guessInput.disabled = false;
+      guessInput.focus();
+      if (fallback){
+        document.getElementById("result").innerHTML =
+          `<span class="small">Live traffic route lookup failed; using a reasonable estimate for today’s challenge.</span>`;
+      } else {
+        document.getElementById("result").textContent = "";
+      }
+    }
+
+    // ---------------------------
+    // Guess submission + Storage
+    // ---------------------------
+    const submitBtn = document.getElementById("submitBtn");
+    const guessInput = document.getElementById("guessInput");
+    submitBtn.addEventListener("click", onSubmit);
+    guessInput.addEventListener("keydown", (e) => { if (e.key === "Enter") onSubmit(); });
+
+    function onSubmit(){
+      const resEl = document.getElementById("result");
+      const guessVal = parseInt(guessInput.value, 10);
+      if (!ACTUAL_MINUTES){
+        resEl.textContent = "Route still loading—try again in a moment.";
+        return;
+      }
+      if (Number.isNaN(guessVal) || guessVal <= 0){
+        resEl.textContent = "Please enter a valid positive number.";
+        resEl.className = "result no";
+        return;
+      }
+
+      const pct = percentError(guessVal, ACTUAL_MINUTES);
+      const within = pct <= (TOLERANCE_PERCENT/100);
+      const near   = !within && pct <= (NEAR_MISS_PERCENT/100);
+      const diff   = Math.abs(guessVal - ACTUAL_MINUTES);
+
+      if (within){
+        resEl.textContent = `🎉 Correct! Within ${TOLERANCE_PERCENT}%. You guessed ${guessVal} min.`;
+        resEl.className = "result ok";
+      } else if (near){
+        resEl.textContent = `🟡 So close! You were ${diff} min off (≈ ${fmtPct(pct)}). Try again tomorrow.`;
+        resEl.className = "result near";
+      } else {
+        resEl.textContent = `❌ Not quite. You were ${diff} min off (≈ ${fmtPct(pct)}).`;
+        resEl.className = "result no";
+      }
+
+      // Save results (device + optional email)
+      saveResult({ guess: guessVal, actual: ACTUAL_MINUTES, pct, within, diff });
+
+      // Optional Slack (does NOT reveal the actual time)
+      postToSlack({
+        text: "TripGuessr result",
+        blocks: [
+          { type:"section", text:{ type:"mrkdwn", text:`*TripGuessr – ${todayKey()}*`}},
+          { type:"section", text:{ type:"mrkdwn", text:`Result: ${within ? "WIN ✅" : near ? "NEAR 🟡" : "MISS ❌"}`}},
+          { type:"section", text:{ type:"mrkdwn", text:`Guess: *${guessVal} min* • Error: *${(pct*100).toFixed(1)}%*`}},
+          { type:"context", elements:[{ type:"mrkdwn", text:"(We don’t reveal the actual time in Slack)"}]}
+        ]
+      });
+
+      // Update recent table
+      renderRecent();
+    }
+
+    function saveResult(entry){
+      const dkey = todayKey();
+      const deviceId = getDeviceId();
+
+      // Device-local history
+      const dev = loadJSON(DEVICE_RESULTS_KEY, []);
+      dev.push({
+        date: dkey,
+        deviceId,
+        guess: entry.guess,
+        actual: entry.actual,
+        pct: entry.pct,
+        within: entry.within,
+        diff: entry.diff
+      });
+      saveJSON(DEVICE_RESULTS_KEY, dev);
+
+      // Email history (still local, but keyed per-email)
+      const email = (localStorage.getItem(EMAIL_KEY) || "").trim();
+      if (email){
+        const key = "tg_email_history_v2::" + email.toLowerCase();
+        const arr = loadJSON(key, []);
+        arr.push({
+          date: dkey,
+          guess: entry.guess,
+          actual: entry.actual,
+          pct: entry.pct,
+          within: entry.within,
+          diff: entry.diff
+        });
+        saveJSON(key, arr);
+      }
+    }
+
+    // ---------------------------
+    // Recent results (device)
+    // ---------------------------
+    function renderRecent(){
+      const tbody = document.querySelector("#recentTable tbody");
+      tbody.innerHTML = "";
+      const dev = loadJSON(DEVICE_RESULTS_KEY, []);
+      const latest = dev.slice(-MAX_RECENT_ROWS).reverse();
+      for (const row of latest){
+        const tr = document.createElement("tr");
+        const date = document.createElement("td"); date.textContent = row.date;
+        const guess = document.createElement("td"); guess.textContent = `${row.guess} min`;
+        const outcome = document.createElement("td");
+        const diff = document.createElement("td"); diff.textContent = `${row.diff} min`;
+
+        const span = document.createElement("span");
+        if (row.within){ span.textContent = "Win"; span.className = "tag"; }
+        else if (row.pct <= (NEAR_MISS_PERCENT/100)){ span.textContent = "Near"; span.className = "tag near"; }
+        else { span.textContent = "Miss"; span.className = "tag lose"; }
+        outcome.appendChild(span);
+
+        tr.append(date, guess, outcome, diff);
+        tbody.appendChild(tr);
+      }
+    }
+
+    // Initial render for recent
+    renderRecent();
+
+    // ---------------------------
+    // Report (email)
+    // ---------------------------
+    const viewReportBtn = document.getElementById("viewReportBtn");
+    const reportBlock = document.getElementById("reportBlock");
+    const reportText = document.getElementById("reportText");
+    const reportBtn = document.getElementById("reportBtn");
+    const clearEmailDataBtn = document.getElementById("clearEmailDataBtn");
+
+    function computeStats(arr){
+      const total = arr.length;
+      const wins = arr.filter(x => x.within).length;
+      const avgAbs = total ? (arr.reduce((s,x)=> s + Math.abs(x.diff), 0) / total) : 0;
+      const avgPct = total ? (arr.reduce((s,x)=> s + x.pct, 0) / total) : 0;
+      // streak
+      let streak=0, maxStreak=0;
+      for (const x of arr){
+        if (x.within){ streak++; maxStreak = Math.max(maxStreak, streak); }
+        else streak = 0;
+      }
+      const best = total ? Math.min(...arr.map(x => Math.abs(x.diff))) : null;
+      return { total, wins, avgAbs, avgPct, maxStreak, best };
+    }
+
+    function renderStats(stats){
+      document.getElementById("statGames").textContent = stats.total;
+      document.getElementById("statWins").textContent = stats.wins;
+      document.getElementById("statAvgErr").textContent = stats.total ? stats.avgAbs.toFixed(1) : "–";
+      document.getElementById("statAvgPct").textContent = stats.total ? (stats.avgPct*100).toFixed(1) + "%" : "–";
+      document.getElementById("statStreak").textContent = stats.maxSt
