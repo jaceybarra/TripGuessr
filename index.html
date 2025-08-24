@@ -400,7 +400,7 @@ function slackBlocks(resText){
       { type:"section", text:{ type:"mrkdwn", text:`*Result:* ${resText}` } },
       { type:"context", elements:[ { type:"mrkdwn", text:`Tries: ${st.tries}/${MAX_TRIES_PER_DAY}` } ] },
       { type:"actions", elements:[
-        { type:"button", text:{ type:"plain_text", text:"Play TripGuessr" }, url:"https://jaceybarra.github.io/TripGuessr/" }
+        { type:"button", text: url:"https://jaceybarra.github.io/TripGuessr/"
       ]}
     ]
   };
