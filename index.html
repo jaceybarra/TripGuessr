@@ -64,7 +64,6 @@
 
     .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
 
-    /* Error banner for Maps/API issues */
     #mapError { display:none; margin-top:10px; padding:10px; border-radius:10px; background:#fff3cd; color:#7a5c00; border:1px solid #ffe69c; }
   </style>
 </head>
@@ -127,7 +126,7 @@
               <span class="suffix">minutes</span>
             </div>
             <button id="submitBtn" class="btn" type="button">Submit Guess</button>
-            <button id="copyBtn" class="btn secondary" type="button" title="Copy today’s result">Copy Result</button>
+            <button id="copyBtn" class="btn secondary" type="button" title="Copy today’s result (Slack‑ready)">Copy Result</button>
           </div>
           <div class="hint">You get <strong>5 tries per day</strong>. ±10% counts as a win (we don’t reveal the actual time).</div>
           <div id="result" class="result" aria-live="polite"></div>
@@ -184,7 +183,8 @@
       // ===== Config
       const TOLERANCE_PERCENT = 10;
       const MAX_RECENT_ROWS = 12;
-      const USE_SLACK = false; let SLACK_WEBHOOK_URL = "";
+      let USE_SLACK = false;                  // toggled by the header button
+      let SLACK_WEBHOOK_URL = "";             // <- paste your Slack incoming webhook URL here to enable posting
       const DEVICE_KEY = "tg_device_id_v2";
       const DEVICE_RESULTS_KEY = "tg_device_results_v2";
       const EMAIL_KEY = "tg_email_v2";
@@ -325,14 +325,12 @@
         const d = todayKey();
         let st = loadJSON(PLAY_STATE_KEY, null);
         if (!st || st.date !== d){
-          // migrate from legacy and/or infer from today’s saved results
           const dev = loadJSON(DEVICE_RESULTS_KEY, []);
           const todayRows = dev.filter(r => r.date === d);
-          const tries = todayRows.length;                     // number of guesses already made today
-          const won = todayRows.some(r => r.within === true); // whether already won today
+          const tries = todayRows.length;
+          const won = todayRows.some(r => r.within === true);
           st = { date: d, tries, won };
           saveJSON(PLAY_STATE_KEY, st);
-          // remove legacy single-play flag if present
           try { const legacy = localStorage.getItem(LEGACY_PLAY_KEY); if (legacy) localStorage.removeItem(LEGACY_PLAY_KEY); } catch(e){}
         }
         return st;
@@ -340,7 +338,6 @@
       function setPlayState(st){ saveJSON(PLAY_STATE_KEY, st); }
       function incrementTries(){ const st=getPlayState(); st.tries = Math.min(MAX_TRIES_PER_DAY, st.tries + 1); setPlayState(st); return st; }
       function setWon(){ const st=getPlayState(); st.won = true; setPlayState(st); return st; }
-
       function triesLeft(){ const st=getPlayState(); return Math.max(0, MAX_TRIES_PER_DAY - st.tries); }
       function isLocked(){ const st=getPlayState(); return st.won || st.tries >= MAX_TRIES_PER_DAY; }
 
@@ -369,6 +366,43 @@
         updateTriesBanner();
       }
 
+      // Slack helpers
+      async function postToSlack(payload){
+        try {
+          if (!USE_SLACK || !SLACK_WEBHOOK_URL) return;
+          await fetch(SLACK_WEBHOOK_URL, {
+            method: "POST",
+            headers: {"Content-Type":"application/json"},
+            body: JSON.stringify(payload)
+          });
+        } catch(e){ /* silent */ }
+      }
+      function slackTextSummary(resText){
+        const d = todayKey();
+        const route = (TODAY_PAIR && TODAY_PAIR.a)
+          ? `${TODAY_PAIR.a.n} → ${TODAY_PAIR.b.n} (${TODAY_PAIR.metro.name})`
+          : "Today’s route";
+        const st = getPlayState();
+        return `*TripGuessr — ${d}*\n*Route:* ${route}\n*Result:* ${resText}\n*Tries:* ${st.tries}/${MAX_TRIES_PER_DAY}`;
+      }
+      function slackBlocks(resText){
+        const d = todayKey();
+        const route = (TODAY_PAIR && TODAY_PAIR.a)
+          ? `${TODAY_PAIR.a.n} → ${TODAY_PAIR.b.n} (${TODAY_PAIR.metro.name})`
+          : "Today’s route";
+        const st = getPlayState();
+        return {
+          text: `TripGuessr ${d}`,
+          blocks: [
+            { type:"section", text:{ type:"mrkdwn", text:`*TripGuessr — ${d}*` } },
+            { type:"section", text:{ type:"mrkdwn", text:`*Route:* ${route}` } },
+            { type:"section", text:{ type:"mrkdwn", text:`*Result:* ${resText}` } },
+            { type:"context", elements:[ { type:"mrkdwn", text:`Tries: ${st.tries}/${MAX_TRIES_PER_DAY}` } ] }
+          ]
+        };
+      }
+
+      // Build candidate routes
       function buildCandidates(metro){
         const out=[]; const L=metro.landmarks;
         for(let i=0;i<L.length;i++) for(let j=i+1;j<L.length;j++){
@@ -501,6 +535,18 @@
           themeBtn.textContent = document.documentElement.classList.contains("dark") ? "Light" : "Dark";
         }
 
+        const slackBtn=document.getElementById("slackBtn");
+        if (slackBtn){
+          slackBtn.addEventListener("click", () => {
+            USE_SLACK = !USE_SLACK;
+            slackBtn.textContent = USE_SLACK ? "Slack On" : "Slack Off";
+            slackBtn.setAttribute("aria-pressed", String(USE_SLACK));
+            if (USE_SLACK && !SLACK_WEBHOOK_URL){
+              alert("Add your Slack Incoming Webhook URL in the code (SLACK_WEBHOOK_URL) to enable posting.");
+            }
+          });
+        }
+
         const emailInput=document.getElementById("emailInput");
         const saveEmailBtn=document.getElementById("saveEmailBtn");
         if (emailInput) emailInput.value = localStorage.getItem(EMAIL_KEY) || "";
@@ -586,6 +632,11 @@
         renderRecent();
         enforceTriesUI(); // reflect current tries at startup
 
+        async function handleSlackShare(resText){
+          // Post to Slack (if enabled)
+          await postToSlack(slackBlocks(resText));
+        }
+
         function onSubmit(){
           const stBefore = getPlayState();
           if (stBefore.won){
@@ -609,21 +660,28 @@
           const st = incrementTries();
 
           const within = percentError(val, ACTUAL_MINUTES) <= (TOLERANCE_PERCENT/100);
+          let resText = "";
           if (within){
             setWon();
-            resultEl.textContent = `🎉 Correct! Within ${TOLERANCE_PERCENT}%.`;
+            resText = `🎉 Correct! Within ${TOLERANCE_PERCENT}%.`;
+            resultEl.textContent = resText;
             resultEl.className = "result ok";
           } else {
-            resultEl.textContent = val>ACTUAL_MINUTES ? "Too high." : "Too low.";
+            resText = (val>ACTUAL_MINUTES ? "Too high." : "Too low.");
+            resultEl.textContent = resText;
             resultEl.className = "result no";
           }
 
           // Lock if won or out of tries
           enforceTriesUI();
 
-          // Save the attempt (we do store 'actual' internally; never shown)
+          // Save the attempt (actual kept internal)
           saveResult({ guess: val, actual: ACTUAL_MINUTES, within });
 
+          // Slack auto-post (if enabled)
+          handleSlackShare(resText);
+
+          // Refresh recent table
           renderRecent();
         }
         if (submitBtn) submitBtn.addEventListener("click", onSubmit);
@@ -631,19 +689,11 @@
 
         if (copyBtn){
           copyBtn.addEventListener("click", async () => {
-            const d=todayKey(); const res=resultEl?.textContent||"Played";
-            const route=(TODAY_PAIR&&TODAY_PAIR.a)? `${TODAY_PAIR.a.n} → ${TODAY_PAIR.b.n} (${TODAY_PAIR.metro.name})` : "Today’s route";
-            const text=`TripGuessr (${d}): ${res} — Route: ${route}`;
+            const res = document.getElementById("result")?.textContent || "Played";
+            const text = slackTextSummary(res);
             try { await navigator.clipboard.writeText(text); copyBtn.textContent="Copied!"; setTimeout(()=>copyBtn.textContent="Copy Result",1200); }
             catch(e){ const ta=document.createElement("textarea"); ta.value=text; document.body.appendChild(ta); ta.select(); document.execCommand("copy"); ta.remove(); copyBtn.textContent="Copied!"; setTimeout(()=>copyBtn.textContent="Copy Result",1200); }
           });
-        }
-
-        // Simple Slack toggle label (feature off by default)
-        const slackBtn=document.getElementById("slackBtn");
-        if (slackBtn){
-          let on=USE_SLACK;
-          slackBtn.addEventListener("click", ()=>{ on=!on; slackBtn.textContent=on?"Slack On":"Slack Off"; slackBtn.setAttribute("aria-pressed", String(on)); });
         }
       });
 
