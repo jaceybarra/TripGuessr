@@ -5,124 +5,116 @@
   <title>TripGuessr – Daily Driving Challenge</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <!-- =========================
-       Styles
-  ========================== -->
   <style>
     :root {
-      --bg: #f9fafb;
-      --text: #111827;
-      --muted: #6b7280;
-      --card: #ffffff;
-      --primary: #2563eb;
-      --primary-contrast: #ffffff;
-      --accent: #10b981;
-      --danger: #ef4444;
-      --shadow: 0 8px 30px rgba(0,0,0,0.08);
-      --ring: 0 0 0 3px rgba(37, 99, 235, 0.2);
+      --bg: #f9fafb; --text: #111827; --muted: #6b7280; --card: #ffffff;
+      --primary: #2563eb; --primary-contrast: #ffffff;
+      --accent: #10b981; --danger: #ef4444;
+      --shadow: 0 8px 30px rgba(0,0,0,0.08); --ring: 0 0 0 3px rgba(37,99,235,0.2);
     }
     .dark {
-      --bg: #0d0f13;
-      --text: #e5e7eb;
-      --muted: #9ca3af;
-      --card: #12161c;
-      --primary: #60a5fa;
-      --primary-contrast: #0b1220;
-      --accent: #34d399;
-      --danger: #f87171;
-      --shadow: 0 8px 30px rgba(0,0,0,0.35);
-      --ring: 0 0 0 3px rgba(96, 165, 250, 0.25);
+      --bg: #0d0f13; --text: #e5e7eb; --muted: #9ca3af; --card: #12161c;
+      --primary: #60a5fa; --primary-contrast: #0b1220;
+      --accent: #34d399; --danger: #f87171;
+      --shadow: 0 8px 30px rgba(0,0,0,0.35); --ring: 0 0 0 3px rgba(96,165,250,0.25);
     }
-
     html, body { height: 100%; }
-    body {
-      margin: 0;
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
-      background: var(--bg);
-      color: var(--text);
-      transition: background .25s ease, color .25s ease;
-    }
+    body { margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; background: var(--bg); color: var(--text); transition: background .25s, color .25s; }
 
-    /* Header */
-    header {
-      position: sticky;
-      top: 0;
-      z-index: 50;
-      background: var(--card);
-      border-bottom: 1px solid rgba(0,0,0,0.05);
-      box-shadow: var(--shadow);
-      padding: 10px 20px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
+    header { position: sticky; top: 0; z-index: 50; background: var(--card); border-bottom: 1px solid rgba(0,0,0,0.05); box-shadow: var(--shadow); }
+    .container { max-width: 1100px; margin: 0 auto; padding: 16px 20px; }
+    .row { display: flex; align-items: center; gap: 16px; justify-content: space-between; flex-wrap: wrap; }
     .brand { display: flex; align-items: center; gap: 12px; text-decoration: none; color: inherit; }
     .logo { width: 48px; height: 48px; }
     .title-wrap h1 { font-size: 1.25rem; margin: 0; }
     .title-wrap p { margin: 2px 0 0 0; color: var(--muted); font-size: .9rem; }
 
-    /* Controls */
     .controls { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-    .btn {
-      border: none; background: var(--primary); color: var(--primary-contrast);
-      padding: 10px 14px; border-radius: 10px; font-weight: 600; cursor: pointer;
-    }
+    .btn { border: none; background: var(--primary); color: var(--primary-contrast); padding: 10px 14px; border-radius: 10px; font-weight: 600; cursor: pointer; }
     .btn.secondary { background: transparent; color: var(--text); border: 1px solid rgba(0,0,0,.1); }
+    .btn.small { padding: 8px 12px; font-size: .9rem; }
 
-    /* Layout */
-    .container { max-width: 1100px; margin: 0 auto; padding: 18px; }
-    .grid { display: grid; grid-template-columns: 1.45fr 1fr; gap: 18px; }
+    .grid { display: grid; grid-template-columns: 1.45fr 1fr; gap: 18px; align-items: start; }
     @media (max-width: 980px){ .grid { grid-template-columns: 1fr; } }
 
-    /* Map */
-    #map { width: 100%; height: 520px; border-radius: 16px; background: #dfe7f3; box-shadow: var(--shadow); }
+    #map { width: 100%; height: 520px; border-radius: 16px; background: #dfe7f3; box-shadow: var(--shadow); border: 1px solid rgba(0,0,0,.06); overflow: hidden; }
 
-    /* Cards */
-    .card { background: var(--card); border-radius: 16px; box-shadow: var(--shadow); padding: 16px; margin-top: 12px; }
-    .guess-panel { border: 2px dashed rgba(37,99,235, .35); border-radius: 16px; padding: 18px; }
+    .card { background: var(--card); border: 1px solid rgba(0,0,0,.06); border-radius: 16px; box-shadow: var(--shadow); padding: 16px; }
+    .muted { color: var(--muted); }
+    .spacer { height: 14px; }
 
-    /* Input row */
+    .guess-panel { position: relative; padding: 18px; border: 2px dashed rgba(37,99,235,.35); border-radius: 16px; }
+    .label { display: inline-flex; gap: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; font-size: .78rem; color: var(--muted); margin-bottom: 10px; }
     .input-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-    .input { display: inline-flex; align-items: center; background: var(--bg); border: 1px solid rgba(0,0,0,.08); padding: 12px 14px; border-radius: 12px; }
-    .input input { border: none; background: transparent; color: var(--text); width: 120px; font-size: 1.1rem; }
+    .input { display: inline-flex; align-items: center; gap: 8px; background: var(--bg); border: 1px solid rgba(0,0,0,.08); padding: 12px 14px; border-radius: 12px; font-size: 1.05rem; min-width: 220px; }
+    .input input { border: none; outline: none; background: transparent; color: var(--text); width: 120px; font-size: 1.1rem; }
+    .suffix { color: var(--muted); font-weight: 600; }
+    .hint { margin-top: 8px; font-size: .9rem; color: var(--muted); }
     .result { margin-top: 12px; font-weight: 700; }
-    .result.ok { color: var(--accent); }
-    .result.no { color: var(--danger); }
-    .result.near { color: #f59e0b; }
+    .result.ok { color: var(--accent); } .result.no { color: var(--danger); } .result.near { color: #f59e0b; }
 
-    /* Email & report */
     .email-row { display: grid; grid-template-columns: 1fr auto; gap: 10px; }
-    .report-block pre { background: var(--bg); padding: 12px; border-radius: 12px; white-space: pre-wrap; }
+    .email-row input[type=email]{ width: 100%; background: var(--bg); color: var(--text); border: 1px solid rgba(0,0,0,.08); padding: 11px 12px; border-radius: 12px; font-size: 1rem; }
 
-    /* Table */
     .table { width: 100%; border-collapse: collapse; font-size: .95rem; }
-    .table th, .table td { padding: 8px 10px; border-bottom: 1px solid rgba(0,0,0,.06); }
+    .table th, .table td { padding: 8px 10px; border-bottom: 1px solid rgba(0,0,0,.06); text-align: left; }
     .table th { color: var(--muted); font-weight: 700; font-size: .85rem; }
-    .tag { padding: 2px 6px; border-radius: 6px; font-size: .8rem; }
-    .tag.lose { background: #fdd; color: #900; }
-    .tag.near { background: #ffd; color: #990; }
-    .tag.win { background: #dfd; color: #090; }
+    .tag { display: inline-block; padding: 2px 8px; border-radius: 999px; background: rgba(16,185,129,.12); color: #059669; font-size: .75rem; font-weight: 700; letter-spacing: .3px; }
+    .tag.lose { background: rgba(239,68,68,.12); color: #b91c1c; }
+
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
+
+    /* Error banner for Maps/API issues */
+    #mapError { display:none; margin-top:10px; padding:10px; border-radius:10px; background:#fff3cd; color:#7a5c00; border:1px solid #ffe69c; }
   </style>
 </head>
-  <!-- =========================
-       Main
-  ========================== -->
+<body>
+  <script>
+    // default light
+    try {
+      const pref = localStorage.getItem('tg_theme');
+      if (pref === 'dark') document.documentElement.classList.add('dark');
+      else document.documentElement.classList.remove('dark');
+    } catch(e){}
+  </script>
+
+  <header>
+    <div class="container">
+      <div class="row">
+        <a class="brand" href="#">
+          <svg class="logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" aria-hidden="true">
+            <defs><linearGradient id="g" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#2563eb"/><stop offset="1" stop-color="#10b981"/></linearGradient></defs>
+            <circle cx="32" cy="32" r="30" fill="url(#g)"/>
+            <path d="M20 38c2-7 7-13 12-18 6-6 10-4 10 2 0 6-8 10-12 12-3 1-6 2-10 4z" fill="#ffffff" opacity=".5"/>
+            <text x="32" y="39" text-anchor="middle" font-weight="800" font-family="ui-sans-serif, system-ui" font-size="16" fill="#fff">TG</text>
+          </svg>
+          <div class="title-wrap">
+            <h1>TripGuessr</h1>
+            <p class="small">Guess today’s drive time. Within <strong>10%</strong> counts as a win.</p>
+          </div>
+        </a>
+        <div class="controls">
+          <button id="themeBtn" class="btn secondary small" type="button" aria-pressed="false">Dark</button>
+          <button id="reportBtn" class="btn secondary small" type="button">Download CSV</button>
+          <button id="slackBtn" class="btn secondary small" type="button" aria-pressed="false" title="Toggle Slack notifications (set webhook in code)">Slack Off</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
   <main class="container" style="padding-top:18px;">
     <div class="grid">
-      <!-- Map + Today Meta -->
       <section>
-        <div id="map" role="region" aria-label="Map showing today’s hidden route"></div>
+        <div id="map" role="region" aria-label="Map showing today’s route"></div>
+        <div id="mapError"></div>
         <div class="spacer"></div>
         <div class="card">
           <h2>Today’s Challenge</h2>
-          <p class="small">
-            The route changes every day (based on your local date). Below shows the start and end landmarks.
-          </p>
+          <p class="small">The route changes daily. We show start & end landmarks.</p>
           <div id="todayMeta" class="small muted"></div>
         </div>
       </section>
 
-      <!-- Guess + Stats -->
       <aside>
         <div class="card guess-panel" id="guessCard" aria-live="polite">
           <div class="label">Enter Your Guess</div>
@@ -139,7 +131,7 @@
             <button id="submitBtn" class="btn" type="button">Submit Guess</button>
             <button id="copyBtn" class="btn secondary" type="button" title="Copy today’s result">Copy Result</button>
           </div>
-          <div class="hint">Pro tip: ±10% counts as a win. We round to the nearest minute.</div>
+          <div class="hint">Pro tip: ±10% counts as a win (we don’t reveal the actual time).</div>
           <div id="result" class="result" aria-live="polite"></div>
         </div>
 
@@ -147,7 +139,7 @@
 
         <div class="card">
           <h2>Track Your Progress</h2>
-          <p class="small">We already track this device locally. Add your email to keep a longer history across sessions on this device (no server required here).</p>
+          <p class="small">Track on this device. Add email to keep history here across sessions.</p>
           <div class="email-row" style="margin-top:8px;">
             <input id="emailInput" type="email" placeholder="you@example.com" />
             <button id="saveEmailBtn" class="btn secondary" type="button">Save Email</button>
@@ -157,16 +149,16 @@
             <button id="clearEmailDataBtn" class="btn secondary" type="button">Clear Email Data</button>
           </div>
           <div class="report-block" id="reportBlock" style="margin-top:12px; display:none;">
-            <div class="stat-grid">
-              <div class="stat"><div class="k" id="statGames">0</div><div class="l">Games Played</div></div>
-              <div class="stat"><div class="k" id="statWins">0</div><div class="l">Wins (≤10%)</div></div>
-              <div class="stat"><div class="k" id="statAvgErr">–</div><div class="l">Avg Abs Error (min)</div></div>
-              <div class="stat"><div class="k" id="statAvgPct">–</div><div class="l">Avg % Error</div></div>
-              <div class="stat"><div class="k" id="statStreak">0</div><div class="l">Longest Win Streak</div></div>
-              <div class="stat"><div class="k" id="statBest">–</div><div class="l">Best Guess (min diff)</div></div>
+            <div class="stat-grid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:8px;">
+              <div class="stat" style="background:var(--bg);border:1px solid rgba(0,0,0,.06);border-radius:12px;padding:10px 12px;"><div class="k" id="statGames">0</div><div class="l" style="font-size:.8rem;color:var(--muted);">Games Played</div></div>
+              <div class="stat" style="background:var(--bg);border:1px solid rgba(0,0,0,.06);border-radius:12px;padding:10px 12px;"><div class="k" id="statWins">0</div><div class="l" style="font-size:.8rem;color:var(--muted);">Wins (≤10%)</div></div>
+              <div class="stat" style="background:var(--bg);border:1px solid rgba(0,0,0,.06);border-radius:12px;padding:10px 12px;"><div class="k" id="statAvgErr">–</div><div class="l" style="font-size:.8rem;color:var(--muted);">Avg Abs Error</div></div>
+              <div class="stat" style="background:var(--bg);border:1px solid rgba(0,0,0,.06);border-radius:12px;padding:10px 12px;"><div class="k" id="statAvgPct">–</div><div class="l" style="font-size:.8rem;color:var(--muted);">Avg % Error</div></div>
+              <div class="stat" style="background:var(--bg);border:1px solid rgba(0,0,0,.06);border-radius:12px;padding:10px 12px;"><div class="k" id="statStreak">–</div><div class="l" style="font-size:.8rem;color:var(--muted);">Longest Streak</div></div>
+              <div class="stat" style="background:var(--bg);border:1px solid rgba(0,0,0,.06);border-radius:12px;padding:10px 12px;"><div class="k" id="statBest">–</div><div class="l" style="font-size:.8rem;color:var(--muted);">Best Guess</div></div>
             </div>
             <div style="margin-top:10px;">
-              <pre id="reportText"></pre>
+              <pre id="reportText" style="background:var(--bg);border:1px dashed rgba(0,0,0,.08);padding:12px;border-radius:12px;white-space:pre-wrap;max-height:240px;overflow:auto;"></pre>
             </div>
           </div>
         </div>
@@ -183,672 +175,429 @@
       </aside>
     </div>
   </main>
-  <!-- =========================
-       Scripts
-  ========================== -->
+
+  <!-- Make initMap global BEFORE loading Maps -->
   <script>
-    // ---------------------------
-    // Config / Constants
-    // ---------------------------
-    const TOLERANCE_PERCENT = 10;        // within 10% => WIN
-    const MAX_RECENT_ROWS = 12;
-    const USE_SLACK = false;             // toggle via button
-    let SLACK_WEBHOOK_URL = "";          // optional
-    const DEVICE_KEY = "tg_device_id_v2";
-    const DEVICE_RESULTS_KEY = "tg_device_results_v2";
-    const EMAIL_KEY = "tg_email_v2";
-    const THEME_KEY = "tg_theme";
-    const PLAY_KEY = "tg_played_date_v1"; // one play per day
-    const MAX_MINUTES = 60;              // cap route length
-    const MIN_KM = 5;                    // ~3+ miles to avoid trivial walks
-    const MAX_KM = 80;                   // ~<= 50 miles, likely ≤ 60 mins with traffic
-
-    // ---------------------------
-    // Utilities
-    // ---------------------------
-    function toMinutes(seconds){ return Math.round(seconds/60); }
-    function percentError(guess, actual){
-      if (actual <= 0) return 1;
-      return Math.abs(guess - actual) / actual;
-    }
-    function todayKey(){
-      const d = new Date();
-      const y = d.getFullYear();
-      const m = String(d.getMonth()+1).padStart(2,"0");
-      const day = String(d.getDate()).padStart(2,"0");
-      return `${y}-${m}-${day}`;
-    }
-    function saveJSON(key, obj){ try { localStorage.setItem(key, JSON.stringify(obj)); } catch(e){} }
-    function loadJSON(key, fallback){
-      try { const s = localStorage.getItem(key); return s ? JSON.parse(s) : fallback; }
-      catch(e){ return fallback; }
-    }
-    function getDeviceId(){
-      let id = localStorage.getItem(DEVICE_KEY);
-      if (!id){
-        id = "dev_" + Math.random().toString(36).slice(2) + "_" + Date.now().toString(36);
-        localStorage.setItem(DEVICE_KEY, id);
-      }
-      return id;
-    }
-    function download(filename, text){
-      const blob = new Blob([text], {type:"text/csv;charset=utf-8;"});
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url; a.download = filename;
-      document.body.appendChild(a); a.click(); document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    }
-
-    // Seeded RNG (daily)
-    function xmur3(str){
-      let h = 1779033703 ^ str.length;
-      for (let i=0; i<str.length; i++){
-        h = Math.imul(h ^ str.charCodeAt(i), 3432918353);
-        h = h << 13 | h >>> 19;
-      }
-      return function() {
-        h = Math.imul(h ^ (h >>> 16), 2246822507);
-        h = Math.imul(h ^ (h >>> 13), 3266489909);
-        return (h ^= h >>> 16) >>> 0;
-      }
-    }
-    function sfc32(a,b,c,d){
-      return function(){
-        a >>>= 0; b >>>= 0; c >>>= 0; d >>>= 0;
-        let t = (a + b) | 0;
-        a = b ^ b >>> 9;
-        b = c + (c << 3) | 0;
-        c = (c << 21 | c >>> 11);
-        d = d + 1 | 0;
-        t = t + d | 0;
-        c = c + t | 0;
-        return (t >>> 0) / 4294967296;
-      }
-    }
-    function seededRandom(seedStr){
-      const seed = xmur3(seedStr);
-      return sfc32(seed(), seed(), seed(), seed());
-    }
-
-    // Haversine helpers
-    function kmBetween(a,b){
-      const R=6371;
-      const toRad = d => d*Math.PI/180;
-      const dLat = toRad(b.lat-a.lat);
-      const dLng = toRad(b.lng-a.lng);
-      const s1 = Math.sin(dLat/2)**2 + Math.cos(toRad(a.lat))*Math.cos(toRad(b.lat))*Math.sin(dLng/2)**2;
-      return 2*R*Math.asin(Math.sqrt(s1));
-    }
-
-    // ---------------------------
-    // Curated metros with well-known landmarks
-    // ---------------------------
-    const METROS = [
-      { name:"Boston, MA", landmarks:[
-        {n:"Fenway Park", c:"Boston, MA", lat:42.346676, lng:-71.097218},
-        {n:"Harvard Yard", c:"Cambridge, MA", lat:42.374541, lng:-71.118021},
-        {n:"Boston Common", c:"Boston, MA", lat:42.355010, lng:-71.065620},
-        {n:"TD Garden", c:"Boston, MA", lat:42.366303, lng:-71.062228}
-      ]},
-      { name:"New York City, NY", landmarks:[
-        {n:"Central Park (Bethesda Terrace)", c:"NYC, NY", lat:40.774036, lng:-73.970872},
-        {n:"Times Square", c:"NYC, NY", lat:40.758001, lng:-73.985500},
-        {n:"Yankee Stadium", c:"Bronx, NY", lat:40.829643, lng:-73.926175},
-        {n:"Citi Field", c:"Queens, NY", lat:40.757088, lng:-73.845821}
-      ]},
-      { name:"Los Angeles, CA", landmarks:[
-        {n:"Griffith Observatory", c:"Los Angeles, CA", lat:34.118434, lng:-118.300393},
-        {n:"Dodger Stadium", c:"Los Angeles, CA", lat:34.073851, lng:-118.239958},
-        {n:"Santa Monica Pier", c:"Santa Monica, CA", lat:34.009242, lng:-118.497604},
-        {n:"Crypto.com Arena", c:"Los Angeles, CA", lat:34.043017, lng:-118.267254}
-      ]},
-      { name:"San Francisco Bay Area, CA", landmarks:[
-        {n:"Golden Gate Park (Music Concourse)", c:"San Francisco, CA", lat:37.769421, lng:-122.486214},
-        {n:"Oracle Park", c:"San Francisco, CA", lat:37.778595, lng:-122.389270},
-        {n:"Stanford Stadium", c:"Palo Alto, CA", lat:37.434839, lng:-122.161122},
-        {n:"SFO Terminal 2", c:"San Francisco, CA", lat:37.621312, lng:-122.378955}
-      ]},
-      { name:"Chicago, IL", landmarks:[
-        {n:"Navy Pier", c:"Chicago, IL", lat:41.891551, lng:-87.607375},
-        {n:"Wrigley Field", c:"Chicago, IL", lat:41.948438, lng:-87.655333},
-        {n:"United Center", c:"Chicago, IL", lat:41.880690, lng:-87.674190},
-        {n:"Millennium Park", c:"Chicago, IL", lat:41.882702, lng:-87.619392}
-      ]},
-      { name:"Washington, DC", landmarks:[
-        {n:"Lincoln Memorial", c:"Washington, DC", lat:38.889269, lng:-77.050176},
-        {n:"Smithsonian National Zoo", c:"Washington, DC", lat:38.929640, lng:-77.049766},
-        {n:"Nationals Park", c:"Washington, DC", lat:38.872865, lng:-77.007369},
-        {n:"Union Station", c:"Washington, DC", lat:38.897699, lng:-77.006639}
-      ]},
-      { name:"Seattle, WA", landmarks:[
-        {n:"Space Needle", c:"Seattle, WA", lat:47.620506, lng:-122.349277},
-        {n:"T-Mobile Park", c:"Seattle, WA", lat:47.591390, lng:-122.332500},
-        {n:"University of Washington Quad", c:"Seattle, WA", lat:47.656051, lng:-122.309331},
-        {n:"Lumen Field", c:"Seattle, WA", lat:47.595151, lng:-122.331639}
-      ]},
-      { name:"Miami, FL", landmarks:[
-        {n:"Lummus Park (South Beach)", c:"Miami Beach, FL", lat:25.782612, lng:-80.131004},
-        {n:"LoanDepot Park", c:"Miami, FL", lat:25.778135, lng:-80.219760},
-        {n:"Wynwood Walls", c:"Miami, FL", lat:25.801121, lng:-80.199356},
-        {n:"Miami Intl Airport (MIA)", c:"Miami, FL", lat:25.795865, lng:-80.287046}
-      ]},
-      { name:"Dallas–Fort Worth, TX", landmarks:[
-        {n:"AT&T Stadium", c:"Arlington, TX", lat:32.747289, lng:-97.094504},
-        {n:"American Airlines Center", c:"Dallas, TX", lat:32.790523, lng:-96.810136},
-        {n:"Klyde Warren Park", c:"Dallas, TX", lat:32.789304, lng:-96.801742},
-        {n:"Fort Worth Stockyards", c:"Fort Worth, TX", lat:32.790146, lng:-97.347388}
-      ]},
-      { name:"Denver, CO", landmarks:[
-        {n:"Coors Field", c:"Denver, CO", lat:39.755942, lng:-104.994169},
-        {n:"Red Rocks Amphitheatre", c:"Morrison, CO", lat:39.665387, lng:-105.205705},
-        {n:"Union Station", c:"Denver, CO", lat:39.752659, lng:-105.000618},
-        {n:"Empower Field at Mile High", c:"Denver, CO", lat:39.743936, lng:-105.020097}
-      ]},
-      { name:"Phoenix, AZ", landmarks:[
-        {n:"Phoenix Zoo", c:"Phoenix, AZ", lat:33.451041, lng:-111.948397},
-        {n:"ASU Sun Devil Stadium", c:"Tempe, AZ", lat:33.426322, lng:-111.932174},
-        {n:"State Farm Stadium", c:"Glendale, AZ", lat:33.527635, lng:-112.262551},
-        {n:"Chase Field", c:"Phoenix, AZ", lat:33.445524, lng:-112.066721}
-      ]},
-      { name:"Salt Lake City, UT", landmarks:[
-        {n:"Temple Square", c:"Salt Lake City, UT", lat:40.770618, lng:-111.891037},
-        {n:"Sugar House Park", c:"Salt Lake City, UT", lat:40.717756, lng:-111.856138},
-        {n:"Rice-Eccles Stadium", c:"Salt Lake City, UT", lat:40.760692, lng:-111.848683},
-        {n:"Hogle Zoo", c:"Salt Lake City, UT", lat:40.750288, lng:-111.819693}
-      ]},
-      { name:"Orlando, FL", landmarks:[
-        {n:"Magic Kingdom TTC", c:"Bay Lake, FL", lat:28.410882, lng:-81.581220},
-        {n:"Universal Studios Florida", c:"Orlando, FL", lat:28.473470, lng:-81.467855},
-        {n:"Amway Center", c:"Orlando, FL", lat:28.539199, lng:-81.383729},
-        {n:"Orlando Intl Airport (MCO)", c:"Orlando, FL", lat:28.431157, lng:-81.308083}
-      ]}
-    ];
-
-    // ---------------------------
-    // Theming (button toggles)
-    // ---------------------------
-    const themeBtn = document.getElementById("themeBtn");
-    themeBtn.addEventListener("click", () => {
-      const dark = document.documentElement.classList.toggle("dark");
-      localStorage.setItem(THEME_KEY, dark ? "dark":"light");
-      themeBtn.textContent = dark ? "Light" : "Dark";
-      if (map){
-        map.setOptions({ styles: dark ? MAP_STYLES_DARK : MAP_STYLES_LIGHT });
-      }
-    });
-    (function(){
-      const dark = document.documentElement.classList.contains("dark");
-      themeBtn.textContent = dark ? "Light" : "Dark";
-    })();
-
-    // ---------------------------
-    // Slack toggle
-    // ---------------------------
-    const slackBtn = document.getElementById("slackBtn");
-    let slackOn = USE_SLACK;
-    slackBtn.addEventListener("click", () => {
-      slackOn = !slackOn;
-      slackBtn.textContent = slackOn ? "Slack On" : "Slack Off";
-      slackBtn.setAttribute("aria-pressed", String(slackOn));
-    });
-
-    async function postToSlack(payload){
-      try {
-        if (!slackOn || !SLACK_WEBHOOK_URL) return;
-        await fetch(SLACK_WEBHOOK_URL, {
-          method: "POST",
-          headers: {"Content-Type":"application/json"},
-          body: JSON.stringify(payload)
-        });
-      } catch(e){ /* silent */ }
-    }
-
-    // ---------------------------
-    // Email persistence
-    // ---------------------------
-    const emailInput = document.getElementById("emailInput");
-    const saveEmailBtn = document.getElementById("saveEmailBtn");
-    saveEmailBtn.addEventListener("click", () => {
-      const v = (emailInput.value || "").trim();
-      if (!v || !/^\S+@\S+\.\S+$/.test(v)) { alert("Please enter a valid email."); return; }
-      localStorage.setItem(EMAIL_KEY, v);
-      alert("Email saved for local tracking on this device.");
-    });
-    (function(){ emailInput.value = localStorage.getItem(EMAIL_KEY) || ""; })();
-
-    // ---------------------------
-    // Google Maps styles (light/dark)
-    // ---------------------------
-    const MAP_STYLES_LIGHT = [
-      {"elementType":"geometry","stylers":[{"color":"#ebe3cd"}]},
-      {"elementType":"labels.text.fill","stylers":[{"color":"#523735"}]},
-      {"elementType":"labels.text.stroke","stylers":[{"color":"#f5f1e6"}]},
-      {"featureType":"administrative","elementType":"geometry.stroke","stylers":[{"color":"#c9b2a6"}]},
-      {"featureType":"poi","elementType":"geometry","stylers":[{"color":"#dfd2ae"}]},
-      {"featureType":"poi.park","elementType":"geometry.fill","stylers":[{"color":"#a5d6a7"}]},
-      {"featureType":"road","elementType":"geometry","stylers":[{"color":"#f5f1e6"}]},
-      {"featureType":"road.arterial","elementType":"geometry","stylers":[{"color":"#fdfcf8"}]},
-      {"featureType":"road.highway","elementType":"geometry","stylers":[{"color":"#f8c967"}]},
-      {"featureType":"water","elementType":"geometry.fill","stylers":[{"color":"#a1c4fd"}]}
-    ];
-    const MAP_STYLES_DARK = [
-      {"elementType":"geometry","stylers":[{"color":"#1f2937"}]},
-      {"elementType":"labels.text.fill","stylers":[{"color":"#e5e7eb"}]},
-      {"elementType":"labels.text.stroke","stylers":[{"color":"#111827"}]},
-      {"featureType":"administrative","elementType":"geometry.stroke","stylers":[{"color":"#374151"}]},
-      {"featureType":"poi","elementType":"geometry","stylers":[{"color":"#111827"}]},
-      {"featureType":"poi.park","elementType":"geometry.fill","stylers":[{"color":"#064e3b"}]},
-      {"featureType":"road","elementType":"geometry","stylers":[{"color":"#0b1220"}]},
-      {"featureType":"road.highway","elementType":"geometry","stylers":[{"color":"#1f2937"}]},
-      {"featureType":"water","elementType":"geometry.fill","stylers":[{"color":"#0ea5e9"}]}
-    ];
-
-    // ---------------------------
-    // Build candidate landmark pairs (distance band)
-    // ---------------------------
-    function buildCandidates(metro){
-      const out = [];
-      for (let i=0;i<metro.landmarks.length;i++){
-        for (let j=i+1;j<metro.landmarks.length;j++){
-          const a = metro.landmarks[i], b = metro.landmarks[j];
-          const km = kmBetween(a,b);
-          if (km >= MIN_KM && km <= MAX_KM) out.push([a,b]);
-        }
-      }
-      return out;
-    }
-
-    function pickDailyMetroAndPairs(){
-      const seed = todayKey();
-      const rnd = seededRandom(seed);
-      const metro = METROS[Math.floor(rnd()*METROS.length)];
-      const pairs = buildCandidates(metro);
-      // deterministic shuffle by seeded RNG
-      for (let i=pairs.length-1;i>0;i--){
-        const j = Math.floor(rnd()*(i+1));
-        [pairs[i], pairs[j]] = [pairs[j], pairs[i]];
-      }
-      return { metro, pairs };
-    }
-
-    // ---------------------------
-    // Google Maps init
-    // ---------------------------
-    let map, directionsService, directionsRenderer, trafficLayer;
-    let startMarker, endMarker;
-    let ACTUAL_MINUTES = null;
-    let TODAY_PAIR = null;
-
-    window.initMap = function initMap(){
-      const dark = document.documentElement.classList.contains("dark");
-      map = new google.maps.Map(document.getElementById("map"), {
-        center: {lat: 39.8283, lng: -98.5795},
-        zoom: 4,
-        disableDefaultUI: true,
-        gestureHandling: 'greedy',
-        styles: dark ? MAP_STYLES_DARK : MAP_STYLES_LIGHT
-      });
-
-      directionsService = new google.maps.DirectionsService();
-      directionsRenderer = new google.maps.DirectionsRenderer({
-        map,
-        suppressMarkers: true,
-        preserveViewport: true,
-        polylineOptions: { strokeColor: "#2563eb", strokeWeight: 5, strokeOpacity: 0.9 }
-      });
-      trafficLayer = new google.maps.TrafficLayer();
-      trafficLayer.setMap(map);
-
-      const { metro, pairs } = pickDailyMetroAndPairs();
-      tryCandidates(metro, pairs, 0);
-      enforceOnePlayPerDayUI();
-    };
-
-    function tryCandidates(metro, pairs, idx){
-      if (!pairs.length){
-        const a = metro.landmarks[0], b = metro.landmarks[1];
-        plotRoute(metro, a, b, ()=>{});
-        return;
-      }
-      if (idx >= pairs.length){
-        const [a,b] = pairs[0];
-        plotRoute(metro, a, b, ()=>{});
-        return;
-      }
-      const [a,b] = pairs[idx];
-      plotRoute(metro, a, b, (ok, minutes) => {
-        if (ok && minutes <= MAX_MINUTES){
-          // done
-        } else {
-          tryCandidates(metro, pairs, idx+1);
-        }
-      });
-    }
-
-    function setMarkers(a,b){
-      if (startMarker) startMarker.setMap(null);
-      if (endMarker) endMarker.setMap(null);
-
-      startMarker = new google.maps.Marker({
-        position: {lat: a.lat, lng: a.lng},
-        map, title: `${a.n} (${a.c})`,
-        label: {text: "A", color: "#ffffff", fontWeight: "700"},
-        icon: {
-          path: google.maps.SymbolPath.CIRCLE, scale: 10,
-          fillColor: "#10b981", fillOpacity: 1, strokeColor: "#065f46", strokeWeight: 2
-        }
-      });
-
-      endMarker = new google.maps.Marker({
-        position: {lat: b.lat, lng: b.lng},
-        map, title: `${b.n} (${b.c})`,
-        label: {text: "B", color: "#ffffff", fontWeight: "700"},
-        icon: {
-          path: google.maps.SymbolPath.CIRCLE, scale: 10,
-          fillColor: "#2563eb", fillOpacity: 1, strokeColor: "#1e40af", strokeWeight: 2
-        }
-      });
-    }
-
-    function renderTodayMetaNames(metro, a, b){
-      const el = document.getElementById("todayMeta");
-      el.textContent = `Start: ${a.n} (${a.c}) → End: ${b.n} (${b.c}) — Metro: ${metro.name}`;
-    }
-
-    function plotRoute(metro, a, b, cb){
-      setMarkers(a,b);
-      renderTodayMetaNames(metro, a, b);
-
-      const request = {
-        origin: {lat: a.lat, lng: a.lng},
-        destination: {lat: b.lat, lng: b.lng},
-        travelMode: google.maps.TravelMode.DRIVING,
-        drivingOptions: { departureTime: new Date(Date.now() + 2*60*1000) },
-        provideRouteAlternatives: false,
-        unitSystem: google.maps.UnitSystem.IMPERIAL
-      };
-
-      directionsService.route(request, (result, status) => {
-        if (status === "OK" && result && result.routes && result.routes[0]){
-          directionsRenderer.setDirections(result);
-          const legs = result.routes[0].legs || [];
-          let seconds = 0;
-          for (const leg of legs){
-            if (leg.duration_in_traffic && typeof leg.duration_in_traffic.value === "number"){
-              seconds += leg.duration_in_traffic.value;
-            } else if (leg.duration && typeof leg.duration.value === "number") {
-              seconds += leg.duration.value;
-            }
-          }
-          ACTUAL_MINUTES = toMinutes(seconds);
-          if (ACTUAL_MINUTES < 5) ACTUAL_MINUTES = 5;
-
-          // Fit bounds to route
-          const bounds = new google.maps.LatLngBounds();
-          for (const leg of legs){ bounds.extend(leg.start_location); bounds.extend(leg.end_location); }
-          map.fitBounds(bounds, { top: 50, left: 20, bottom: 50, right: 20 });
-
-          TODAY_PAIR = { metro, a, b };
-          enableGuessUI();
-          cb(true, ACTUAL_MINUTES);
-        } else {
-          // Fallback to reasonable city estimate
-          ACTUAL_MINUTES = estimateByAir(a,b);
-          TODAY_PAIR = { metro, a, b };
-          enableGuessUI(true);
-          cb(true, ACTUAL_MINUTES);
-        }
-      });
-    }
-
-    function estimateByAir(a,b){
-      const km = kmBetween(a,b);
-      const mph = 35; // conservative urban-ish average
-      const miles = km * 0.621371;
-      return Math.max(5, Math.round((miles / mph) * 60));
-    }
-
-    function enableGuessUI(fallback=false){
-      const submitBtn = document.getElementById("submitBtn");
-      const guessInput = document.getElementById("guessInput");
-      submitBtn.disabled = false;
-      guessInput.disabled = false;
-      if (fallback){
-        document.getElementById("result").innerHTML =
-          `<span class="small">Route lookup had issues; using a reasonable estimate for today’s challenge.</span>`;
-      } else {
-        document.getElementById("result").textContent = "";
-      }
-      guessInput.focus();
-      enforceOnePlayPerDayUI(); // in case route took time
-    }
-
-    // ---------------------------
-    // One play per day
-    // ---------------------------
-    function hasPlayedToday(){
-      return localStorage.getItem(PLAY_KEY) === todayKey();
-    }
-    function markPlayedToday(){
-      localStorage.setItem(PLAY_KEY, todayKey());
-    }
-    function enforceOnePlayPerDayUI(){
-      const already = hasPlayedToday();
-      const banner = document.getElementById("playedBanner");
-      const submitBtn = document.getElementById("submitBtn");
-      const guessInput = document.getElementById("guessInput");
-      banner.style.display = already ? "block" : "none";
-      submitBtn.disabled = already;
-      guessInput.disabled = already;
-    }
-
-    // ---------------------------
-    // Guess submission + Storage
-    // ---------------------------
-    const submitBtn = document.getElementById("submitBtn");
-    const guessInput = document.getElementById("guessInput");
-    submitBtn.addEventListener("click", onSubmit);
-    guessInput.addEventListener("keydown", (e) => { if (e.key === "Enter") onSubmit(); });
-
-    function onSubmit(){
-      const resEl = document.getElementById("result");
-      if (hasPlayedToday()){
-        resEl.textContent = "You’ve already played today. Come back tomorrow!";
-        resEl.className = "result no";
-        return;
-      }
-
-      const guessVal = parseInt(guessInput.value, 10);
-      if (!ACTUAL_MINUTES){
-        resEl.textContent = "Route still loading—try again in a moment.";
-        return;
-      }
-      if (Number.isNaN(guessVal) || guessVal <= 0){
-        resEl.textContent = "Please enter a valid positive number.";
-        resEl.className = "result no";
-        return;
-      }
-
-      const within = percentError(guessVal, ACTUAL_MINUTES) <= (TOLERANCE_PERCENT/100);
-
-      if (within){
-        resEl.textContent = `🎉 Correct! Within ${TOLERANCE_PERCENT}%.`;
-        resEl.className = "result ok";
-      } else {
-        // Direction only — no minutes/percent leak
-        resEl.textContent = guessVal > ACTUAL_MINUTES ? "Too high." : "Too low.";
-        resEl.className = "result no";
-      }
-
-      markPlayedToday();          // lock for today
-      enforceOnePlayPerDayUI();   // disable UI
-      saveResult({ guess: guessVal, actual: ACTUAL_MINUTES, within });
-      postToSlack({
-        text: "TripGuessr result",
-        blocks: [
-          { type:"section", text:{ type:"mrkdwn", text:`*TripGuessr – ${todayKey()}*`}},
-          { type:"section", text:{ type:"mrkdwn", text:`Route: ${TODAY_PAIR.a.n} → ${TODAY_PAIR.b.n} (${TODAY_PAIR.metro.name})`}},
-          { type:"section", text:{ type:"mrkdwn", text:`Result: ${within ? "WIN ✅" : "TRY AGAIN ❌"}`}}
-        ]
-      });
-      renderRecent();
-    }
-
-    function saveResult(entry){
-      const dkey = todayKey();
-      const deviceId = getDeviceId();
-
-      // Device-local history
-      const dev = loadJSON(DEVICE_RESULTS_KEY, []);
-      dev.push({
-        date: dkey, deviceId,
-        guess: entry.guess,
-        // we store actual for stats if you ever want server-side later; not revealed in UI
-        actual: entry.actual,
-        within: entry.within
-      });
-      saveJSON(DEVICE_RESULTS_KEY, dev);
-
-      // Email history (local per-email)
-      const email = (localStorage.getItem(EMAIL_KEY) || "").trim();
-      if (email){
-        const key = "tg_email_history_v2::" + email.toLowerCase();
-        const arr = loadJSON(key, []);
-        arr.push({
-          date: dkey,
-          guess: entry.guess,
-          actual: entry.actual,
-          within: entry.within
-        });
-        saveJSON(key, arr);
-      }
-    }
-
-    // ---------------------------
-    // Recent results (device)
-    // ---------------------------
-    function renderRecent(){
-      const tbody = document.querySelector("#recentTable tbody");
-      tbody.innerHTML = "";
-      const dev = loadJSON(DEVICE_RESULTS_KEY, []);
-      const latest = dev.slice(-MAX_RECENT_ROWS).reverse();
-      for (const row of latest){
-        const tr = document.createElement("tr");
-        const date = document.createElement("td"); date.textContent = row.date;
-        const guess = document.createElement("td"); guess.textContent = `${row.guess} min`;
-        const outcome = document.createElement("td");
-        const diff = document.createElement("td"); diff.textContent = "–"; // no leak
-
-        const span = document.createElement("span");
-        if (row.within){ span.textContent = "Win"; span.className = "tag"; }
-        else { span.textContent = "Miss"; span.className = "tag lose"; }
-        outcome.appendChild(span);
-
-        tr.append(date, guess, outcome, diff);
-        tbody.appendChild(tr);
-      }
-    }
-    renderRecent();
-
-    // ---------------------------
-    // Report (email)
-    // ---------------------------
-    const viewReportBtn = document.getElementById("viewReportBtn");
-    const reportBlock = document.getElementById("reportBlock");
-    const reportText = document.getElementById("reportText");
-    const reportBtn = document.getElementById("reportBtn");
-    const clearEmailDataBtn = document.getElementById("clearEmailDataBtn");
-
-    function buildReportCSV(arr){
-      const sorted = [...arr].reverse();
-      const lines = ["date,guess_minutes,within_10pct"];
-      for (const x of sorted){
-        lines.push([x.date, x.guess, x.within ? "yes":"no"].join(","));
-      }
-      return lines.join("\n");
-    }
-
-    viewReportBtn.addEventListener("click", () => {
-      const email = (localStorage.getItem(EMAIL_KEY) || "").trim().toLowerCase();
-      if (!email){ alert("Save your email first."); return; }
-      const key = "tg_email_history_v2::" + email;
-      const arr = loadJSON(key, []);
-      reportBlock.style.display = "block";
-      // Update visible tiles (keep placeholders for design consistency)
-      document.getElementById("statGames").textContent = arr.length;
-      document.getElementById("statWins").textContent = arr.filter(x=>x.within).length;
-      document.getElementById("statAvgErr").textContent = "–";
-      document.getElementById("statAvgPct").textContent = "–";
-      document.getElementById("statStreak").textContent = "–";
-      document.getElementById("statBest").textContent = "–";
-      reportText.textContent = arr.length ? buildReportCSV(arr) : "No games recorded for this email yet.";
-    });
-
-    reportBtn.addEventListener("click", () => {
-      const email = (localStorage.getItem(EMAIL_KEY) || "").trim().toLowerCase();
-      let filename = "tripguessr_report.csv";
-      let arr = [];
-      if (email){
-        const key = "tg_email_history_v2::" + email;
-        arr = loadJSON(key, []);
-        filename = `tripguessr_report_${email.replace(/[^a-z0-9_.-]+/g,'_')}.csv`;
-      } else {
-        arr = loadJSON(DEVICE_RESULTS_KEY, []);
-        filename = "tripguessr_report_device.csv";
-      }
-      if (!arr.length){ alert("No data to export yet."); return; }
-      download(filename, buildReportCSV(arr));
-    });
-
-    clearEmailDataBtn.addEventListener("click", () => {
-      const email = (localStorage.getItem(EMAIL_KEY) || "").trim().toLowerCase();
-      if (!email){ alert("No email is saved."); return; }
-      const key = "tg_email_history_v2::" + email;
-      if (confirm(`Delete all locally stored results for ${email}? This cannot be undone.`)){
-        localStorage.removeItem(key);
-        alert("Email data cleared (on this device).");
-        if (reportBlock.style.display !== "none"){
-          document.getElementById("statGames").textContent = "0";
-          document.getElementById("statWins").textContent = "0";
-          document.getElementById("statAvgErr").textContent = "–";
-          document.getElementById("statAvgPct").textContent = "–";
-          document.getElementById("statStreak").textContent = "–";
-          document.getElementById("statBest").textContent = "–";
-          reportText.textContent = "No games recorded for this email yet.";
-        }
-      }
-    });
-
-    // ---------------------------
-    // Copy to clipboard (no spoilers)
-    // ---------------------------
-    const copyBtn = document.getElementById("copyBtn");
-    copyBtn.addEventListener("click", async () => {
-      const d = todayKey();
-      const res = document.getElementById("result").textContent || "Played";
-      const route = (TODAY_PAIR && TODAY_PAIR.a)
-        ? `${TODAY_PAIR.a.n} → ${TODAY_PAIR.b.n} (${TODAY_PAIR.metro.name})`
-        : "Today’s route";
-      const text = `TripGuessr (${d}): ${res} — Route: ${route}`;
-      try {
-        await navigator.clipboard.writeText(text);
-        copyBtn.textContent = "Copied!";
-        setTimeout(()=>copyBtn.textContent="Copy Result", 1200);
-      } catch(e){
-        // Fallback
-        const ta = document.createElement("textarea");
-        ta.value = text; document.body.appendChild(ta);
-        ta.select(); document.execCommand("copy"); document.body.removeChild(ta);
-        copyBtn.textContent = "Copied!";
-        setTimeout(()=>copyBtn.textContent="Copy Result", 1200);
-      }
-    });
+    window.initMap = function(){ /* replaced below after helpers are defined */ };
   </script>
 
-  <!-- =========================
-       Google Maps JS (YOUR KEY)
-  ========================== -->
-  <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDJhWz8jA_KfdQCZ1jE_z8RPGuvcQBVKFM&callback=initMap"></script>
+  <script>
+    (function(){
+      // ===== Config
+      const TOLERANCE_PERCENT = 10;
+      const MAX_RECENT_ROWS = 12;
+      const USE_SLACK = false; let SLACK_WEBHOOK_URL = "";
+      const DEVICE_KEY = "tg_device_id_v2";
+      const DEVICE_RESULTS_KEY = "tg_device_results_v2";
+      const EMAIL_KEY = "tg_email_v2";
+      const THEME_KEY = "tg_theme";
+      const PLAY_KEY = "tg_played_date_v1";
+      const MAX_MINUTES = 60;         // cap challenges to ~≤ 60 minutes
+      const MIN_KM = 5, MAX_KM = 80;  // distance band for landmark pairs
+
+      // ===== Utils
+      function toMinutes(s){ return Math.round(s/60); }
+      function percentError(g,a){ return a<=0 ? 1 : Math.abs(g-a)/a; }
+      function todayKey(){ const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; }
+      function saveJSON(k,o){ try{ localStorage.setItem(k, JSON.stringify(o)); }catch(e){} }
+      function loadJSON(k,f){ try{ const s=localStorage.getItem(k); return s?JSON.parse(s):f; }catch(e){ return f; } }
+      function getDeviceId(){ let id=localStorage.getItem(DEVICE_KEY); if(!id){ id="dev_"+Math.random().toString(36).slice(2)+"_"+Date.now().toString(36); localStorage.setItem(DEVICE_KEY,id);} return id; }
+      function download(filename, text){ const blob=new Blob([text],{type:"text/csv;charset=utf-8;"}); const url=URL.createObjectURL(blob); const a=document.createElement("a"); a.href=url; a.download=filename; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url); }
+
+      // Seeded RNG
+      function xmur3(str){ let h=1779033703^str.length; for(let i=0;i<str.length;i++){ h=Math.imul(h^str.charCodeAt(i),3432918353); h=h<<13|h>>>19; } return function(){ h=Math.imul(h^(h>>>16),2246822507); h=Math.imul(h^(h>>>13),3266489909); return (h^=h>>>16)>>>0; } }
+      function sfc32(a,b,c,d){ return function(){ a>>>=0;b>>>=0;c>>>=0;d>>>=0; let t=(a+b)|0; a=b^b>>>9; b=c+(c<<3)|0; c=c<<21|c>>>11; d=d+1|0; t=t+d|0; c=c+t|0; return (t>>>0)/4294967296; } }
+      function seededRandom(seed){ const s=xmur3(seed); return sfc32(s(),s(),s(),s()); }
+
+      // Haversine
+      function kmBetween(a,b){ const R=6371,toRad=d=>d*Math.PI/180; const dLat=toRad(b.lat-a.lat), dLng=toRad(b.lng-a.lng);
+        const s1=Math.sin(dLat/2)**2 + Math.cos(toRad(a.lat))*Math.cos(toRad(b.lat))*Math.sin(dLng/2)**2;
+        return 2*R*Math.asin(Math.sqrt(s1));
+      }
+
+      // Landmarks (metros)
+      const METROS = [
+        { name:"Boston, MA", landmarks:[
+          {n:"Fenway Park", c:"Boston, MA", lat:42.346676, lng:-71.097218},
+          {n:"Harvard Yard", c:"Cambridge, MA", lat:42.374541, lng:-71.118021},
+          {n:"Boston Common", c:"Boston, MA", lat:42.355010, lng:-71.065620},
+          {n:"TD Garden", c:"Boston, MA", lat:42.366303, lng:-71.062228}
+        ]},
+        { name:"New York City, NY", landmarks:[
+          {n:"Central Park (Bethesda Terrace)", c:"NYC, NY", lat:40.774036, lng:-73.970872},
+          {n:"Times Square", c:"NYC, NY", lat:40.758001, lng:-73.985500},
+          {n:"Yankee Stadium", c:"Bronx, NY", lat:40.829643, lng:-73.926175},
+          {n:"Citi Field", c:"Queens, NY", lat:40.757088, lng:-73.845821}
+        ]},
+        { name:"Los Angeles, CA", landmarks:[
+          {n:"Griffith Observatory", c:"Los Angeles, CA", lat:34.118434, lng:-118.300393},
+          {n:"Dodger Stadium", c:"Los Angeles, CA", lat:34.073851, lng:-118.239958},
+          {n:"Santa Monica Pier", c:"Santa Monica, CA", lat:34.009242, lng:-118.497604},
+          {n:"Crypto.com Arena", c:"Los Angeles, CA", lat:34.043017, lng:-118.267254}
+        ]},
+        { name:"San Francisco Bay Area, CA", landmarks:[
+          {n:"Golden Gate Park (Music Concourse)", c:"San Francisco, CA", lat:37.769421, lng:-122.486214},
+          {n:"Oracle Park", c:"San Francisco, CA", lat:37.778595, lng:-122.389270},
+          {n:"Stanford Stadium", c:"Palo Alto, CA", lat:37.434839, lng:-122.161122},
+          {n:"SFO Terminal 2", c:"San Francisco, CA", lat:37.621312, lng:-122.378955}
+        ]},
+        { name:"Chicago, IL", landmarks:[
+          {n:"Navy Pier", c:"Chicago, IL", lat:41.891551, lng:-87.607375},
+          {n:"Wrigley Field", c:"Chicago, IL", lat:41.948438, lng:-87.655333},
+          {n:"United Center", c:"Chicago, IL", lat:41.880690, lng:-87.674190},
+          {n:"Millennium Park", c:"Chicago, IL", lat:41.882702, lng:-87.619392}
+        ]},
+        { name:"Washington, DC", landmarks:[
+          {n:"Lincoln Memorial", c:"Washington, DC", lat:38.889269, lng:-77.050176},
+          {n:"Smithsonian National Zoo", c:"Washington, DC", lat:38.929640, lng:-77.049766},
+          {n:"Nationals Park", c:"Washington, DC", lat:38.872865, lng:-77.007369},
+          {n:"Union Station", c:"Washington, DC", lat:38.897699, lng:-77.006639}
+        ]},
+        { name:"Seattle, WA", landmarks:[
+          {n:"Space Needle", c:"Seattle, WA", lat:47.620506, lng:-122.349277},
+          {n:"T-Mobile Park", c:"Seattle, WA", lat:47.591390, lng:-122.332500},
+          {n:"University of Washington Quad", c:"Seattle, WA", lat:47.656051, lng:-122.309331},
+          {n:"Lumen Field", c:"Seattle, WA", lat:47.595151, lng:-122.331639}
+        ]},
+        { name:"Miami, FL", landmarks:[
+          {n:"Lummus Park (South Beach)", c:"Miami Beach, FL", lat:25.782612, lng:-80.131004},
+          {n:"LoanDepot Park", c:"Miami, FL", lat:25.778135, lng:-80.219760},
+          {n:"Wynwood Walls", c:"Miami, FL", lat:25.801121, lng:-80.199356},
+          {n:"Miami Intl Airport (MIA)", c:"Miami, FL", lat:25.795865, lng:-80.287046}
+        ]},
+        { name:"Dallas–Fort Worth, TX", landmarks:[
+          {n:"AT&T Stadium", c:"Arlington, TX", lat:32.747289, lng:-97.094504},
+          {n:"American Airlines Center", c:"Dallas, TX", lat:32.790523, lng:-96.810136},
+          {n:"Klyde Warren Park", c:"Dallas, TX", lat:32.789304, lng:-96.801742},
+          {n:"Fort Worth Stockyards", c:"Fort Worth, TX", lat:32.790146, lng:-97.347388}
+        ]},
+        { name:"Denver, CO", landmarks:[
+          {n:"Coors Field", c:"Denver, CO", lat:39.755942, lng:-104.994169},
+          {n:"Red Rocks Amphitheatre", c:"Morrison, CO", lat:39.665387, lng:-105.205705},
+          {n:"Union Station", c:"Denver, CO", lat:39.752659, lng:-105.000618},
+          {n:"Empower Field at Mile High", c:"Denver, CO", lat:39.743936, lng:-105.020097}
+        ]},
+        { name:"Phoenix, AZ", landmarks:[
+          {n:"Phoenix Zoo", c:"Phoenix, AZ", lat:33.451041, lng:-111.948397},
+          {n:"ASU Sun Devil Stadium", c:"Tempe, AZ", lat:33.426322, lng:-111.932174},
+          {n:"State Farm Stadium", c:"Glendale, AZ", lat:33.527635, lng:-112.262551},
+          {n:"Chase Field", c:"Phoenix, AZ", lat:33.445524, lng:-112.066721}
+        ]},
+        { name:"Salt Lake City, UT", landmarks:[
+          {n:"Temple Square", c:"Salt Lake City, UT", lat:40.770618, lng:-111.891037},
+          {n:"Sugar House Park", c:"Salt Lake City, UT", lat:40.717756, lng:-111.856138},
+          {n:"Rice-Eccles Stadium", c:"Salt Lake City, UT", lat:40.760692, lng:-111.848683},
+          {n:"Hogle Zoo", c:"Salt Lake City, UT", lat:40.750288, lng:-111.819693}
+        ]},
+        { name:"Orlando, FL", landmarks:[
+          {n:"Magic Kingdom TTC", c:"Bay Lake, FL", lat:28.410882, lng:-81.581220},
+          {n:"Universal Studios Florida", c:"Orlando, FL", lat:28.473470, lng:-81.467855},
+          {n:"Amway Center", c:"Orlando, FL", lat:28.539199, lng:-81.383729},
+          {n:"Orlando Intl Airport (MCO)", c:"Orlando, FL", lat:28.431157, lng:-81.308083}
+        ]}
+      ];
+
+      // Map styles
+      const MAP_STYLES_LIGHT = [
+        {"elementType":"geometry","stylers":[{"color":"#ebe3cd"}]},
+        {"elementType":"labels.text.fill","stylers":[{"color":"#523735"}]},
+        {"elementType":"labels.text.stroke","stylers":[{"color":"#f5f1e6"}]},
+        {"featureType":"poi.park","elementType":"geometry.fill","stylers":[{"color":"#a5d6a7"}]},
+        {"featureType":"road","elementType":"geometry","stylers":[{"color":"#f5f1e6"}]},
+        {"featureType":"water","elementType":"geometry.fill","stylers":[{"color":"#a1c4fd"}]}
+      ];
+      const MAP_STYLES_DARK = [
+        {"elementType":"geometry","stylers":[{"color":"#1f2937"}]},
+        {"elementType":"labels.text.fill","stylers":[{"color":"#e5e7eb"}]},
+        {"elementType":"labels.text.stroke","stylers":[{"color":"#111827"}]},
+        {"featureType":"road","elementType":"geometry","stylers":[{"color":"#0b1220"}]},
+        {"featureType":"water","elementType":"geometry.fill","stylers":[{"color":"#0ea5e9"}]}
+      ];
+
+      // Map state
+      let map, directionsService, directionsRenderer, trafficLayer;
+      let startMarker, endMarker;
+      let ACTUAL_MINUTES = null;
+      let TODAY_PAIR = null;
+
+      function buildCandidates(metro){
+        const out=[]; const L=metro.landmarks;
+        for(let i=0;i<L.length;i++) for(let j=i+1;j<L.length;j++){
+          const a=L[i], b=L[j]; const km=kmBetween(a,b);
+          if (km>=MIN_KM && km<=MAX_KM) out.push([a,b]);
+        }
+        return out;
+      }
+      function pickDailyMetroAndPairs(){
+        const rnd = seededRandom(todayKey());
+        const metro = METROS[Math.floor(rnd()*METROS.length)];
+        const pairs = buildCandidates(metro);
+        for(let i=pairs.length-1;i>0;i--){ const j=Math.floor(rnd()*(i+1)); [pairs[i],pairs[j]]=[pairs[j],pairs[i]]; }
+        return { metro, pairs };
+      }
+
+      function setMarkers(a,b){
+        if (startMarker) startMarker.setMap(null);
+        if (endMarker) endMarker.setMap(null);
+        startMarker = new google.maps.Marker({
+          position:{lat:a.lat,lng:a.lng}, map, title:`${a.n} (${a.c})`,
+          label:{text:"A",color:"#fff",fontWeight:"700"},
+          icon:{ path:google.maps.SymbolPath.CIRCLE, scale:10, fillColor:"#10b981", fillOpacity:1, strokeColor:"#065f46", strokeWeight:2 }
+        });
+        endMarker = new google.maps.Marker({
+          position:{lat:b.lat,lng:b.lng}, map, title:`${b.n} (${b.c})`,
+          label:{text:"B",color:"#fff",fontWeight:"700"},
+          icon:{ path:google.maps.SymbolPath.CIRCLE, scale:10, fillColor:"#2563eb", fillOpacity:1, strokeColor:"#1e40af", strokeWeight:2 }
+        });
+      }
+      function renderTodayMetaNames(metro,a,b){
+        const el=document.getElementById("todayMeta");
+        if (el) el.textContent = `Start: ${a.n} (${a.c}) → End: ${b.n} (${b.c}) — Metro: ${metro.name}`;
+      }
+
+      function estimateByAir(a,b){
+        const miles = kmBetween(a,b) * 0.621371;
+        const mph = 35;
+        return Math.max(5, Math.round((miles / mph) * 60));
+      }
+
+      function enableGuessUI(fallback=false){
+        const res = document.getElementById("result");
+        if (fallback && res) res.innerHTML = `<span class="small">Using an estimated route time today.</span>`;
+        const submitBtn=document.getElementById("submitBtn");
+        const guessInput=document.getElementById("guessInput");
+        if (submitBtn) submitBtn.disabled=false;
+        if (guessInput){ guessInput.disabled=false; guessInput.focus(); }
+        enforceOnePlayPerDayUI();
+      }
+
+      // One play/day
+      function hasPlayedToday(){ return localStorage.getItem(PLAY_KEY) === todayKey(); }
+      function markPlayedToday(){ localStorage.setItem(PLAY_KEY, todayKey()); }
+      function enforceOnePlayPerDayUI(){
+        const already=hasPlayedToday();
+        const banner=document.getElementById("playedBanner");
+        const submitBtn=document.getElementById("submitBtn");
+        const guessInput=document.getElementById("guessInput");
+        if (banner) banner.style.display = already ? "block" : "none";
+        if (submitBtn) submitBtn.disabled = already;
+        if (guessInput) guessInput.disabled = already;
+      }
+
+      // Define initMap (GLOBAL) now
+      window.initMap = function initMap(){
+        try{
+          const dark = document.documentElement.classList.contains("dark");
+          map = new google.maps.Map(document.getElementById("map"), {
+            center:{lat:39.8283,lng:-98.5795}, zoom:4, disableDefaultUI:true, gestureHandling:'greedy',
+            styles: dark ? MAP_STYLES_DARK : MAP_STYLES_LIGHT
+          });
+          directionsService = new google.maps.DirectionsService();
+          directionsRenderer = new google.maps.DirectionsRenderer({
+            map, suppressMarkers:true, preserveViewport:true,
+            polylineOptions:{ strokeColor:"#2563eb", strokeWeight:5, strokeOpacity:0.9 }
+          });
+          trafficLayer = new google.maps.TrafficLayer();
+          trafficLayer.setMap(map);
+
+          const { metro, pairs } = pickDailyMetroAndPairs();
+          tryPair(metro, pairs, 0);
+          enforceOnePlayPerDayUI();
+        } catch(err){
+          showMapError(err && err.message ? err.message : String(err));
+        }
+      };
+
+      function tryPair(metro, pairs, idx){
+        if (!pairs.length){
+          const a=metro.landmarks[0], b=metro.landmarks[1];
+          return route(metro,a,b,()=>{});
+        }
+        if (idx>=pairs.length){
+          const [a,b]=pairs[0];
+          return route(metro,a,b,()=>{});
+        }
+        const [a,b]=pairs[idx];
+        route(metro,a,b,(ok,mins)=>{ if (ok && mins<=MAX_MINUTES) return; tryPair(metro,pairs,idx+1); });
+      }
+
+      function route(metro,a,b,cb){
+        setMarkers(a,b); renderTodayMetaNames(metro,a,b);
+        const req = {
+          origin:{lat:a.lat,lng:a.lng}, destination:{lat:b.lat,lng:b.lng},
+          travelMode: google.maps.TravelMode.DRIVING,
+          drivingOptions:{ departureTime:new Date(Date.now()+2*60*1000) },
+          provideRouteAlternatives:false, unitSystem: google.maps.UnitSystem.IMPERIAL
+        };
+        directionsService.route(req, (result, status) => {
+          if (status==="OK" && result && result.routes && result.routes[0]){
+            directionsRenderer.setDirections(result);
+            const legs=result.routes[0].legs||[]; let seconds=0;
+            for(const leg of legs){
+              if (leg.duration_in_traffic && typeof leg.duration_in_traffic.value==="number") seconds+=leg.duration_in_traffic.value;
+              else if (leg.duration && typeof leg.duration.value==="number") seconds+=leg.duration.value;
+            }
+            ACTUAL_MINUTES = Math.max(5, toMinutes(seconds));
+            const bounds=new google.maps.LatLngBounds(); for(const leg of legs){ bounds.extend(leg.start_location); bounds.extend(leg.end_location); }
+            map.fitBounds(bounds, {top:50,left:20,bottom:50,right:20});
+            TODAY_PAIR={metro,a,b};
+            enableGuessUI();
+            cb(true, ACTUAL_MINUTES);
+          } else {
+            ACTUAL_MINUTES = estimateByAir(a,b);
+            TODAY_PAIR={metro,a,b};
+            enableGuessUI(true);
+            cb(true, ACTUAL_MINUTES);
+          }
+        });
+      }
+
+      // DOM wiring
+      document.addEventListener("DOMContentLoaded", () => {
+        const themeBtn=document.getElementById("themeBtn");
+        if (themeBtn){
+          themeBtn.addEventListener("click", () => {
+            const dark = document.documentElement.classList.toggle("dark");
+            localStorage.setItem(THEME_KEY, dark ? "dark":"light");
+            themeBtn.textContent = dark ? "Light" : "Dark";
+            if (map) map.setOptions({ styles: dark ? MAP_STYLES_DARK : MAP_STYLES_LIGHT });
+          });
+          themeBtn.textContent = document.documentElement.classList.contains("dark") ? "Light" : "Dark";
+        }
+
+        const emailInput=document.getElementById("emailInput");
+        const saveEmailBtn=document.getElementById("saveEmailBtn");
+        if (emailInput) emailInput.value = localStorage.getItem(EMAIL_KEY) || "";
+        if (saveEmailBtn){
+          saveEmailBtn.addEventListener("click", () => {
+            const v=(emailInput?.value||"").trim();
+            if (!v || !/^\S+@\S+\.\S+$/.test(v)) { alert("Please enter a valid email."); return; }
+            localStorage.setItem(EMAIL_KEY, v); alert("Email saved for local tracking on this device.");
+          });
+        }
+
+        const reportBtn=document.getElementById("reportBtn");
+        if (reportBtn){
+          reportBtn.addEventListener("click", () => {
+            const email=(localStorage.getItem(EMAIL_KEY)||"").trim().toLowerCase();
+            let filename="tripguessr_report.csv"; let arr=[];
+            if (email){ arr=loadJSON("tg_email_history_v2::"+email,[]); filename=`tripguessr_report_${email.replace(/[^a-z0-9_.-]+/g,'_')}.csv`; }
+            else { arr=loadJSON(DEVICE_RESULTS_KEY,[]); filename="tripguessr_report_device.csv"; }
+            if (!arr.length){ alert("No data to export yet."); return; }
+            const lines=["date,guess_minutes,within_10pct"]; for(const x of [...arr].reverse()){ lines.push([x.date,x.guess,x.within?"yes":"no"].join(",")); }
+            download(filename, lines.join("\n"));
+          });
+        }
+
+        const viewReportBtn=document.getElementById("viewReportBtn");
+        const reportBlock=document.getElementById("reportBlock");
+        const reportText=document.getElementById("reportText");
+        const clearEmailDataBtn=document.getElementById("clearEmailDataBtn");
+        if (viewReportBtn){
+          viewReportBtn.addEventListener("click", () => {
+            const email=(localStorage.getItem(EMAIL_KEY)||"").trim().toLowerCase();
+            if (!email){ alert("Save your email first."); return; }
+            const key="tg_email_history_v2::"+email; const arr=loadJSON(key,[]);
+            if (reportBlock) reportBlock.style.display="block";
+            const g=document.getElementById("statGames"); if (g) g.textContent=arr.length;
+            const w=document.getElementById("statWins"); if (w) w.textContent=arr.filter(x=>x.within).length;
+            ["statAvgErr","statAvgPct","statStreak","statBest"].forEach(id=>{ const el=document.getElementById(id); if (el) el.textContent="–"; });
+            if (reportText){
+              const lines=["date,guess_minutes,within_10pct"]; for(const x of [...arr].reverse()){ lines.push([x.date,x.guess,x.within?"yes":"no"].join(",")); }
+              reportText.textContent = arr.length ? lines.join("\n") : "No games recorded for this email yet.";
+            }
+          });
+        }
+        if (clearEmailDataBtn){
+          clearEmailDataBtn.addEventListener("click", () => {
+            const email=(localStorage.getItem(EMAIL_KEY)||"").trim().toLowerCase();
+            if (!email){ alert("No email is saved."); return; }
+            const key="tg_email_history_v2::"+email;
+            if (confirm(`Delete all locally stored results for ${email}?`)){
+              localStorage.removeItem(key); alert("Email data cleared (on this device).");
+              if (reportBlock && reportBlock.style.display!=="none"){
+                ["statGames","statWins"].forEach(id=>{ const el=document.getElementById(id); if (el) el.textContent="0"; });
+                ["statAvgErr","statAvgPct","statStreak","statBest"].forEach(id=>{ const el=document.getElementById(id); if (el) el.textContent="–"; });
+                if (reportText) reportText.textContent="No games recorded for this email yet.";
+              }
+            }
+          });
+        }
+
+        const submitBtn=document.getElementById("submitBtn");
+        const guessInput=document.getElementById("guessInput");
+        const resultEl=document.getElementById("result");
+        const copyBtn=document.getElementById("copyBtn");
+
+        function saveResult(entry){
+          const dkey=todayKey(); const deviceId=getDeviceId();
+          const dev=loadJSON(DEVICE_RESULTS_KEY,[]); dev.push({date:dkey,deviceId,guess:entry.guess,actual:entry.actual,within:entry.within}); saveJSON(DEVICE_RESULTS_KEY,dev);
+          const email=(localStorage.getItem(EMAIL_KEY)||"").trim();
+          if (email){ const key="tg_email_history_v2::"+email.toLowerCase(); const arr=loadJSON(key,[]); arr.push({date:dkey,guess:entry.guess,actual:entry.actual,within:entry.within}); saveJSON(key,arr); }
+        }
+        function renderRecent(){
+          const tbody=document.querySelector("#recentTable tbody"); if (!tbody) return;
+          tbody.innerHTML=""; const dev=loadJSON(DEVICE_RESULTS_KEY,[]); const latest=dev.slice(-MAX_RECENT_ROWS).reverse();
+          for (const row of latest){
+            const tr=document.createElement("tr");
+            const d=document.createElement("td"); d.textContent=row.date;
+            const g=document.createElement("td"); g.textContent=`${row.guess} min`;
+            const o=document.createElement("td"); const s=document.createElement("span"); s.textContent=row.within?"Win":"Miss"; s.className=row.within?"tag":"tag lose"; o.appendChild(s);
+            const diff=document.createElement("td"); diff.textContent="–";
+            tr.append(d,g,o, diff); tbody.appendChild(tr);
+          }
+        }
+        renderRecent(); enforceOnePlayPerDayUI();
+
+        function onSubmit(){
+          if (hasPlayedToday()){ resultEl.textContent="You’ve already played today. Come back tomorrow!"; resultEl.className="result no"; return; }
+          const val=parseInt(guessInput.value,10);
+          if (!ACTUAL_MINUTES){ resultEl.textContent="Route still loading—try again in a moment."; return; }
+          if (Number.isNaN(val) || val<=0){ resultEl.textContent="Please enter a valid positive number."; resultEl.className="result no"; return; }
+          const within = percentError(val, ACTUAL_MINUTES) <= (TOLERANCE_PERCENT/100);
+          resultEl.textContent = within ? `🎉 Correct! Within ${TOLERANCE_PERCENT}%.` : (val>ACTUAL_MINUTES ? "Too high." : "Too low.");
+          resultEl.className = within ? "result ok" : "result no";
+          markPlayedToday(); enforceOnePlayPerDayUI();
+          saveResult({ guess: val, actual: ACTUAL_MINUTES, within });
+          renderRecent();
+        }
+        if (submitBtn) submitBtn.addEventListener("click", onSubmit);
+        if (guessInput) guessInput.addEventListener("keydown", (e)=>{ if (e.key==="Enter") onSubmit(); });
+        if (copyBtn){
+          copyBtn.addEventListener("click", async () => {
+            const d=todayKey(); const res=resultEl?.textContent||"Played";
+            const route=(TODAY_PAIR&&TODAY_PAIR.a)? `${TODAY_PAIR.a.n} → ${TODAY_PAIR.b.n} (${TODAY_PAIR.metro.name})` : "Today’s route";
+            const text=`TripGuessr (${d}): ${res} — Route: ${route}`;
+            try { await navigator.clipboard.writeText(text); copyBtn.textContent="Copied!"; setTimeout(()=>copyBtn.textContent="Copy Result",1200); }
+            catch(e){ const ta=document.createElement("textarea"); ta.value=text; document.body.appendChild(ta); ta.select(); document.execCommand("copy"); ta.remove(); copyBtn.textContent="Copied!"; setTimeout(()=>copyBtn.textContent="Copy Result",1200); }
+          });
+        }
+
+        // Simple Slack toggle label (feature off by default)
+        const slackBtn=document.getElementById("slackBtn");
+        if (slackBtn){
+          let on=USE_SLACK;
+          slackBtn.addEventListener("click", ()=>{ on=!on; slackBtn.textContent=on?"Slack On":"Slack Off"; slackBtn.setAttribute("aria-pressed", String(on)); });
+        }
+      });
+
+      // Map/API error helper
+      function showMapError(msg){
+        const el=document.getElementById("mapError");
+        if (!el) return;
+        el.style.display="block";
+        el.innerHTML = `⚠️ Map error: ${msg}<br><span class="small">If this persists, check: API key enabled for Maps JavaScript API, billing active, and your site’s domain is allowed in the key’s restrictions.</span>`;
+      }
+
+      // Global error trap to surface issues
+      window.addEventListener('error', (e) => {
+        if (String(e.message||"").includes("Google Maps"))
+          showMapError(e.message);
+      });
+    })();
+  </script>
+
+  <!-- Load Google Maps (async) with your key and callback -->
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDJhWz8jA_KfdQCZ1jE_z8RPGuvcQBVKFM&loading=async&callback=initMap"></script>
 </body>
 </html>
