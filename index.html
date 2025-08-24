@@ -119,9 +119,7 @@
         <div class="card guess-panel" id="guessCard" aria-live="polite">
           <div class="label">Enter Your Guess</div>
           <h2 style="margin:0 0 6px 0;">How long will the drive take?</h2>
-          <div id="playedBanner" class="small" style="display:none; margin:6px 0 10px; font-weight:700;">
-            You’ve already played today. Come back tomorrow!
-          </div>
+          <div id="triesBanner" class="small" style="margin:6px 0 10px; font-weight:700;"></div>
           <div class="input-row" style="margin-top:8px;">
             <label class="sr-only" for="guessInput">Minutes</label>
             <div class="input" style="flex:1 1 260px;">
@@ -131,7 +129,7 @@
             <button id="submitBtn" class="btn" type="button">Submit Guess</button>
             <button id="copyBtn" class="btn secondary" type="button" title="Copy today’s result">Copy Result</button>
           </div>
-          <div class="hint">Pro tip: ±10% counts as a win (we don’t reveal the actual time).</div>
+          <div class="hint">You get <strong>5 tries per day</strong>. ±10% counts as a win (we don’t reveal the actual time).</div>
           <div id="result" class="result" aria-live="polite"></div>
         </div>
 
@@ -191,7 +189,9 @@
       const DEVICE_RESULTS_KEY = "tg_device_results_v2";
       const EMAIL_KEY = "tg_email_v2";
       const THEME_KEY = "tg_theme";
-      const PLAY_KEY = "tg_played_date_v1";
+      const LEGACY_PLAY_KEY = "tg_played_date_v1"; // old single-play flag
+      const PLAY_STATE_KEY = "tg_play_state_v1";   // new multi-try state
+      const MAX_TRIES_PER_DAY = 5;
       const MAX_MINUTES = 60;         // cap challenges to ~≤ 60 minutes
       const MIN_KM = 5, MAX_KM = 80;  // distance band for landmark pairs
 
@@ -320,6 +320,55 @@
       let ACTUAL_MINUTES = null;
       let TODAY_PAIR = null;
 
+      // ----- Multi-try play state
+      function getPlayState(){
+        const d = todayKey();
+        let st = loadJSON(PLAY_STATE_KEY, null);
+        if (!st || st.date !== d){
+          // migrate from legacy and/or infer from today’s saved results
+          const dev = loadJSON(DEVICE_RESULTS_KEY, []);
+          const todayRows = dev.filter(r => r.date === d);
+          const tries = todayRows.length;                     // number of guesses already made today
+          const won = todayRows.some(r => r.within === true); // whether already won today
+          st = { date: d, tries, won };
+          saveJSON(PLAY_STATE_KEY, st);
+          // remove legacy single-play flag if present
+          try { const legacy = localStorage.getItem(LEGACY_PLAY_KEY); if (legacy) localStorage.removeItem(LEGACY_PLAY_KEY); } catch(e){}
+        }
+        return st;
+      }
+      function setPlayState(st){ saveJSON(PLAY_STATE_KEY, st); }
+      function incrementTries(){ const st=getPlayState(); st.tries = Math.min(MAX_TRIES_PER_DAY, st.tries + 1); setPlayState(st); return st; }
+      function setWon(){ const st=getPlayState(); st.won = true; setPlayState(st); return st; }
+
+      function triesLeft(){ const st=getPlayState(); return Math.max(0, MAX_TRIES_PER_DAY - st.tries); }
+      function isLocked(){ const st=getPlayState(); return st.won || st.tries >= MAX_TRIES_PER_DAY; }
+
+      function updateTriesBanner(){
+        const el = document.getElementById("triesBanner");
+        if (!el) return;
+        const st = getPlayState();
+        if (st.won){
+          el.textContent = `You already won today! (Tries used: ${st.tries}/${MAX_TRIES_PER_DAY})`;
+          el.style.color = "var(--accent)";
+        } else if (st.tries >= MAX_TRIES_PER_DAY){
+          el.textContent = `You’ve used all ${MAX_TRIES_PER_DAY} tries today. Come back tomorrow!`;
+          el.style.color = "var(--danger)";
+        } else {
+          el.textContent = `Tries left: ${MAX_TRIES_PER_DAY - st.tries} of ${MAX_TRIES_PER_DAY}`;
+          el.style.color = "var(--muted)";
+        }
+      }
+      function enforceTriesUI(){
+        const st = getPlayState();
+        const submitBtn=document.getElementById("submitBtn");
+        const guessInput=document.getElementById("guessInput");
+        const locked = st.won || st.tries >= MAX_TRIES_PER_DAY;
+        if (submitBtn) submitBtn.disabled = locked;
+        if (guessInput) guessInput.disabled = locked;
+        updateTriesBanner();
+      }
+
       function buildCandidates(metro){
         const out=[]; const L=metro.landmarks;
         for(let i=0;i<L.length;i++) for(let j=i+1;j<L.length;j++){
@@ -367,24 +416,11 @@
         const submitBtn=document.getElementById("submitBtn");
         const guessInput=document.getElementById("guessInput");
         if (submitBtn) submitBtn.disabled=false;
-        if (guessInput){ guessInput.disabled=false; guessInput.focus(); }
-        enforceOnePlayPerDayUI();
+        if (guessInput){ guessInput.disabled=false; if (!isLocked()) guessInput.focus(); }
+        enforceTriesUI();
       }
 
-      // One play/day
-      function hasPlayedToday(){ return localStorage.getItem(PLAY_KEY) === todayKey(); }
-      function markPlayedToday(){ localStorage.setItem(PLAY_KEY, todayKey()); }
-      function enforceOnePlayPerDayUI(){
-        const already=hasPlayedToday();
-        const banner=document.getElementById("playedBanner");
-        const submitBtn=document.getElementById("submitBtn");
-        const guessInput=document.getElementById("guessInput");
-        if (banner) banner.style.display = already ? "block" : "none";
-        if (submitBtn) submitBtn.disabled = already;
-        if (guessInput) guessInput.disabled = already;
-      }
-
-      // Define initMap (GLOBAL) now
+      // Define initMap (GLOBAL)
       window.initMap = function initMap(){
         try{
           const dark = document.documentElement.classList.contains("dark");
@@ -402,7 +438,7 @@
 
           const { metro, pairs } = pickDailyMetroAndPairs();
           tryPair(metro, pairs, 0);
-          enforceOnePlayPerDayUI();
+          enforceTriesUI();
         } catch(err){
           showMapError(err && err.message ? err.message : String(err));
         }
@@ -547,22 +583,52 @@
             tr.append(d,g,o, diff); tbody.appendChild(tr);
           }
         }
-        renderRecent(); enforceOnePlayPerDayUI();
+        renderRecent();
+        enforceTriesUI(); // reflect current tries at startup
 
         function onSubmit(){
-          if (hasPlayedToday()){ resultEl.textContent="You’ve already played today. Come back tomorrow!"; resultEl.className="result no"; return; }
+          const stBefore = getPlayState();
+          if (stBefore.won){
+            resultEl.textContent = "You already won today! Come back tomorrow.";
+            resultEl.className = "result ok";
+            enforceTriesUI();
+            return;
+          }
+          if (stBefore.tries >= MAX_TRIES_PER_DAY){
+            resultEl.textContent = `You’ve used all ${MAX_TRIES_PER_DAY} tries today. Come back tomorrow!`;
+            resultEl.className = "result no";
+            enforceTriesUI();
+            return;
+          }
+
           const val=parseInt(guessInput.value,10);
           if (!ACTUAL_MINUTES){ resultEl.textContent="Route still loading—try again in a moment."; return; }
           if (Number.isNaN(val) || val<=0){ resultEl.textContent="Please enter a valid positive number."; resultEl.className="result no"; return; }
+
+          // Count this attempt
+          const st = incrementTries();
+
           const within = percentError(val, ACTUAL_MINUTES) <= (TOLERANCE_PERCENT/100);
-          resultEl.textContent = within ? `🎉 Correct! Within ${TOLERANCE_PERCENT}%.` : (val>ACTUAL_MINUTES ? "Too high." : "Too low.");
-          resultEl.className = within ? "result ok" : "result no";
-          markPlayedToday(); enforceOnePlayPerDayUI();
+          if (within){
+            setWon();
+            resultEl.textContent = `🎉 Correct! Within ${TOLERANCE_PERCENT}%.`;
+            resultEl.className = "result ok";
+          } else {
+            resultEl.textContent = val>ACTUAL_MINUTES ? "Too high." : "Too low.";
+            resultEl.className = "result no";
+          }
+
+          // Lock if won or out of tries
+          enforceTriesUI();
+
+          // Save the attempt (we do store 'actual' internally; never shown)
           saveResult({ guess: val, actual: ACTUAL_MINUTES, within });
+
           renderRecent();
         }
         if (submitBtn) submitBtn.addEventListener("click", onSubmit);
         if (guessInput) guessInput.addEventListener("keydown", (e)=>{ if (e.key==="Enter") onSubmit(); });
+
         if (copyBtn){
           copyBtn.addEventListener("click", async () => {
             const d=todayKey(); const res=resultEl?.textContent||"Played";
