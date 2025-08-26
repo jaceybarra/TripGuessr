@@ -126,7 +126,7 @@
               <span class="suffix">minutes</span>
             </div>
             <button id="submitBtn" class="btn" type="button">Submit Guess</button>
-            <button id="copyBtn" class="btn secondary" type="button" title="Copy today’s result (Slack‑ready)">Copy Result</button>
+            <button id="copyBtn" class="btn secondary" type="button" title="Copy today’s result (Slack-ready)">Copy Result</button>
           </div>
           <div class="hint">You get <strong>5 tries per day</strong>. ±10% counts as a win (we don’t reveal the actual time).</div>
           <div id="result" class="result" aria-live="polite"></div>
@@ -173,7 +173,7 @@
     </div>
   </main>
 
-  <!-- Make initMap global BEFORE loading Maps -->
+  <!-- Define global initMap BEFORE loading Maps -->
   <script>
     window.initMap = function(){ /* replaced below after helpers are defined */ };
   </script>
@@ -184,13 +184,14 @@
       const TOLERANCE_PERCENT = 10;
       const MAX_RECENT_ROWS = 12;
       let USE_SLACK = false;                  // toggled by the header button
-      let SLACK_WEBHOOK_URL = "";             // <- paste your Slack incoming webhook URL here to enable posting
+      let SLACK_WEBHOOK_URL = "";             // <-- put your Incoming Webhook URL here to enable auto-posting
+      const PUBLIC_URL = "https://jaceybarra.github.io/TripGuessr/";
       const DEVICE_KEY = "tg_device_id_v2";
       const DEVICE_RESULTS_KEY = "tg_device_results_v2";
       const EMAIL_KEY = "tg_email_v2";
       const THEME_KEY = "tg_theme";
       const LEGACY_PLAY_KEY = "tg_played_date_v1"; // old single-play flag
-      const PLAY_STATE_KEY = "tg_play_state_v1";   // new multi-try state
+      const PLAY_STATE_KEY = "tg_play_state_v1";   // multi-try state
       const MAX_TRIES_PER_DAY = 5;
       const MAX_MINUTES = 60;         // cap challenges to ~≤ 60 minutes
       const MIN_KM = 5, MAX_KM = 80;  // distance band for landmark pairs
@@ -377,34 +378,33 @@
           });
         } catch(e){ /* silent */ }
       }
-function slackTextSummary(resText){
-  const d = todayKey();
-  const route = (TODAY_PAIR && TODAY_PAIR.a)
-    ? `${TODAY_PAIR.a.n} → ${TODAY_PAIR.b.n} (${TODAY_PAIR.metro.name})`
-    : "Today’s route";
-  const st = getPlayState();
-  return `*TripGuessr — ${d}*\n*Route:* ${route}\n*Result:* ${resText}\n*Tries:* ${st.tries}/${MAX_TRIES_PER_DAY}\n<https://jaceybarra.github.io/TripGuessr/|Play here>`;
-}
-
-function slackBlocks(resText){
-  const d = todayKey();
-  const route = (TODAY_PAIR && TODAY_PAIR.a)
-    ? `${TODAY_PAIR.a.n} → ${TODAY_PAIR.b.n} (${TODAY_PAIR.metro.name})`
-    : "Today’s route";
-  const st = getPlayState();
-  return {
-    text: `TripGuessr ${d}`,
-    blocks: [
-      { type:"section", text:{ type:"mrkdwn", text:`*TripGuessr — ${d}*` } },
-      { type:"section", text:{ type:"mrkdwn", text:`*Route:* ${route}` } },
-      { type:"section", text:{ type:"mrkdwn", text:`*Result:* ${resText}` } },
-      { type:"context", elements:[ { type:"mrkdwn", text:`Tries: ${st.tries}/${MAX_TRIES_PER_DAY}` } ] },
-      { type:"actions", elements:[
-        { type:"button", text: url:"https://jaceybarra.github.io/TripGuessr/"
-      ]}
-    ]
-  };
-}
+      function slackTextSummary(resText){
+        const d = todayKey();
+        const route = (TODAY_PAIR && TODAY_PAIR.a)
+          ? `${TODAY_PAIR.a.n} → ${TODAY_PAIR.b.n} (${TODAY_PAIR.metro.name})`
+          : "Today’s route";
+        const st = getPlayState();
+        return `*TripGuessr — ${d}*\n*Route:* ${route}\n*Result:* ${resText}\n*Tries:* ${st.tries}/${MAX_TRIES_PER_DAY}\n<${PUBLIC_URL}|Play here>`;
+      }
+      function slackBlocks(resText){
+        const d = todayKey();
+        const route = (TODAY_PAIR && TODAY_PAIR.a)
+          ? `${TODAY_PAIR.a.n} → ${TODAY_PAIR.b.n} (${TODAY_PAIR.metro.name})`
+          : "Today’s route";
+        const st = getPlayState();
+        return {
+          text: `TripGuessr ${d}`,
+          blocks: [
+            { type:"section", text:{ type:"mrkdwn", text:`*TripGuessr — ${d}*` } },
+            { type:"section", text:{ type:"mrkdwn", text:`*Route:* ${route}` } },
+            { type:"section", text:{ type:"mrkdwn", text:`*Result:* ${resText}` } },
+            { type:"context", elements:[ { type:"mrkdwn", text:`Tries: ${st.tries}/${MAX_TRIES_PER_DAY}` } ] },
+            { type:"actions", elements:[
+              { type:"button", text:{ type:"plain_text", text:"Play TripGuessr" }, url: PUBLIC_URL }
+            ]}
+          ]
+        };
+      }
 
       // Build candidate routes
       function buildCandidates(metro){
@@ -637,7 +637,6 @@ function slackBlocks(resText){
         enforceTriesUI(); // reflect current tries at startup
 
         async function handleSlackShare(resText){
-          // Post to Slack (if enabled)
           await postToSlack(slackBlocks(resText));
         }
 
@@ -706,8 +705,26 @@ function slackBlocks(resText){
         const el=document.getElementById("mapError");
         if (!el) return;
         el.style.display="block";
-        el.innerHTML = `⚠️ Map error: ${msg}<br><span class="small">If this persists, check: API key enabled for Maps JavaScript API, billing active, and your site’s domain is allowed in the key’s restrictions.</span>`;
+        el.innerHTML = `⚠️ Map error: ${msg}<br><span class="small">If this persists, check: API key HTTP referrers include <code>https://jaceybarra.github.io/*</code>, Maps JavaScript API is enabled, and billing is active.</span>`;
       }
+
+      // Deployment diagnostics to surface common issues
+      (function(){
+        function banner(msg){
+          var el = document.getElementById('mapError');
+          if (!el) return; el.style.display='block'; el.innerHTML='⚠️ ' + msg;
+        }
+        if (typeof window.initMap !== 'function') {
+          console.error('initMap is not a function yet. The JS that assigns window.initMap must load before the Maps script.');
+          banner('initMap is not defined when Maps loads. Move your game JS above the Google Maps <script> tag.');
+        }
+        setTimeout(function(){
+          if (!window.google || !window.google.maps) {
+            console.error('google.maps not available. Likely API key restriction (HTTP referrers), disabled API, or billing.');
+            banner('google.maps failed to load. Check API key referrers for https://jaceybarra.github.io/* and billing.');
+          }
+        }, 3000);
+      })();
 
       // Global error trap to surface issues
       window.addEventListener('error', (e) => {
